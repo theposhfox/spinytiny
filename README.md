@@ -1,2 +1,2 @@
 # spinytiny
-Measuring calcium levels in dendritic spines using GcAMP6f
+Measuring the spine lengths of mammoths and elephants
