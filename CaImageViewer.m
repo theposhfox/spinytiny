@@ -107,6 +107,7 @@ gui_CaImageViewer.NewSpineAnalysis = 0;
 gui_CaImageViewer.NewSpineAnalysisInfo.CurrentDate = [];
 gui_CaImageViewer.NewSpineAnalysisInfo.CurrentImagingField = [];
 gui_CaImageViewer.NewSpineAnalysisInfo.SpineList = [];
+set(handles.Autoscale_CheckBox, 'Value', 1);
 
 
 %%%%% Clear All ROIs and Associated Labels %%%%%%
