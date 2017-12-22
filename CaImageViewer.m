@@ -1,6 +1,4 @@
 function varargout = CaImageViewer(varargin)
-
-
 % CAIMAGEVIEWER MATLAB code for CaImageViewer.fig
 %      CAIMAGEVIEWER, by itself, creates a new CAIMAGEVIEWER or raises the existing
 %      singleton*.
@@ -24,7 +22,7 @@ function varargout = CaImageViewer(varargin)
 
 % Edit the above text to modify the response to help CaImageViewer
 
-% Last Modified by GUIDE v2.5 01-Dec-2017 10:17:37
+% Last Modified by GUIDE v2.5 22-Dec-2017 13:14:13
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -106,7 +104,7 @@ set(gui_CaImageViewer.figure.handles.RedGamma_EditableText, 'KeyPressFcn', @fram
 %%% Initialize Random Parameters
 gui_CaImageViewer.CurrentCMap = 'RGB';
 gui_CaImageViewer.NewSpineAnalysis = 0;
-gui_CaImageViewer.NewSpineAnlysisInfo.CurrentDate = [];
+gui_CaImageViewer.NewSpineAnalysisInfo.CurrentDate = [];
 gui_CaImageViewer.NewSpineAnalysisInfo.CurrentImagingField = [];
 gui_CaImageViewer.NewSpineAnalysisInfo.SpineList = [];
 
@@ -680,7 +678,7 @@ try
                 useroption{i} = 'undefined';
             end
         end
-        % choice = questdlg('Which color do you prefere?', ... % Add by Assaf for choosing colors (Red, Green or Blue) for the ROIs
+%        choice = questdlg('Which color do you prefere?', ... % Add by Assaf for choosing colors (Red, Green or Blue) for the ROIs
 %	'ROIs color', ...
 %	'Red','Green', 'Blue', 'Blue');
 % Handle response
@@ -689,7 +687,7 @@ try
 %        color_by_user = [1 0 0];
 %    case 'Green'
 %        color_by_user = [0 1 0];
-%    case 'Green'
+%   case 'Green'
 %        color_by_user = [0 0 1];
 % end
 
@@ -957,6 +955,7 @@ set(gui_CaImageViewer.figure.handles.MaxProjection_CheckBox, 'Value', 0);
 set(gui_CaImageViewer.figure.handles.AveProjection_CheckBox, 'Value', 0);
 set(gui_CaImageViewer.figure.handles.ImageSlider_Slider, 'Enable', 'on');
 gui_CaImageViewer.NewSpineAnalysis = 0;
+gui_CaImageViewer.SelectedStopFrame = [];
 
 
 [filename, pathname] = uigetfile('.tif');
@@ -1548,56 +1547,60 @@ h1 = waitbar(0, 'Loading images for session 1');
 for i = 3:length(exp_folder)
     cd(directory)
     if isdir(exp_folder(i).name) && isempty(regexp(exp_folder(i).name, '[A-Z]*'))
-        path = [directory, '\', exp_folder(i).name, '\summed'];
-        cd(path);
-        a = dir(cd);
-        for j = 3:length(a)
-            if ~isempty(strfind(a(j).name, 'summed_50.tif'))
-                imagefile = a(j).name;
-                break
+        try
+            path = [directory, '\', exp_folder(i).name, '\summed'];
+            cd(path);
+            a = dir(cd);
+            for j = 3:length(a)
+                if ~isempty(strfind(a(j).name, 'summed_50.tif'))
+                    imagefile = a(j).name;
+                    break
+                end
             end
-        end
-        fname = [path,'\',imagefile];
-        CaImage_File_info = imfinfo(fname);
-        timecourse_image_number = numel(CaImage_File_info);
-        TifLink = Tiff(fname, 'r');
-        h2 = waitbar(0, 'Loading image ');
-        Green_Frame = 1;
-        GCaMP_Image = {};
-            for j = 1:timecourse_image_number
-                TifLink.setDirectory(j);
-                GCaMP_Image{1,Green_Frame} = TifLink.read();
-                Green_Frame = Green_Frame+1;
-                waitbar(Green_Frame/timecourse_image_number,h2,['Loading Image ', num2str(Green_Frame)]);
+            fname = [path,'\',imagefile];
+            CaImage_File_info = imfinfo(fname);
+            timecourse_image_number = numel(CaImage_File_info);
+            TifLink = Tiff(fname, 'r');
+            h2 = waitbar(0, 'Loading image ');
+            Green_Frame = 1;
+            GCaMP_Image = {};
+                for j = 1:timecourse_image_number
+                    TifLink.setDirectory(j);
+                    GCaMP_Image{1,Green_Frame} = TifLink.read();
+                    Green_Frame = Green_Frame+1;
+                    waitbar(Green_Frame/timecourse_image_number,h2,['Loading Image ', num2str(Green_Frame)]);
+                end
+                delete(h2)
+            im = cat(3, GCaMP_Image{:});
+            immean = mean(im,3);
+            figure(OverSessionsFigure);
+        %     subplot(2,round(numsessions/2), i-2)
+            figpos = get(gcf, 'Position');
+            xint = figpos(3)/7;
+            yint = figpos(4)/2;
+            if (i-2)/7 <= 1
+                yrow = 1;
+            else
+                yrow = 0;
             end
-            delete(h2)
-        im = cat(3, GCaMP_Image{:});
-        immean = mean(im,3);
-        figure(OverSessionsFigure);
-    %     subplot(2,round(numsessions/2), i-2)
-        figpos = get(gcf, 'Position');
-        xint = figpos(3)/7;
-        yint = figpos(4)/2;
-        if (i-2)/7 <= 1
-            yrow = 1;
-        else
-            yrow = 0;
+            posmat = [1:7,1:7];
+            axes('Position', [((posmat(i-2)-1)*xint+10)/figpos(3), (yint*(yrow)+150)/figpos(4), 250/figpos(3), 250/figpos(4)])
+            A = imagesc(immean); colormap(fire); set(gca, 'XTick', [], 'YTick', [])
+            set(A,'ButtonDownFcn', @HighLightAxis)
+            set(A, 'UserData', (i-2));
+            title(exp_folder(i).name)
+            waitbar((i-2)/numsessions, h1, ['Loading images for session ', num2str(i-2)])
+        catch
+            continue
         end
-        posmat = [1:7,1:7];
-        axes('Position', [((posmat(i-2)-1)*xint+10)/figpos(3), (yint*(yrow)+150)/figpos(4), 250/figpos(3), 250/figpos(4)])
-        A = imagesc(immean); colormap(fire); set(gca, 'XTick', [], 'YTick', [])
-        set(A,'ButtonDownFcn', @HighLightAxis)
-        set(A, 'UserData', (i-2));
-        title(exp_folder(i).name)
-        waitbar((i-2)/numsessions, h1, ['Loading images for session ', num2str(i-2)])
     else
     end
 end
 
 %%% Run these variables before manually adding a button!
-%        figpos = get(gcf, 'Position');hui
-%        xint = figpos(3)/7;
-%        yint = figpos(4)/2;
+       figpos = get(gcf, 'Position');
+       xint = figpos(3)/7;
+       yint = figpos(4)/2;
 
 
 uicontrol('Style', 'pushbutton', 'String', 'Project to Analysis Window', 'FontSize', 12, 'Units', 'Normalized','Position', [0.4 0.925 0.2 0.05], 'CallBack', @ProjectToAnalysisWindow)
@@ -1631,7 +1634,32 @@ for i = 2:length(gui_CaImageViewer.GCaMP_Image)
     pwc(1,i) = corr2(gui_CaImageViewer.GCaMP_Image{i},gui_CaImageViewer.GCaMP_Image{i-1});
 end
 
-figure('NumberTitle', 'off', 'Name', 'Pairwise Image Correlation Over Timecourse');
-plot(pwc, 'k')
-xlabel('Frame', 'FontSize', 14)
-ylabel('Pairwise Correlation', 'FontSize', 14);
+scrsz = get(0, 'ScreenSize');
+
+figure('NumberTitle', 'off', 'Name', 'Pairwise Image Correlation Over Timecourse', 'Position', [0.25*scrsz(3),0.25*scrsz(4), 0.5*scrsz(3), 0.5*scrsz(4)]);
+subplot(1,2,1); plot(pwc, 'k')
+xlabel('Frame (Downsampled)', 'FontSize', 14)
+title('Pairwise Correlation', 'FontSize', 14);
+
+cd(gui_CaImageViewer.save_directory)
+alignfile = [gui_CaImageViewer.filename(1:end-6), 't'];
+load(alignfile);
+
+subplot(1,2,2);
+plot(t);
+xlabel('Frame (Actual)', 'FontSize', 14)
+
+tc_length = length(t);
+
+uicontrol(gcf, 'Style', 'pushbutton', 'String', {'Set end frame'}, 'Fontsize', 8, 'Units', 'Normalized', 'Position', [0.915 0.45 0.08 0.2], 'Callback', {@SetEndFrame,tc_length})
+uicontrol(gcf, 'Style', 'pushbutton', 'String', {'Clip image '}, 'Fontsize', 8, 'Units', 'Normalized', 'Position', [0.005 0.45 0.08 0.2], 'Callback', {@ClipImageSeriesLength, length(gui_CaImageViewer.GCaMP_Image)})
+set(gcf, 'ToolBar', 'figure')
+
+
+% --- Executes on button press in Autoscale_CheckBox.
+function Autoscale_CheckBox_Callback(hObject, eventdata, handles)
+% hObject    handle to Autoscale_CheckBox (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hint: get(hObject,'Value') returns toggle state of Autoscale_CheckBox

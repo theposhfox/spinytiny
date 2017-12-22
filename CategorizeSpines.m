@@ -1,0 +1,19 @@
+function CategorizeSpine(source, callbackdata)
+%UNTITLED Summary of this function goes here
+%   Detailed explanation goes here
+
+global gui_CaImageViewer
+
+source = get(source);
+ROInum = regexp(get(gco, 'Tag'), '[0-9]*', 'match'); ROInum = str2num(ROInum{1});
+
+switch source.Label
+    case 'Set as eliminated'
+        set(gco, 'FaceColor',[1 0 0]) 
+        gui_CaImageViewer.NewSpineAnalysisInfo.SpineList(ROInum) = 0; % what about case of new spines?-ZL
+    case 'Set as active'
+        set(gco, 'FaceColor', 'none')
+        gui_CaImageViewer.NewSpineAnalysisInfo.SpineList(ROInum) = 1; %cancel out the marked "eliminated" spines-ZL
+end
+
+

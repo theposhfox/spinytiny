@@ -1,0 +1,77 @@
+function plotspineanddenddata(varargin)
+
+if isempty(varargin)
+    cd('C:\Users\Komiyama\Desktop\ActivitySummary_UsingRawData');
+
+    files = dir('C:\Users\Komiyama\Desktop\ActivitySummary_UsingRawData');
+    
+    firstfileofint = 4;
+    
+    good = 0;
+    
+    while ~good
+        randnum = round(firstfileofint + (length(files)-firstfileofint).*rand(1,1)); %%% Choose (number of files of directory) random files from the list of current files to analyze
+        
+        if isempty(strfind(files(randnum).name, 'PolySummary'))
+            good = 1;
+                currentfile = load(files(randnum).name);
+                File = eval(['currentfile.' files(randnum).name(1:end-4)]);
+        end
+    end
+            
+        SpineNo = randi(length(File.deltaF));
+        DendriteChoice =  find(~cell2mat(cellfun(@(x) isempty(find(x == SpineNo,1)), File.SpineDendriteGrouping, 'Uni', false))); %% Get the dendrite on which the chosen spine is located
+
+        figure; 
+        h1 = subplot(2,3,1:3);
+        plot(File.Fluorescence_Measurement{SpineNo}, 'k')
+        
+        h2 = subplot(2,3,4:6);
+        plot(File.Processed_dFoF(SpineNo, :), 'k');
+        hold on;
+        plot(File.Processed_Dendrite_dFoF(DendriteChoice, :)/5-2, 'b', 'Linewidth', 2)
+        plot(File.SynapseOnlyBinarized(SpineNo,:), 'r', 'Linewidth', 2)
+        plot(File.Dendrite_Binarized(DendriteChoice, :)/2-2, 'm', 'Linewidth', 2)
+        plot(File.Processed_dFoF_DendriteSubtracted(SpineNo,:), 'Color', [0.6 0.6 0.6], 'Linewidth', 2)
+        plot(File.SynapseOnlyBinarized_DendriteSubtracted(SpineNo, :)/2, 'g', 'Linewidth', 2)
+        linkaxes([h1,h2], 'x')
+
+        legend({'Processed Spine Trace', 'Processed Dend Trace', 'Binarized Spine', 'Binarized Dend', 'Dend-subtracted spine trace', 'Binarized dend-sub'})
+
+        filename = regexp(File.Filename, '[A-Z]{2,3}0+\d+_\d{4,6}', 'match');
+        filename = filename{1};
+        session = File.Session;
+        
+        title(['Comparison of traces for spine no. ', num2str(SpineNo), ' from ', filename, ' (Session ', num2str(session), ')'], 'Interpreter', 'none')
+
+            
+else
+    if length(varargin)>1
+        File = varargin{1};
+        SpineNo = varargin{2};
+    else
+        File = varargin;
+        SpineNo = randi(length(File.deltaF));
+    end
+    DendriteChoice =  find(~cell2mat(cellfun(@(x) isempty(find(x == SpineNo,1)), File.SpineDendriteGrouping, 'Uni', false))); %% Get the dendrite on which the chosen spine is located
+
+    figure; 
+    
+    h1 = subplot(2,3,1:3);
+    plot(File.Fluorescence_Measurement{SpineNo}, 'k')
+    
+    h2 = subplot(2,3,4:6);
+    plot(File.Processed_dFoF(SpineNo, :), 'k')
+    hold on;
+    plot(File.Processed_Dendrite_dFoF(DendriteChoice, :)/5-2, 'b', 'Linewidth', 2)
+    plot(File.SynapseOnlyBinarized(SpineNo,:), 'r', 'Linewidth', 2)
+    plot(File.Dendrite_Binarized(DendriteChoice, :)/2-1, 'm', 'Linewidth', 2)
+    plot(File.Processed_dFoF_DendriteSubtracted(SpineNo,:), 'Color', [0.6 0.6 0.6], 'Linewidth', 2)
+    plot(File.SynapseOnlyBinarized_DendriteSubtracted(SpineNo, :)/2, 'g', 'Linewidth', 2)
+    linkaxes([h1,h2], 'x')
+
+
+    legend({'Processed Spine Trace', 'Processed Dend Trace', 'Binarized Spine', 'Binarized Dend', 'Dend-subtracted spine trace', 'Binarized dend-sub'})
+
+    title(['Comparison of traces for spine no. ', num2str(SpineNo)])
+end

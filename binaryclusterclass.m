@@ -1,0 +1,194 @@
+function [Clustered, CorrelationofClusters, FarClustered, CausalClustered] = binaryclusterclass(Data, Correlations, Causal)
+            
+
+%%% Find all values that are greater than the cluster threshold
+
+ClusterThresh = 0.5;
+
+Clustnum = 0;
+FarClustnum = 0;
+
+Correlations(Correlations==1) = nan; Correlations = round(Correlations.*100)/100; %%% Round to the nearest hundredths place
+Causal(Causal==1) = nan; Causal = round(Causal.*100)/100;
+
+[row, col] = find(triu(Correlations)>=ClusterThresh);
+[Crow, Ccol] = find(triu(Causal)>=ClusterThresh);
+Dendind = [];
+CDendind = [];
+
+DendNum = Data.NumberofDendrites;
+addresses = cell(1,DendNum);
+faraddresses = {};
+Caddresses = cell(1,DendNum);
+farcount = 1;
+
+
+%%% 'Synapse only' clusters
+
+%%% Find the parent dendrites of highly correlated spines
+Clustered = {[]};
+for r = 1:length(row)
+    for D = 1:DendNum
+        if ~isempty(find(Data.SpineDendriteGrouping{D} == row(r))) && ~isempty(find(Data.SpineDendriteGrouping{D} == col(r)))   %%% Spines on the same dendrite
+            Dendind = [Dendind; D];
+            addresses{D} = [addresses{D}; row(r), col(r)];
+        elseif xor(~isempty(find(Data.SpineDendriteGrouping{D} == row(r))), ~isempty(find(Data.SpineDendriteGrouping{D} == col(r)))) %%% Spines on separate dendrites
+            faraddresses{farcount} = [row(r), col(r)];
+            farcount = farcount+1;
+        end
+    end
+end
+
+usedDend = unique(Dendind);
+
+for A = 1:length(addresses)
+    clust = [];
+    if ~isempty(addresses{A})
+        if length(unique(addresses{A}))>2
+            spines = unique(addresses{A});
+            
+            for root = 1:length(spines)
+                clust{root} = spines(root);
+                otherspines = setdiff(spines,spines(root));
+                for s = 1:length(otherspines)
+                    if sum(Correlations(clust{root}, otherspines(s))>=ClusterThresh)==length(clust{root})  %%% If all the indices in the 'clust' array yield correlation values > ClustThresh, then it should return all logical == 1, so the sum should be the same as the length of the 'clust' array
+                        clust{root} = [clust{root}; otherspines(s)];
+                    end
+                end
+            end
+            
+            %%% search for identical clusters, then remove them
+            for i = 1:length(clust)
+                for j = 1:length(clust)
+                    if i ~= j && ~isempty(clust{i}) && ~isempty(clust{j}) && length(clust{i}) == length(union(clust{i},clust{j}))
+                        clust{j} = [];
+                    end
+                end
+            end
+            
+            clust = clust(~cellfun(@isempty, clust));
+            
+
+            Clustered(Clustnum+1:Clustnum+sum(~cellfun(@(x) isempty(x), clust))) = clust(~cellfun(@(x) isempty(x), clust));
+            CorrelationofClusters(Clustnum+1:Clustnum+sum(~cellfun(@(x) isempty(x), clust))) = cellfun(@(x) nanmean(nanmean(Correlations(x,x))), clust(~cellfun(@(x) isempty(x), clust)));
+            Clustnum = Clustnum+sum(~cellfun(@(x) isempty(x), clust));
+
+            
+        else
+            spines = unique(addresses{A});
+            Clustered{Clustnum+1} = spines';
+            CorrelationofClusters(Clustnum+1) = nanmean(nanmean(Correlations(spines,spines)));
+            Clustnum = Clustnum+1;
+        end
+    else
+        Clustered{Clustnum+1} = [];
+        CorrelationofClusters(Clustnum+1) = nan;
+    end
+end
+
+%%% Highly correlated spines on different dendrites
+
+FarClustered = {[]};
+
+for A = 1:length(faraddresses)
+    clust = [];
+    if ~isempty(faraddresses{A})
+        if length(unique(faraddresses{A}))>2
+            farspines = unique(faraddresses{A});
+            
+            for root = 1:length(farspines)
+                farclust{root} = farspines(root);
+                otherspines = setdiff(farspines,farspines(root));
+                for s = 1:length(otherspines)
+                    if sum(Correlations(farclust{root}, otherspines(s))>=ClusterThresh)==length(farclust{root})  %%% If all the indices in the 'clust' array yield correlation values > ClustThresh, then it should return all logical == 1, so the sum should be the same as the length of the 'clust' array
+                        farclust{root} = [farclust{root}; otherspines(s)];
+                    end
+                end
+            end
+            
+            %%% search for identical clusters, then remove them
+            for i = 1:length(farclust)
+                for j = 1:length(farclust)
+                    if i ~= j && ~isempty(farclust{i}) && ~isempty(farclust{j}) && length(farclust{i}) == length(union(farclust{i},farclust{j}))
+                        farclust{j} = [];
+                    end
+                end
+            end
+            
+            farclust = farclust(~cellfun(@isempty, farclust));
+            
+
+            FarClustered(FarClustnum+1:FarClustnum+sum(~cellfun(@(x) isempty(x), farclust))) = farclust(~cellfun(@(x) isempty(x), farclust));
+            FarClustnum = FarClustnum+sum(~cellfun(@(x) isempty(x), farclust));
+
+            
+        else
+            farspines = unique(faraddresses{A});
+            FarClustered{FarClustnum+1} = farspines';
+            FarClustnum = FarClustnum+1;
+        end
+    else
+        FarClustered{FarClustnum+1} = [];
+    end
+end
+
+%%% Causal clusters
+
+Clustnum = 1;
+
+CausalClustered = {[]};
+for Cr = 1:length(Crow)
+    for D = 1:DendNum
+        if ~isempty(find(Data.SpineDendriteGrouping{D} == Crow(Cr)))
+            CDendind = [CDendind; D];
+            Caddresses{D} = [Caddresses{D}; Crow(Cr), Ccol(Cr)];
+        end
+    end
+end
+
+CusedDend = unique(CDendind);
+
+
+for A = 1:length(Caddresses)
+    if ~isempty(Caddresses{A})
+        if size(Caddresses{A},1)>1
+            spines = unique(Caddresses{A});
+            clust = spines(1);
+            for s = 2:length(spines)
+                if sum(Causal(clust, spines(s))>ClusterThresh)==length(clust)  %%% If all the indices in the 'clust' array yield correlation values > 0.5, then it should return all logical == 1, so the sum should be the same as the length of the 'clust' array
+                    clust = [clust; spines(s)];
+                end
+            end
+            if length(clust)>1
+                CausalClustered{Clustnum} = clust;
+                Clustnum = Clustnum+1;
+            end
+            while length(clust)<length(spines)
+                for c = 1:length(clust)
+                    spines = spines(spines~=clust(c));  %%% Replace 'spines' array with only the ones that haven't been used yet
+                end
+%                 if length(spines) == 1
+%                     continue
+%                 end
+                clust = spines(1);
+                options = unique(Caddresses{A});
+                for o = 1:length(options)
+                    if sum(Causal(clust, options(o))>ClusterThresh)==length(clust)
+                        clust = [clust; options(o)];
+                    end
+                end
+                if length(clust)>1
+                    CausalClustered{Clustnum} = clust;
+                    Clustnum = Clustnum+1;
+                end
+            end
+        else
+            spines = unique(Caddresses{A});
+            CausalClustered{Clustnum} = spines';
+            Clustnum = Clustnum+1;
+        end
+    else
+        CausalClustered{Clustnum} = [];
+    end
+end
+end
