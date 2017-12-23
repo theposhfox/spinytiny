@@ -236,6 +236,9 @@ gui_CaImageViewer.Red_Image = [];
 h = waitbar(0, 'Loading Image ');
 TifLink = Tiff(fname, 'r');
 
+Green_loc = gui_CaImageViewer.GreenGraph_loc;
+Red_loc = gui_CaImageViewer.RedGraph_loc;
+
 if twochannels
     [Rfilename, Rpathname] = uigetfile('.tif', 'Select image file for the red channel');
     Rfname = [Rpathname, Rfilename];
@@ -258,8 +261,6 @@ if twochannels
             Red_Frame = Red_Frame+1;
         end
     end
-        Green_loc = gui_CaImageViewer.GreenGraph_loc;
-        Red_loc = gui_CaImageViewer.RedGraph_loc;
         set(handles.RedGraph, 'Visible', 'on')
         set(handles.Channel2_StaticText, 'Visible', 'on')
         set(handles.RedUpperLUT_EditableText, 'Visible', 'on')
@@ -288,9 +289,7 @@ else
             waitbar(Green_Frame/timecourse_image_number,h,['Loading Image ', num2str(Green_Frame)]);
         end
     end
-    if ~gui_CaImageViewer.LoadedFile
-        Green_loc = gui_CaImageViewer.GreenGraph_loc;
-        Red_loc = gui_CaImageViewer.RedGraph_loc;
+    if ~gui_CaImageViewer.LoadedFile || Green_loc(3) == Red_loc(3)
         set(handles.RedGraph, 'Visible', 'off')
         set(handles.Channel2_StaticText, 'Visible', 'off')
         set(handles.RedUpperLUT_EditableText, 'Visible', 'off')
