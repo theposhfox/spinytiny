@@ -42,7 +42,7 @@ end
 if filterwindow == 1;
     
     channel1 = gui_CaImageViewer.GCaMP_Image{ImageNum};
-    if twochannels == 1
+    if twochannels 
         channel2 = gui_CaImageViewer.Red_Image{ImageNum};
     else
         channel2 = [];
@@ -57,7 +57,7 @@ if filterwindow == 1;
 else
     smoothing_green = filter2(ones(filterwindow, filterwindow)/filterwindow^2, gui_CaImageViewer.GCaMP_Image{ImageNum});
     channel1 = smoothing_green;
-    if twochannels == 1
+    if twochannels 
         smoothing_red = filter2(ones(filterwindow, filterwindow)/filterwindow^2, gui_CaImageViewer.Red_Image{ImageNum});
         channel2 = smoothing_red;
     else

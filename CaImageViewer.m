@@ -59,7 +59,7 @@ handles.output = hObject;
 
 gui_CaImageViewer.figure.handles = handles;
 
-Users = {'Nathan', 'Zhongmin', 'Giulia', 'Mingyuan', 'Assaf'}; % Assaf was add as a user.
+Users = {'Nathan', 'Zhongmin', 'Giulia', 'Mingyuan', 'Assaf'}; % Assaf was added as a user.
 
 Scrsz = get(0, 'Screensize');
     dialogboxwidth = 315;
@@ -101,7 +101,7 @@ set(gui_CaImageViewer.figure.handles.GreenGamma_EditableText, 'KeyPressFcn', @fr
 set(gui_CaImageViewer.figure.handles.RedGamma_EditableText, 'KeyPressFcn', @frameset);
 
 
-%%% Initialize Random Parameters
+%%% Initialize Various Parameters
 gui_CaImageViewer.CurrentCMap = 'RGB';
 gui_CaImageViewer.NewSpineAnalysis = 0;
 gui_CaImageViewer.NewSpineAnalysisInfo.CurrentDate = [];
@@ -170,6 +170,246 @@ function varargout = CaImageViewer_OutputFcn(hObject, eventdata, handles)
 varargout{1} = handles.output;
 
 
+% --------------------------------------------------------------------
+function LoadFile_Callback(hObject, eventdata, handles)
+% hObject    handle to LoadFile (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+
+global gui_CaImageViewer
+
+%%% Get file information %%%
+
+try
+    cd('Z:\People\Nathan\Data')
+catch
+    cd('/usr/local/lab/People/Nathan/Data')
+end
+
+%%% Initialize/reset parameters and settings when loading new file
+set(gui_CaImageViewer.figure.handles.MaxProjection_CheckBox, 'Value', 0);
+set(gui_CaImageViewer.figure.handles.AveProjection_CheckBox, 'Value', 0);
+set(gui_CaImageViewer.figure.handles.ImageSlider_Slider, 'Enable', 'on');
+gui_CaImageViewer.NewSpineAnalysis = 0;
+gui_CaImageViewer.SelectedStopFrame = [];
+
+
+[filename, pathname] = uigetfile('.tif');
+
+if isnumeric(pathname) && isnumeric(filename)
+    return
+end
+
+fname = [pathname, filename];
+
+load_type = listdlg('PromptString', 'Analyze compressed image (fast), or full series (slow)? (note that only compressed image will be displayed)', 'SelectionMode', 'single','ListString', {'Compressed', 'Full'});
+
+timecourse_image_number = [];
+
+if load_type == 1
+    gui_CaImageViewer.Load_Type = 'Compressed';
+elseif load_type == 2
+    gui_CaImageViewer.Load_Type = 'Full';
+end
+
+% fname = fname;
+CaImage_File_info = imfinfo(fname);
+timecourse_image_number = numel(CaImage_File_info);
+
+
+gui_CaImageViewer.filename = filename;
+gui_CaImageViewer.save_directory = pathname;
+cd(pathname)
+twochannels = get(gui_CaImageViewer.figure.handles.TwoChannels_CheckBox, 'Value');
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%%% Set Image Properties %%%
+
+Green_Frame = 1;
+Red_Frame = 1;
+
+gui_CaImageViewer.GCaMP_Image = [];
+gui_CaImageViewer.Red_Image = [];
+
+h = waitbar(0, 'Loading Image ');
+TifLink = Tiff(fname, 'r');
+
+if twochannels
+    [Rfilename, Rpathname] = uigetfile('.tif', 'Select image file for the red channel');
+    Rfname = [Rpathname, Rfilename];
+    RTifLink = Tiff(Rfname, 'r');
+    if load_type == 1 %%% if loading compressed 
+        for i = 1:timecourse_image_number
+            TifLink.setDirectory(i);
+            gui_CaImageViewer.GCaMP_Image{1,Green_Frame} = TifLink.read();
+            Green_Frame = Green_Frame+1;
+            waitbar(Green_Frame/timecourse_image_number,h,['Loading Image ', num2str(Green_Frame)]);
+        end
+    elseif load_type == 2 %%% if loading full
+        for i = 1:timecourse_image_number
+            TifLink.setDirectory(i);
+            gui_CaImageViewer.GCaMP_Image{1,Green_Frame} = TifLink.read();
+            Green_Frame = Green_Frame+1;
+            waitbar(Green_Frame/timecourse_image_number,h,['Loading Image ', num2str(Green_Frame)]);
+            RTifLink.setDirectory(i);
+            gui_CaImageViewer.Red_Image{1,Red_Frame} = RTifLink.read();
+            Red_Frame = Red_Frame+1;
+        end
+    end
+        Green_loc = gui_CaImageViewer.GreenGraph_loc;
+        Red_loc = gui_CaImageViewer.RedGraph_loc;
+        set(handles.RedGraph, 'Visible', 'on')
+        set(handles.Channel2_StaticText, 'Visible', 'on')
+        set(handles.RedUpperLUT_EditableText, 'Visible', 'on')
+        set(handles.RedLowerLUT_EditableText, 'Visible', 'on')
+        set(handles.RedGamma_EditableText, 'Visible', 'on')
+        set(handles.RedGamma_StaticText, 'Visible', 'on')
+        set(handles.GreenGraph, 'Units', 'normalized')
+        set(handles.RedGraph, 'Units', 'normalized')
+        figure(gui_CaImageViewer.figure.handles.figure1)
+        axes(gui_CaImageViewer.figure.handles.GreenGraph);
+        set(handles.GreenGraph, 'Position', [Green_loc(1), Red_loc(2), Red_loc(3), Red_loc(4)]);      %%% If an image using only 1 channel is already loaded, the "green" graph overlays the red, but the size of the original axes is maintained in the "red" graph.
+        set(handles.RedGraph, 'Position', [Red_loc(1), Red_loc(2),  Red_loc(3), Red_loc(4)]);
+else
+    if load_type == 1 %%% if loading compressed 
+        for i = 1:timecourse_image_number
+            TifLink.setDirectory(i);
+            gui_CaImageViewer.GCaMP_Image{1,Green_Frame} = TifLink.read();
+            Green_Frame = Green_Frame+1;
+            waitbar(Green_Frame/timecourse_image_number,h,['Loading Image ', num2str(Green_Frame)]);
+        end
+    elseif load_type == 2 %%% if loading full
+        for i = 1:timecourse_image_number
+            TifLink.setDirectory(i);
+            gui_CaImageViewer.GCaMP_Image{1,Green_Frame} = TifLink.read();
+            Green_Frame = Green_Frame+1;
+            waitbar(Green_Frame/timecourse_image_number,h,['Loading Image ', num2str(Green_Frame)]);
+        end
+    end
+    if ~gui_CaImageViewer.LoadedFile
+        Green_loc = gui_CaImageViewer.GreenGraph_loc;
+        Red_loc = gui_CaImageViewer.RedGraph_loc;
+        set(handles.RedGraph, 'Visible', 'off')
+        set(handles.Channel2_StaticText, 'Visible', 'off')
+        set(handles.RedUpperLUT_EditableText, 'Visible', 'off')
+        set(handles.RedLowerLUT_EditableText, 'Visible', 'off')
+        set(handles.RedGamma_EditableText, 'Visible', 'off')
+        set(handles.RedGamma_StaticText, 'Visible', 'off')
+        gui_CaImageViewer.GraphPlacement = [Green_loc(1), Green_loc(2), Green_loc(3)+(Red_loc(1)-(Green_loc(1)+Green_loc(3))+Red_loc(3)), Green_loc(4)];
+        set(handles.GreenGraph, 'Units', 'normalized')
+        figure(gui_CaImageViewer.figure.handles.figure1)
+        axes(gui_CaImageViewer.figure.handles.GreenGraph);
+        intergraphdistance = Red_loc(1)-(Green_loc(1)+Green_loc(3));
+        set(handles.GreenGraph, 'Position', [Green_loc(1), Green_loc(2), Green_loc(3)+Red_loc(3)+intergraphdistance, Green_loc(4)])
+    else
+    end
+end
+
+close(h)
+
+channel1 = gui_CaImageViewer.GCaMP_Image;
+channel2 = gui_CaImageViewer.Red_Image;
+
+CommandSource = 'Loader';
+
+[ch1image, ch2image] = PlaceImages(channel1, channel2, CommandSource);
+
+imageserieslength = size(gui_CaImageViewer.GCaMP_Image, 2);
+gui_CaImageViewer.imageserieslength = imageserieslength;
+
+set(handles.ImageSlider_Slider, 'Value', 1);
+set(handles.ImageSlider_Slider, 'Min', 1);
+set(handles.ImageSlider_Slider, 'Max', imageserieslength);
+set(handles.ImageSlider_Slider, 'SliderStep', [(1/(imageserieslength-1)) (32/(imageserieslength-1))]);  %%% The Slider Step values indicate the minor and major transitions, which should be represented by the desired transition as the numerator and the length of the series as the denominator
+set(handles.Frame_EditableText, 'String', 1);
+set(handles.SmoothingFactor_EditableText, 'String', '1');
+
+% 
+% Smoothing = str2num(get(handles.SmoothingFactor_EditableText, 'String'));
+% 
+% if Smoothing ~= 1
+%     Smoother(hObject, eventdata, ch1image,ch2image, CommandSource)
+% end
+
+set(gui_CaImageViewer.figure.handles.output, 'WindowButtonDownFcn', [])
+
+gui_CaImageViewer.LoadedFile = 1;
+
+
+% --- Executes on button press in MaxProjection_CheckBox.
+function MaxProjection_CheckBox_Callback(hObject, eventdata, handles)
+% hObject    handle to MaxProjection_CheckBox (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hint: get(hObject,'Value') returns toggle state of MaxProjection_CheckBox
+
+global gui_CaImageViewer
+
+val = get(handles.MaxProjection_CheckBox, 'Value');
+frame = get(handles.Frame_EditableText, 'String');
+
+ImageNum = str2num(get(gui_CaImageViewer.figure.handles.Frame_EditableText, 'String'));
+twochannels = get(gui_CaImageViewer.figure.handles.TwoChannels_CheckBox, 'Value');
+filterwindow = str2num(get(gui_CaImageViewer.figure.handles.SmoothingFactor_EditableText, 'String'));
+
+if val
+    set(handles.AveProjection_CheckBox, 'Value', 0);
+    im = gui_CaImageViewer.GCaMP_Image;
+    im = cat(3, im{:});
+    immax = max(im, [], 3);
+    
+    if twochannels
+        Rim = gui_CaImageViewer.Red_Image;
+        Rim = cat(3,Rim{:});
+        Rimmax = max(Rim, [], 3);
+    end
+    
+    if filterwindow == 1;
+    
+        channel1 = immax;
+        if twochannels 
+            channel2 = Rimmax;
+        else
+            channel2 = [];
+        end
+
+        CommandSource = 'Slider';
+
+        %%%%%%%%%
+        PlaceImages(channel1,channel2, CommandSource);
+        %%%%%%%%%
+    
+    else
+        smoothing_green = filter2(ones(filterwindow, filterwindow)/filterwindow^2, immax);
+        channel1 = smoothing_green;
+        if twochannels 
+            smoothing_red = filter2(ones(filterwindow, filterwindow)/filterwindow^2, Rimmax);
+            channel2 = smoothing_red;
+        else
+            channel2 = [];
+        end
+
+        CommandSource = 'Slider';
+
+        %%%%%%%%%
+        PlaceImages(channel1,channel2, CommandSource);
+        %%%%%%%%%
+    end
+else
+    channel1 = gui_CaImageViewer.GCaMP_Image{ImageNum};
+    if twochannels == 1
+        channel2 = gui_CaImageViewer.Red_Image{ImageNum};
+    else
+        channel2 = [];
+    end
+    
+    PlaceImages(channel1, channel2, 'Slider');
+    
+    CaImageSlider(ImageNum);
+end
 
 % --- Executes on slider movement.
 function ImageSlider_Slider_Callback(hObject, eventdata, handles)
@@ -933,231 +1173,6 @@ function File_Callback(hObject, eventdata, handles)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 
-
-% --------------------------------------------------------------------
-function LoadFile_Callback(hObject, eventdata, handles)
-% hObject    handle to LoadFile (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
-
-
-global gui_CaImageViewer
-
-%%% Get file information %%%
-
-try
-    cd('Z:\People\Nathan\Data')
-catch
-    cd('/usr/local/lab/People/Nathan/Data')
-end
-
-%%% Initialize/reset parameters and settings when loading new file
-set(gui_CaImageViewer.figure.handles.MaxProjection_CheckBox, 'Value', 0);
-set(gui_CaImageViewer.figure.handles.AveProjection_CheckBox, 'Value', 0);
-set(gui_CaImageViewer.figure.handles.ImageSlider_Slider, 'Enable', 'on');
-gui_CaImageViewer.NewSpineAnalysis = 0;
-gui_CaImageViewer.SelectedStopFrame = [];
-
-
-[filename, pathname] = uigetfile('.tif');
-
-if isnumeric(pathname) && isnumeric(filename)
-    return
-end
-
-fname = [pathname, filename];
-
-load_type = listdlg('PromptString', 'Analyze compressed image (fast), or full series (slow)? (note that only compressed image will be displayed)', 'SelectionMode', 'single','ListString', {'Compressed', 'Full'});
-
-timecourse_image_number = [];
-
-if load_type == 1
-    gui_CaImageViewer.Load_Type = 'Compressed';
-elseif load_type == 2
-    gui_CaImageViewer.Load_Type = 'Full';
-end
-
-% fname = fname;
-CaImage_File_info = imfinfo(fname);
-timecourse_image_number = numel(CaImage_File_info);
-
-
-gui_CaImageViewer.filename = filename;
-gui_CaImageViewer.save_directory = pathname;
-cd(pathname)
-twochannels = get(gui_CaImageViewer.figure.handles.TwoChannels_CheckBox, 'Value');
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-%%% Set Image Properties %%%
-
-Green_Frame = 1;
-Red_Frame = 1;
-
-gui_CaImageViewer.GCaMP_Image = [];
-gui_CaImageViewer.Red_Image = [];
-
-h = waitbar(0, 'Loading Image ');
-TifLink = Tiff(fname, 'r');
-
-if twochannels
-    if load_type == 1
-        for i = 1:2:timecourse_image_number
-            TifLink.setDirectory(i);
-            gui_CaImageViewer.GCaMP_Image{1,Green_Frame} = TifLink.read();
-            Green_Frame = Green_Frame+1;
-            waitbar(Green_Frame/(timecourse_image_number/2),h,['Loading Image ', num2str(Green_Frame)]);
-        end
-        for i = 2:2:timecourse_image_number
-            [gui_CaImageViewer.Red_Image{1,Red_Frame}, mapr{1,Red_Frame}] = imread(fname, i, 'Info', CaImage_File_info);
-            Red_Frame = Red_Frame+1;
-        end
-    elseif load_type == 2
-        for i = 1:2:timecourse_image_number
-            TifLink.setDirectory(i);
-            gui_CaImageViewer.GCaMP_Image{1,Green_Frame} = TifLink.read();
-            Green_Frame = Green_Frame+1;
-        end
-        for i = 2:2:timecourse_image_number
-            [gui_CaImageViewer.Red_Image{1,Red_Frame}, mapr{1,Red_Frame}] = imread(fname, i, 'Info', CaImage_File_info);
-            Red_Frame = Red_Frame+1;
-        end
-    end
-else
-    if load_type == 1 %%% if loading compressed 
-        for i = 1:timecourse_image_number
-            TifLink.setDirectory(i);
-            gui_CaImageViewer.GCaMP_Image{1,Green_Frame} = TifLink.read();
-            Green_Frame = Green_Frame+1;
-            waitbar(Green_Frame/timecourse_image_number,h,['Loading Image ', num2str(Green_Frame)]);
-        end
-    elseif load_type == 2 %%% if loading full
-        for i = 1:timecourse_image_number
-            TifLink.setDirectory(i);
-            gui_CaImageViewer.GCaMP_Image{1,Green_Frame} = TifLink.read();
-            Green_Frame = Green_Frame+1;
-            waitbar(Green_Frame/timecourse_image_number,h,['Loading Image ', num2str(Green_Frame)]);
-        end
-    end
-        if ~gui_CaImageViewer.LoadedFile
-            Green_loc = gui_CaImageViewer.GreenGraph_loc;
-            Red_loc = gui_CaImageViewer.RedGraph_loc;
-            set(handles.RedGraph, 'Visible', 'off')
-            set(handles.Channel2_StaticText, 'Visible', 'off')
-            set(handles.RedUpperLUT_EditableText, 'Visible', 'off')
-            set(handles.RedLowerLUT_EditableText, 'Visible', 'off')
-            set(handles.RedGamma_EditableText, 'Visible', 'off')
-            set(handles.RedGamma_StaticText, 'Visible', 'off')
-            gui_CaImageViewer.GraphPlacement = [Green_loc(1), Green_loc(2), Green_loc(3)+(Red_loc(1)-(Green_loc(1)+Green_loc(3))+Red_loc(3)), Green_loc(4)];
-            set(handles.GreenGraph, 'Units', 'normalized')
-            figure(gui_CaImageViewer.figure.handles.figure1)
-            axes(gui_CaImageViewer.figure.handles.GreenGraph);
-%             set(handles.GreenGraph, 'Position', [Green_loc(1), Green_loc(2), Green_loc(3)+(Red_loc(1)-(Green_loc(1)+Green_loc(3))+Red_loc(3)), Green_loc(4)])
-            intergraphdistance = Red_loc(1)-(Green_loc(1)+Green_loc(3));
-            set(handles.GreenGraph, 'Position', [Green_loc(1), Green_loc(2), Green_loc(3)+Red_loc(3)+intergraphdistance, Green_loc(4)])
-        else
-        end
-end
-
-close(h)
-
-channel1 = gui_CaImageViewer.GCaMP_Image;
-channel2 = gui_CaImageViewer.Red_Image;
-
-CommandSource = 'Loader';
-
-[ch1image, ch2image] = PlaceImages(channel1, channel2, CommandSource);
-
-imageserieslength = size(gui_CaImageViewer.GCaMP_Image, 2);
-gui_CaImageViewer.imageserieslength = imageserieslength;
-
-set(handles.ImageSlider_Slider, 'Value', 1);
-set(handles.ImageSlider_Slider, 'Min', 1);
-set(handles.ImageSlider_Slider, 'Max', imageserieslength);
-set(handles.ImageSlider_Slider, 'SliderStep', [(1/(imageserieslength-1)) (32/(imageserieslength-1))]);  %%% The Slider Step values indicate the minor and major transitions, which should be represented by the desired transition as the numerator and the length of the series as the denominator
-set(handles.Frame_EditableText, 'String', 1);
-set(handles.SmoothingFactor_EditableText, 'String', '1');
-
-% 
-% Smoothing = str2num(get(handles.SmoothingFactor_EditableText, 'String'));
-% 
-% if Smoothing ~= 1
-%     Smoother(hObject, eventdata, ch1image,ch2image, CommandSource)
-% end
-
-set(gui_CaImageViewer.figure.handles.output, 'WindowButtonDownFcn', [])
-
-gui_CaImageViewer.LoadedFile = 1;
-
-
-% --- Executes on button press in MaxProjection_CheckBox.
-function MaxProjection_CheckBox_Callback(hObject, eventdata, handles)
-% hObject    handle to MaxProjection_CheckBox (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
-
-% Hint: get(hObject,'Value') returns toggle state of MaxProjection_CheckBox
-
-global gui_CaImageViewer
-
-val = get(handles.MaxProjection_CheckBox, 'Value');
-frame = get(handles.Frame_EditableText, 'String');
-
-ImageNum = str2num(get(gui_CaImageViewer.figure.handles.Frame_EditableText, 'String'));
-twochannels = get(gui_CaImageViewer.figure.handles.TwoChannels_CheckBox, 'Value');
-filterwindow = str2num(get(gui_CaImageViewer.figure.handles.SmoothingFactor_EditableText, 'String'));
-
-if val
-    set(handles.AveProjection_CheckBox, 'Value', 0);
-    im = gui_CaImageViewer.GCaMP_Image;
-    im = cat(3, im{:});
-    immax = max(im, [], 3);
-
-    filterwindow = str2num(get(gui_CaImageViewer.figure.handles.SmoothingFactor_EditableText, 'String'));
-    
-    if filterwindow == 1;
-    
-        channel1 = immax;
-        if twochannels == 1
-            channel2 = gui_CaImageViewer.Red_Image{ImageNum};
-        else
-            channel2 = [];
-        end
-
-        CommandSource = 'Slider';
-
-        %%%%%%%%%
-        PlaceImages(channel1,channel2, CommandSource);
-        %%%%%%%%%
-    
-    else
-        smoothing_green = filter2(ones(filterwindow, filterwindow)/filterwindow^2, immax);
-        channel1 = smoothing_green;
-        if twochannels == 1
-            smoothing_red = filter2(ones(filterwindow, filterwindow)/filterwindow^2, gui_CaImageViewer.Red_Image{ImageNum});
-            channel2 = smoothing_red;
-        else
-            channel2 = [];
-        end
-
-        CommandSource = 'Slider';
-
-        %%%%%%%%%
-        PlaceImages(channel1,channel2, CommandSource);
-        %%%%%%%%%
-    end
-else
-    channel1 = gui_CaImageViewer.GCaMP_Image{ImageNum};
-    if twochannels == 1
-        channel2 = gui_CaImageViewer.Red_Image{ImageNum};
-    else
-        channel2 = [];
-    end
-    
-    PlaceImages(channel1, channel2, 'Slider');
-    
-    CaImageSlider(ImageNum);
-end
     
 
 % --- Executes on button press in SaveROIs_PushButton.
@@ -1469,13 +1484,16 @@ if val
     im = cat(3, im{:});
     immean = mean(im,3);
 
-    filterwindow = str2num(get(gui_CaImageViewer.figure.handles.SmoothingFactor_EditableText, 'String'));
-    
+    if twochannels
+        Rim = gui_CaImageViewer.Red_Image;
+        Rim = cat(3, Rim{:});
+        Rimmean = mean(Rim,3);
+    end
     if filterwindow == 1;
     
         channel1 = immean;
         if twochannels == 1
-            channel2 = gui_CaImageViewer.Red_Image{ImageNum};
+            channel2 = Rimmean;
         else
             channel2 = [];
         end
@@ -1490,7 +1508,7 @@ if val
         smoothing_green = filter2(ones(filterwindow, filterwindow)/filterwindow^2, immean);
         channel1 = smoothing_green;
         if twochannels == 1
-            smoothing_red = filter2(ones(filterwindow, filterwindow)/filterwindow^2, gui_CaImageViewer.Red_Image{ImageNum});
+            smoothing_red = filter2(ones(filterwindow, filterwindow)/filterwindow^2, Rimmean);
             channel2 = smoothing_red;
         else
             channel2 = [];

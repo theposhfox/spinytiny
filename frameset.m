@@ -13,10 +13,12 @@ if strcmpi(eventdata.Key, 'return')
 
     if aveproj || maxproj
         ch1image = gui_CaImageViewer.ch1image;
+        ch2image = gui_CaImageViewer.ch2image;
     else
         ch1image = gui_CaImageViewer.GCaMP_Image{ImageNum};
+        ch2image = gui_CaImageViewer.Red_Image{ImageNum};
     end
     
-    PlaceImages(ch1image, [], 'Slider');
+    PlaceImages(ch1image, ch2image, 'Slider');
 else
 end
