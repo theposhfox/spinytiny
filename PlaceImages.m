@@ -249,23 +249,33 @@ elseif strcmpi(CommandSource, 'Smoother');
 elseif strcmpi(CommandSource, 'Slider');
     
     ImageNum = get(gui_CaImageViewer.figure.handles.ImageSlider_Slider, 'Value');
+    Merge = get(gui_CaImageViewer.figure.handles.Merge_ToggleButton, 'Value');
     
     axes(Green_Figure);
     
     if strcmpi(mapchoice, 'RGB')
-        if size(channel1,3)>1
-            channel1 = channel1(:,:,2);
-        else
+        if ~Merge
+            if size(channel1,3)>1
+                channel1 = channel1(:,:,2);
+            end
+            dubconv_im = double(channel1);
+            gui_CaImageViewer.ch1image = repmat(dubconv_im/max(max(dubconv_im)),[1 1 3]);
+            gui_CaImageViewer.ch1image(:,:,1) = zeros(size(channel1,1), size(channel1,2));
+            gui_CaImageViewer.ch1image(:,:,3) = zeros(size(channel1,1), size(channel1,2));
+            ch1image = gui_CaImageViewer.ch1image;
+            ch1image = imadjust(ch1image, [0 GreenLower 0; 0.001 GreenUpper 0.001],[], green_gamma);
+            ch1image(:,:,2) = filter2(ones(filterwindow, filterwindow)/filterwindow^2, ch1image(:,:,2));
+            set(GreenChild, 'CData', ch1image)
+            caxis([GreenLower, GreenUpper])
+        elseif Merge
+            gui_CaImageViewer.ch1image = channel1;
+            ch1image = gui_CaImageViewer.ch1image;
+            ch1image = imadjust(ch1image, [RedLower GreenLower 0; RedUpper GreenUpper 0.001],[], green_gamma);
+            ch1image(:,:,1) = filter2(ones(filterwindow, filterwindow)/filterwindow^2, ch1image(:,:,1));
+            ch1image(:,:,2) = filter2(ones(filterwindow, filterwindow)/filterwindow^2, ch1image(:,:,2));
+            set(GreenChild, 'CData', ch1image);
+            caxis([GreenLower, GreenUpper])
         end
-        dubconv_im = double(channel1);
-        gui_CaImageViewer.ch1image = repmat(dubconv_im/max(max(dubconv_im)),[1 1 3]);
-        gui_CaImageViewer.ch1image(:,:,1) = zeros(size(channel1,1), size(channel1,2));
-        gui_CaImageViewer.ch1image(:,:,3) = zeros(size(channel1,1), size(channel1,2));
-        ch1image = gui_CaImageViewer.ch1image;
-        ch1image = imadjust(ch1image, [0 GreenLower 0; 0.001 GreenUpper 0.001],[], green_gamma);
-        ch1image(:,:,2) = filter2(ones(filterwindow, filterwindow)/filterwindow^2, ch1image(:,:,2));
-        set(GreenChild, 'CData', ch1image)
-        caxis([GreenLower, GreenUpper])
     elseif strcmpi(mapchoice, 'Jet')
         gui_CaImageViewer.ch1image = channel1;
         channel1 = filter2(ones(filterwindow, filterwindow)/filterwindow^2, channel1);
@@ -320,10 +330,7 @@ elseif strcmpi(CommandSource, 'Slider');
         gui_CaImageViewer.ch2image(:,:,2) = zeros(size(channel2,1), size(channel2,2));
         gui_CaImageViewer.ch2image(:,:,3) = zeros(size(channel2,1), size(channel2,2));    
         ch2image = gui_CaImageViewer.ch2image;
-        if get(gui_CaImageViewer.figure.handles.Autoscale_CheckBox, 'Value')
-            ch2image = imadjust(ch2image, [RedLower 0 0; RedUpper 0.001 0.001],[],red_gamma);
-        else        
-        end
+        ch2image = imadjust(ch2image, [RedLower 0 0; RedUpper 0.001 0.001],[],red_gamma);
         set(RedChild, 'CData', ch2image)
         caxis([RedLower, RedUpper])
     else

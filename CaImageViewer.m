@@ -22,7 +22,7 @@ function varargout = CaImageViewer(varargin)
 
 % Edit the above text to modify the response to help CaImageViewer
 
-% Last Modified by GUIDE v2.5 22-Dec-2017 13:14:13
+% Last Modified by GUIDE v2.5 22-Dec-2017 18:25:07
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -108,6 +108,7 @@ gui_CaImageViewer.NewSpineAnalysisInfo.CurrentDate = [];
 gui_CaImageViewer.NewSpineAnalysisInfo.CurrentImagingField = [];
 gui_CaImageViewer.NewSpineAnalysisInfo.SpineList = [];
 set(handles.Autoscale_CheckBox, 'Value', 1);
+set(handles.Merge_ToggleButton, 'Enable', 'off');
 
 
 %%%%% Clear All ROIs and Associated Labels %%%%%%
@@ -353,6 +354,7 @@ frame = get(handles.Frame_EditableText, 'String');
 ImageNum = str2num(get(gui_CaImageViewer.figure.handles.Frame_EditableText, 'String'));
 twochannels = get(gui_CaImageViewer.figure.handles.TwoChannels_CheckBox, 'Value');
 filterwindow = str2num(get(gui_CaImageViewer.figure.handles.SmoothingFactor_EditableText, 'String'));
+merged = get(gui_CaImageViewer.figure.handles.Merge_ToggleButton, 'Value');
 
 if val
     set(handles.AveProjection_CheckBox, 'Value', 0);
@@ -360,17 +362,25 @@ if val
     im = cat(3, im{:});
     immax = max(im, [], 3);
     
+    
     if twochannels
         Rim = gui_CaImageViewer.Red_Image;
         Rim = cat(3,Rim{:});
         Rimmax = max(Rim, [], 3);
     end
     
+    
     if filterwindow == 1;
     
         channel1 = immax;
-        if twochannels 
+        if twochannels && ~merged
             channel2 = Rimmax;
+        elseif twochannels && merged
+            channel1 = repmat(double(channel1)/max(max(double(channel1))),[1 1 3]);
+            channel1(:,:,1) = zeros(size(channel1,1), size(channel1,2));
+            channel1(:,:,3) = zeros(size(channel1,1), size(channel1,2));
+            channel1(:,:,1) = double(Rimmax)/max(max(double(Rimmax)));
+            channel2 = [];
         else
             channel2 = [];
         end
@@ -384,9 +394,16 @@ if val
     else
         smoothing_green = filter2(ones(filterwindow, filterwindow)/filterwindow^2, immax);
         channel1 = smoothing_green;
-        if twochannels 
+        if twochannels  && ~merged
             smoothing_red = filter2(ones(filterwindow, filterwindow)/filterwindow^2, Rimmax);
             channel2 = smoothing_red;
+        elseif twochannels && merged
+            channel1 = repmat(double(channel1)/max(max(double(channel1))),[1 1 3]);
+            channel1(:,:,1) = zeros(size(channel1,1), size(channel1,2));
+            channel1(:,:,3) = zeros(size(channel1,1), size(channel1,2));
+            smoothing_red = filter2(ones(filterwindow, filterwindow)/filterwindow^2, Rimmax);
+            channel1(:,:,1) = double(smoothing_red)/max(max(double(smoothing_red)));
+            channel2 = [];
         else
             channel2 = [];
         end
@@ -399,10 +416,17 @@ if val
     end
 else
     channel1 = gui_CaImageViewer.GCaMP_Image{ImageNum};
-    if twochannels == 1
-        channel2 = gui_CaImageViewer.Red_Image{ImageNum};
-    else
-        channel2 = [];
+    
+    if twochannels && ~merged
+            channel2 = gui_CaImageViewer.Red_Image{ImageNum};
+    elseif twochannels && merged
+            channel1 = repmat(double(channel1)/max(max(double(channel1))),[1 1 3]);
+            channel1(:,:,1) = zeros(size(channel1,1), size(channel1,2));
+            channel1(:,:,3) = zeros(size(channel1,1), size(channel1,2));
+            channel1(:,:,1) = double(gui_CaImageViewer.Red_Image{ImageNum})/max(max(double(gui_CaImageViewer.Red_Image{ImageNum})));
+            channel2 = [];
+        else
+            channel2 = [];
     end
     
     PlaceImages(channel1, channel2, 'Slider');
@@ -834,6 +858,13 @@ function TwoChannels_CheckBox_Callback(hObject, eventdata, handles)
 
 % Hint: get(hObject,'Value') returns toggle state of TwoChannels_CheckBox
 
+twochannels = get(handles.TwoChannels_CheckBox, 'Value');
+
+if twochannels
+    set(handles.Merge_ToggleButton, 'Enable', 'on')
+else
+    set(handles.Merge_ToggleButton, 'Enable', 'off')
+end
 
 % --- Executes on button press in RecoverROIs_PushButton.
 function RecoverROIs_PushButton_Callback(hObject, eventdata, handles)
@@ -1471,28 +1502,37 @@ function AveProjection_CheckBox_Callback(hObject, eventdata, handles)
 global gui_CaImageViewer
 
 val = get(handles.AveProjection_CheckBox, 'Value');
-frame = get(handles.Frame_EditableText, 'String');
 
 ImageNum = str2num(get(gui_CaImageViewer.figure.handles.Frame_EditableText, 'String'));
 twochannels = get(gui_CaImageViewer.figure.handles.TwoChannels_CheckBox, 'Value');
 filterwindow = str2num(get(gui_CaImageViewer.figure.handles.SmoothingFactor_EditableText, 'String'));
+merged = get(gui_CaImageViewer.figure.handles.Merge_ToggleButton, 'Value');
 
 if val
     set(handles.MaxProjection_CheckBox, 'Value', 0);
     im = gui_CaImageViewer.GCaMP_Image;
     im = cat(3, im{:});
-    immean = mean(im,3);
-
+    immax = mean(im, 3);
+    
+    
     if twochannels
         Rim = gui_CaImageViewer.Red_Image;
-        Rim = cat(3, Rim{:});
-        Rimmean = mean(Rim,3);
+        Rim = cat(3,Rim{:});
+        Rimmax = mean(Rim, 3);
     end
+    
+    
     if filterwindow == 1;
     
-        channel1 = immean;
-        if twochannels == 1
-            channel2 = Rimmean;
+        channel1 = immax;
+        if twochannels && ~merged
+            channel2 = Rimmax;
+        elseif twochannels && merged
+            channel1 = repmat(double(channel1)/max(max(double(channel1))),[1 1 3]);
+            channel1(:,:,1) = zeros(size(channel1,1), size(channel1,2));
+            channel1(:,:,3) = zeros(size(channel1,1), size(channel1,2));
+            channel1(:,:,1) = double(Rimmax)/max(max(double(Rimmax)));
+            channel2 = [];
         else
             channel2 = [];
         end
@@ -1504,11 +1544,18 @@ if val
         %%%%%%%%%
     
     else
-        smoothing_green = filter2(ones(filterwindow, filterwindow)/filterwindow^2, immean);
+        smoothing_green = filter2(ones(filterwindow, filterwindow)/filterwindow^2, immax);
         channel1 = smoothing_green;
-        if twochannels == 1
-            smoothing_red = filter2(ones(filterwindow, filterwindow)/filterwindow^2, Rimmean);
+        if twochannels  && ~merged
+            smoothing_red = filter2(ones(filterwindow, filterwindow)/filterwindow^2, Rimmax);
             channel2 = smoothing_red;
+        elseif twochannels && merged
+            channel1 = repmat(double(channel1)/max(max(double(channel1))),[1 1 3]);
+            channel1(:,:,1) = zeros(size(channel1,1), size(channel1,2));
+            channel1(:,:,3) = zeros(size(channel1,1), size(channel1,2));
+            smoothing_red = filter2(ones(filterwindow, filterwindow)/filterwindow^2, Rimmax);
+            channel1(:,:,1) = double(smoothing_red)/max(max(double(smoothing_red)));
+            channel2 = [];
         else
             channel2 = [];
         end
@@ -1521,10 +1568,17 @@ if val
     end
 else
     channel1 = gui_CaImageViewer.GCaMP_Image{ImageNum};
-    if twochannels == 1
-        channel2 = gui_CaImageViewer.Red_Image{ImageNum};
-    else
-        channel2 = [];
+    
+    if twochannels && ~merged
+            channel2 = gui_CaImageViewer.Red_Image{ImageNum};
+    elseif twochannels && merged
+            channel1 = repmat(double(channel1)/max(max(double(channel1))),[1 1 3]);
+            channel1(:,:,1) = zeros(size(channel1,1), size(channel1,2));
+            channel1(:,:,3) = zeros(size(channel1,1), size(channel1,2));
+            channel1(:,:,1) = double(gui_CaImageViewer.Red_Image{ImageNum})/max(max(double(gui_CaImageViewer.Red_Image{ImageNum})));
+            channel2 = [];
+        else
+            channel2 = [];
     end
     
     PlaceImages(channel1, channel2, 'Slider');
@@ -1681,3 +1735,43 @@ function Autoscale_CheckBox_Callback(hObject, eventdata, handles)
 % handles    structure with handles and user data (see GUIDATA)
 
 % Hint: get(hObject,'Value') returns toggle state of Autoscale_CheckBox
+
+
+% --- Executes on button press in Merge_ToggleButton.
+function Merge_ToggleButton_Callback(hObject, eventdata, handles)
+% hObject    handle to Merge_ToggleButton (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hint: get(hObject,'Value') returns toggle state of Merge_ToggleButton
+
+global gui_CaImageViewer
+
+merged = get(handles.Merge_ToggleButton, 'Value');
+
+Green_loc = gui_CaImageViewer.GreenGraph_loc;
+Red_loc = gui_CaImageViewer.RedGraph_loc;
+
+if merged
+    set(handles.RedGraph, 'Visible', 'off')
+    gui_CaImageViewer.GraphPlacement = [Green_loc(1), Green_loc(2), Green_loc(3)+(Red_loc(1)-(Green_loc(1)+Green_loc(3))+Red_loc(3)), Green_loc(4)];
+    set(handles.GreenGraph, 'Units', 'normalized')
+    figure(gui_CaImageViewer.figure.handles.figure1)
+    axes(gui_CaImageViewer.figure.handles.GreenGraph);
+    intergraphdistance = Red_loc(1)-(Green_loc(1)+Green_loc(3));
+    set(handles.GreenGraph, 'Position', [Green_loc(1), Green_loc(2), Green_loc(3)+Red_loc(3)+intergraphdistance, Green_loc(4)]);
+    ch1image = gui_CaImageViewer.ch1image;
+    ch1image(:,:,1) = gui_CaImageViewer.ch2image(:,:,1);    %%% Set the Red channel (dimension 1) of the existing green channel (whose channel 1 matrix is currently populated by zeros) to get an overlay
+    PlaceImages(ch1image, [], 'Slider');
+else
+    set(handles.RedGraph, 'Visible', 'on')
+    figure(gui_CaImageViewer.figure.handles.figure1)
+    axes(gui_CaImageViewer.figure.handles.GreenGraph);
+    set(handles.GreenGraph, 'Position', [Green_loc(1), Red_loc(2), Red_loc(3), Red_loc(4)]);      %%% If an image using only 1 channel is already loaded, the "green" graph overlays the red, but the size of the original axes is maintained in the "red" graph.
+    set(handles.RedGraph, 'Position', [Red_loc(1), Red_loc(2),  Red_loc(3), Red_loc(4)]);
+
+    ch1image = gui_CaImageViewer.GCaMP_Image{1};
+    ch2image = gui_CaImageViewer.Red_Image{1};
+    PlaceImages(ch1image,ch2image, 'Slider');
+end
+

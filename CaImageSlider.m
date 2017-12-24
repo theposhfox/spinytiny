@@ -19,12 +19,6 @@ elseif ImageNum < 1
 end
 
 
-%%%% Create ROI stamps if ROIs exist %%%%
-
-% [ROI_stamp, coordinates] = CaCreateROIstamps;
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
 %%% Modify and filter the new frame like the previous one(s) %%%
 
 filterwindow = str2num(get(gui_CaImageViewer.figure.handles.SmoothingFactor_EditableText, 'String'));
@@ -37,13 +31,19 @@ if ~isinteger(ImageNum)
     ImageNum = ceil(ImageNum);
 end
 
-
+merged = get(gui_CaImageViewer.figure.handles.Merge_ToggleButton, 'Value');
 
 if filterwindow == 1;
     
-    channel1 = gui_CaImageViewer.GCaMP_Image{ImageNum};
-    if twochannels 
+    channel1 = double(gui_CaImageViewer.GCaMP_Image{ImageNum});
+    if twochannels && ~merged
         channel2 = gui_CaImageViewer.Red_Image{ImageNum};
+    elseif twochannels && merged
+        channel1 = repmat(channel1/max(max(channel1)),[1 1 3]);
+        channel1(:,:,1) = zeros(size(channel1,1), size(channel1,2));
+        channel1(:,:,3) = zeros(size(channel1,1), size(channel1,2));
+        channel1(:,:,1) = double(gui_CaImageViewer.Red_Image{ImageNum})/max(max(double(gui_CaImageViewer.Red_Image{ImageNum})));
+        channel2 = [];
     else
         channel2 = [];
     end

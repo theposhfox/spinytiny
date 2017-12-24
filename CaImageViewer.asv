@@ -22,7 +22,7 @@ function varargout = CaImageViewer(varargin)
 
 % Edit the above text to modify the response to help CaImageViewer
 
-% Last Modified by GUIDE v2.5 22-Dec-2017 13:14:13
+% Last Modified by GUIDE v2.5 22-Dec-2017 18:25:07
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -108,6 +108,7 @@ gui_CaImageViewer.NewSpineAnalysisInfo.CurrentDate = [];
 gui_CaImageViewer.NewSpineAnalysisInfo.CurrentImagingField = [];
 gui_CaImageViewer.NewSpineAnalysisInfo.SpineList = [];
 set(handles.Autoscale_CheckBox, 'Value', 1);
+set(handles.Merge_ToggleButton, 'Enable', 'off');
 
 
 %%%%% Clear All ROIs and Associated Labels %%%%%%
@@ -236,6 +237,9 @@ gui_CaImageViewer.Red_Image = [];
 h = waitbar(0, 'Loading Image ');
 TifLink = Tiff(fname, 'r');
 
+Green_loc = gui_CaImageViewer.GreenGraph_loc;
+Red_loc = gui_CaImageViewer.RedGraph_loc;
+
 if twochannels
     [Rfilename, Rpathname] = uigetfile('.tif', 'Select image file for the red channel');
     Rfname = [Rpathname, Rfilename];
@@ -258,8 +262,6 @@ if twochannels
             Red_Frame = Red_Frame+1;
         end
     end
-        Green_loc = gui_CaImageViewer.GreenGraph_loc;
-        Red_loc = gui_CaImageViewer.RedGraph_loc;
         set(handles.RedGraph, 'Visible', 'on')
         set(handles.Channel2_StaticText, 'Visible', 'on')
         set(handles.RedUpperLUT_EditableText, 'Visible', 'on')
@@ -288,9 +290,7 @@ else
             waitbar(Green_Frame/timecourse_image_number,h,['Loading Image ', num2str(Green_Frame)]);
         end
     end
-    if ~gui_CaImageViewer.LoadedFile
-        Green_loc = gui_CaImageViewer.GreenGraph_loc;
-        Red_loc = gui_CaImageViewer.RedGraph_loc;
+    if ~gui_CaImageViewer.LoadedFile || Green_loc(3) == Red_loc(3)
         set(handles.RedGraph, 'Visible', 'off')
         set(handles.Channel2_StaticText, 'Visible', 'off')
         set(handles.RedUpperLUT_EditableText, 'Visible', 'off')
@@ -354,50 +354,54 @@ frame = get(handles.Frame_EditableText, 'String');
 ImageNum = str2num(get(gui_CaImageViewer.figure.handles.Frame_EditableText, 'String'));
 twochannels = get(gui_CaImageViewer.figure.handles.TwoChannels_CheckBox, 'Value');
 filterwindow = str2num(get(gui_CaImageViewer.figure.handles.SmoothingFactor_EditableText, 'String'));
+merged = get(gui_CaImageViewer.figure.handles.Merge_ToggleButton, 'Value');
 
 if val
     set(handles.AveProjection_CheckBox, 'Value', 0);
     im = gui_CaImageViewer.GCaMP_Image;
     im = cat(3, im{:});
     immax = max(im, [], 3);
+    gui_CaImageViewer.ch1image = immax;
     
     if twochannels
         Rim = gui_CaImageViewer.Red_Image;
         Rim = cat(3,Rim{:});
         Rimmax = max(Rim, [], 3);
+        gui_CaImageViewer.ch2image = Rimmax;
     end
     
-    if filterwindow == 1;
     
-        channel1 = immax;
-        if twochannels 
-            channel2 = Rimmax;
-        else
-            channel2 = [];
-        end
-
-        CommandSource = 'Slider';
-
-        %%%%%%%%%
-        PlaceImages(channel1,channel2, CommandSource);
-        %%%%%%%%%
-    
-    else
-        smoothing_green = filter2(ones(filterwindow, filterwindow)/filterwindow^2, immax);
-        channel1 = smoothing_green;
-        if twochannels 
-            smoothing_red = filter2(ones(filterwindow, filterwindow)/filterwindow^2, Rimmax);
-            channel2 = smoothing_red;
-        else
-            channel2 = [];
-        end
-
-        CommandSource = 'Slider';
-
-        %%%%%%%%%
-        PlaceImages(channel1,channel2, CommandSource);
-        %%%%%%%%%
-    end
+%     if filterwindow == 1;
+%     
+%         channel1 = immax;
+%         if twochannels 
+%             channel2 = Rimmax;
+%         else
+%             channel2 = [];
+%         end
+% 
+%         CommandSource = 'Slider';
+% 
+%         %%%%%%%%%
+%         PlaceImages(channel1,channel2, CommandSource);
+%         %%%%%%%%%
+%     
+%     else
+%         smoothing_green = filter2(ones(filterwindow, filterwindow)/filterwindow^2, immax);
+%         channel1 = smoothing_green;
+%         if twochannels 
+%             smoothing_red = filter2(ones(filterwindow, filterwindow)/filterwindow^2, Rimmax);
+%             channel2 = smoothing_red;
+%         else
+%             channel2 = [];
+%         end
+% 
+%         CommandSource = 'Slider';
+% 
+%         %%%%%%%%%
+%         PlaceImages(channel1,channel2, CommandSource);
+%         %%%%%%%%%
+%     end
 else
     channel1 = gui_CaImageViewer.GCaMP_Image{ImageNum};
     if twochannels == 1
@@ -835,6 +839,13 @@ function TwoChannels_CheckBox_Callback(hObject, eventdata, handles)
 
 % Hint: get(hObject,'Value') returns toggle state of TwoChannels_CheckBox
 
+twochannels = get(handles.TwoChannels_CheckBox, 'Value');
+
+if twochannels
+    set(handles.Merge_ToggleButton, 'Enable', 'on')
+else
+    set(handles.Merge_ToggleButton, 'Enable', 'off')
+end
 
 % --- Executes on button press in RecoverROIs_PushButton.
 function RecoverROIs_PushButton_Callback(hObject, eventdata, handles)
@@ -1486,14 +1497,14 @@ if val
 
     if twochannels
         Rim = gui_CaImageViewer.Red_Image;
-        Rim = cat(3, im{:});
-        Rimmean = mean(im,3);
+        Rim = cat(3, Rim{:});
+        Rimmean = mean(Rim,3);
     end
     if filterwindow == 1;
     
         channel1 = immean;
         if twochannels == 1
-            channel2 = Rimmeans;
+            channel2 = Rimmean;
         else
             channel2 = [];
         end
@@ -1508,7 +1519,7 @@ if val
         smoothing_green = filter2(ones(filterwindow, filterwindow)/filterwindow^2, immean);
         channel1 = smoothing_green;
         if twochannels == 1
-            smoothing_red = filter2(ones(filterwindow, filterwindow)/filterwindow^2, gui_CaImageViewer.Red_Image{ImageNum});
+            smoothing_red = filter2(ones(filterwindow, filterwindow)/filterwindow^2, Rimmean);
             channel2 = smoothing_red;
         else
             channel2 = [];
@@ -1682,3 +1693,43 @@ function Autoscale_CheckBox_Callback(hObject, eventdata, handles)
 % handles    structure with handles and user data (see GUIDATA)
 
 % Hint: get(hObject,'Value') returns toggle state of Autoscale_CheckBox
+
+
+% --- Executes on button press in Merge_ToggleButton.
+function Merge_ToggleButton_Callback(hObject, eventdata, handles)
+% hObject    handle to Merge_ToggleButton (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hint: get(hObject,'Value') returns toggle state of Merge_ToggleButton
+
+global gui_CaImageViewer
+
+merged = get(handles.Merge_ToggleButton, 'Value');
+
+Green_loc = gui_CaImageViewer.GreenGraph_loc;
+Red_loc = gui_CaImageViewer.RedGraph_loc;
+
+if merged
+    set(handles.RedGraph, 'Visible', 'off')
+    gui_CaImageViewer.GraphPlacement = [Green_loc(1), Green_loc(2), Green_loc(3)+(Red_loc(1)-(Green_loc(1)+Green_loc(3))+Red_loc(3)), Green_loc(4)];
+    set(handles.GreenGraph, 'Units', 'normalized')
+    figure(gui_CaImageViewer.figure.handles.figure1)
+    axes(gui_CaImageViewer.figure.handles.GreenGraph);
+    intergraphdistance = Red_loc(1)-(Green_loc(1)+Green_loc(3));
+    set(handles.GreenGraph, 'Position', [Green_loc(1), Green_loc(2), Green_loc(3)+Red_loc(3)+intergraphdistance, Green_loc(4)]);
+    ch1image = gui_CaImageViewer.ch1image;
+    ch1image(:,:,1) = gui_CaImageViewer.ch2image(:,:,1);    %%% Set the Red channel (dimension 1) of the existing green channel (whose channel 1 matrix is currently populated by zeros) to get an overlay
+    PlaceImages(ch1image, [], 'Slider');
+else
+    set(handles.RedGraph, 'Visible', 'on')
+    figure(gui_CaImageViewer.figure.handles.figure1)
+    axes(gui_CaImageViewer.figure.handles.GreenGraph);
+    set(handles.GreenGraph, 'Position', [Green_loc(1), Red_loc(2), Red_loc(3), Red_loc(4)]);      %%% If an image using only 1 channel is already loaded, the "green" graph overlays the red, but the size of the original axes is maintained in the "red" graph.
+    set(handles.RedGraph, 'Position', [Red_loc(1), Red_loc(2),  Red_loc(3), Red_loc(4)]);
+
+    ch1image = gui_CaImageViewer.GCaMP_Image{1};
+    ch2image = gui_CaImageViewer.Red_Image{1};
+    PlaceImages(ch1image,ch2image, 'Slider');
+end
+
