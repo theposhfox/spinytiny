@@ -1538,6 +1538,7 @@ exp_folder = dir(directory);
 
 numsessions = length(exp_folder)-2;
 
+choice = listdlg('PromptString', 'Which type of projection do you want to use?', 'ListString', {'Average Projection', 'Max Projection'}, 'SelectionMode', 'single');
 
 scrsz = get(0, 'ScreenSize');
 OverSessionsFigure = figure('Position', scrsz, 'Name', 'Multiple Sessions Analysis', 'NumberTitle', 'off');
@@ -1572,7 +1573,11 @@ for i = 3:length(exp_folder)
                 end
                 delete(h2)
             im = cat(3, GCaMP_Image{:});
-            immean = mean(im,3);
+            if choice == 1
+                immean = mean(im,3);
+            else
+                immean = max(im, [], 3);
+            end
             figure(OverSessionsFigure);
         %     subplot(2,round(numsessions/2), i-2)
             figpos = get(gcf, 'Position');
@@ -1598,9 +1603,9 @@ for i = 3:length(exp_folder)
 end
 
 %%% Run these variables before manually adding a button!
-       figpos = get(gcf, 'Position');
-       xint = figpos(3)/7;
-       yint = figpos(4)/2;
+%        figpos = get(gcf, 'Position');
+%        xint = figpos(3)/7;
+%        yint = figpos(4)/2;
 
 
 uicontrol('Style', 'pushbutton', 'String', 'Project to Analysis Window', 'FontSize', 12, 'Units', 'Normalized','Position', [0.4 0.925 0.2 0.05], 'CallBack', @ProjectToAnalysisWindow)
