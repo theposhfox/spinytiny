@@ -22,8 +22,6 @@ function varargout = CaImageViewer(varargin)
 
 % Edit the above text to modify the response to help CaImageViewer
 
-% Last Modified by GUIDE v2.5 22-Dec-2017 18:25:07
-
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
 gui_State = struct('gui_Name',       mfilename, ...
@@ -1568,6 +1566,7 @@ exp_folder = dir(directory);
 
 numsessions = length(exp_folder)-2;
 
+choice = listdlg('ListString', {'Average Projection', 'Max Projection'}, 'SelectionMode', 'single');
 
 scrsz = get(0, 'ScreenSize');
 OverSessionsFigure = figure('Position', scrsz, 'Name', 'Multiple Sessions Analysis', 'NumberTitle', 'off');
@@ -1694,7 +1693,6 @@ function Autoscale_CheckBox_Callback(hObject, eventdata, handles)
 
 % Hint: get(hObject,'Value') returns toggle state of Autoscale_CheckBox
 
-
 % --- Executes on button press in Merge_ToggleButton.
 function Merge_ToggleButton_Callback(hObject, eventdata, handles)
 % hObject    handle to Merge_ToggleButton (see GCBO)
@@ -1732,4 +1730,3 @@ else
     ch2image = gui_CaImageViewer.Red_Image{1};
     PlaceImages(ch1image,ch2image, 'Slider');
 end
-
