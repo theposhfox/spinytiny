@@ -639,10 +639,7 @@ try
     cd(save_directory)
     folder = dir(save_directory);
 catch
-    [fname pname] = uigetfile();
-    cd(pname)
-    folder = dir(pname);
-    glovar.save_directory = pname;
+    disp('Could not connect to saved directory... will need to select manually');
 end
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -671,11 +668,11 @@ try
 
     if length(roifile)>1
         for i = 1:length(roifile)
-            temp = regexp(roifile{i}, ['DrawnBy'], 'split');
-            if length(temp)>1           %%% If the file doesn't contain the "DrawnBy" tag, then it will only return 1 answer, and therefore was made prior to qualifying the file according to username
+            temp = regexp(roifile{i}, 'DrawnBy', 'split');
+            if length(temp)>1           
                 useroption{i} = temp{2}(1:end-4);
             else
-                useroption{i} = 'undefined';
+                useroption{i} = 'undefined';    %%% If the file doesn't contain the "DrawnBy" tag, then it will only return 1 answer, and therefore was made prior to qualifying the file according to username
             end
         end
 %        choice = questdlg('Which color do you prefere?', ... % Add by Assaf for choosing colors (Red, Green or Blue) for the ROIs
@@ -699,7 +696,6 @@ try
         end
         uiwait(d)
         choice = get(d, 'UserData');
-        drawer = choice;
         delete(d);
         roifilename = [experiment, '_SavedROIs_DrawnBy', choice];
     else

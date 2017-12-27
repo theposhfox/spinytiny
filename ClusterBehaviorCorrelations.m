@@ -187,6 +187,8 @@ if isempty(strfind(inputname(1), 'SpineCorrelationTimecourse'))
     FractionofRewardSpinesThatAreClustered = nan(1,14);
     FractionofRewardSpinesThatAreNonClustered = nan(1,14);
     
+    HighlyCorrelatedMovementRelatedSpines = cell(1,14);
+    
     cluster_freq = nan(1,14);
     nonclustered_freq = nan(1,14);
     cue_cluster_freq = nan(1,14);
@@ -625,9 +627,8 @@ if isempty(strfind(inputname(1), 'SpineCorrelationTimecourse'))
             %%%%%%% Binary Classification of Clusters %%%%%%%%
             %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
             
-
-                
-                [ClusteredSpines, CorrelationofClusts, FarClusteredSpines, CausalClusteredSpines] = binaryclusterclass(varargin{i}, corrmat, causalmat);
+   
+            [ClusteredSpines, CorrelationofClusts, FarClusteredSpines, CausalClusteredSpines] = binaryclusterclass(varargin{i}, corrmat, causalmat);
                 
             CorrelationofClusters{session} = CorrelationofClusts;
             
@@ -732,6 +733,8 @@ if isempty(strfind(inputname(1), 'SpineCorrelationTimecourse'))
             FractionofMovementDuringCueSpinesThatAreClustered(1,session) = length(movduringcue_cluster_ind)/length(find(MovementDuringCueSpines));
             FractionofRewardSpinesThatAreClustered(1,session) = length(rew_cluster_ind)/length(find(RewardSpines));
             FractionofRewardSpinesThatAreNonClustered(1,session) = length((setdiff(find(RewardSpines),rew_cluster_ind-Spine1_address)))/length(find(RewardSpines));
+            
+            HighlyCorrelatedMovementRelatedSpines{1,session} = mov_cluster_ind-Spine1_address;
             
             
             %%
@@ -2183,6 +2186,8 @@ if isempty(strfind(inputname(1), 'SpineCorrelationTimecourse'))
                 NumMovClusters(1,session) = NaN;
             end
             
+            HighlyCorrelatedMovementRelatedSpines{1,session} = [];
+            
             %%% Find number of clustered spines in each category
             
             %%%%%%%%%%%%%%%%%%%            
@@ -3247,6 +3252,7 @@ if isempty(strfind(inputname(1), 'SpineCorrelationTimecourse'))
     a.CausalClusteredSuccessSpineAmp = Caus_SucAmp;
     a.CausalClusteredRewardSpineAmp = Caus_RewAmp;
     
+    a.HighlyCorrelatedMovementRelatedSpines  = HighlyCorrelatedMovementRelatedSpines;
     
     a.NumberofCueSpines = NumCueRelSpines;
     a.NumberofMovementRelatedSpines = NumMovRelSpines;
@@ -5587,7 +5593,7 @@ else
     corrtouse{4} = [CorrelationBetweenMovementSpinesMovePeriods{10}, CorrelationBetweenMovementSpinesMovePeriods{11}];
     disttouse{4} = [AllDistancesBetweenMovementSpines{10}, AllDistancesBetweenMovementSpines{11}];
     
-    usenorm = 1;
+    usenorm = 0;
 
     for i = 1:4
         if i<3

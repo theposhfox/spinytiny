@@ -22,7 +22,7 @@ function varargout = CaImageViewer(varargin)
 
 % Edit the above text to modify the response to help CaImageViewer
 
-% Last Modified by GUIDE v2.5 01-Dec-2017 10:17:37
+% Last Modified by GUIDE v2.5 22-Dec-2017 13:14:13
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -639,10 +639,7 @@ try
     cd(save_directory)
     folder = dir(save_directory);
 catch
-    [fname pname] = uigetfile();
-    cd(pname)
-    folder = dir(pname);
-    glovar.save_directory = pname;
+    disp('Could not connect to saved directory... will need to select manually');
 end
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -671,11 +668,11 @@ try
 
     if length(roifile)>1
         for i = 1:length(roifile)
-            temp = regexp(roifile{i}, ['DrawnBy'], 'split');
-            if length(temp)>1           %%% If the file doesn't contain the "DrawnBy" tag, then it will only return 1 answer, and therefore was made prior to qualifying the file according to username
+            temp = regexp(roifile{i}, 'DrawnBy', 'split');
+            if length(temp)>1           
                 useroption{i} = temp{2}(1:end-4);
             else
-                useroption{i} = 'undefined';
+                useroption{i} = 'undefined';    %%% If the file doesn't contain the "DrawnBy" tag, then it will only return 1 answer, and therefore was made prior to qualifying the file according to username
             end
         end
 %        choice = questdlg('Which color do you prefere?', ... % Add by Assaf for choosing colors (Red, Green or Blue) for the ROIs
@@ -699,7 +696,6 @@ try
         end
         uiwait(d)
         choice = get(d, 'UserData');
-        drawer = choice;
         delete(d);
         roifilename = [experiment, '_SavedROIs_DrawnBy', choice];
     else
@@ -1547,48 +1543,52 @@ h1 = waitbar(0, 'Loading images for session 1');
 for i = 3:length(exp_folder)
     cd(directory)
     if isdir(exp_folder(i).name) && isempty(regexp(exp_folder(i).name, '[A-Z]*'))
-        path = [directory, '\', exp_folder(i).name, '\summed'];
-        cd(path);
-        a = dir(cd);
-        for j = 3:length(a)
-            if ~isempty(strfind(a(j).name, 'summed_50.tif'))
-                imagefile = a(j).name;
-                break
+        try
+            path = [directory, '\', exp_folder(i).name, '\summed'];
+            cd(path);
+            a = dir(cd);
+            for j = 3:length(a)
+                if ~isempty(strfind(a(j).name, 'summed_50.tif'))
+                    imagefile = a(j).name;
+                    break
+                end
             end
-        end
-        fname = [path,'\',imagefile];
-        CaImage_File_info = imfinfo(fname);
-        timecourse_image_number = numel(CaImage_File_info);
-        TifLink = Tiff(fname, 'r');
-        h2 = waitbar(0, 'Loading image ');
-        Green_Frame = 1;
-        GCaMP_Image = {};
-            for j = 1:timecourse_image_number
-                TifLink.setDirectory(j);
-                GCaMP_Image{1,Green_Frame} = TifLink.read();
-                Green_Frame = Green_Frame+1;
-                waitbar(Green_Frame/timecourse_image_number,h2,['Loading Image ', num2str(Green_Frame)]);
+            fname = [path,'\',imagefile];
+            CaImage_File_info = imfinfo(fname);
+            timecourse_image_number = numel(CaImage_File_info);
+            TifLink = Tiff(fname, 'r');
+            h2 = waitbar(0, 'Loading image ');
+            Green_Frame = 1;
+            GCaMP_Image = {};
+                for j = 1:timecourse_image_number
+                    TifLink.setDirectory(j);
+                    GCaMP_Image{1,Green_Frame} = TifLink.read();
+                    Green_Frame = Green_Frame+1;
+                    waitbar(Green_Frame/timecourse_image_number,h2,['Loading Image ', num2str(Green_Frame)]);
+                end
+                delete(h2)
+            im = cat(3, GCaMP_Image{:});
+            immean = mean(im,3);
+            figure(OverSessionsFigure);
+        %     subplot(2,round(numsessions/2), i-2)
+            figpos = get(gcf, 'Position');
+            xint = figpos(3)/7;
+            yint = figpos(4)/2;
+            if (i-2)/7 <= 1
+                yrow = 1;
+            else
+                yrow = 0;
             end
-            delete(h2)
-        im = cat(3, GCaMP_Image{:});
-        immean = mean(im,3);
-        figure(OverSessionsFigure);
-    %     subplot(2,round(numsessions/2), i-2)
-        figpos = get(gcf, 'Position');
-        xint = figpos(3)/7;
-        yint = figpos(4)/2;
-        if (i-2)/7 <= 1
-            yrow = 1;
-        else
-            yrow = 0;
+            posmat = [1:7,1:7];
+            axes('Position', [((posmat(i-2)-1)*xint+10)/figpos(3), (yint*(yrow)+150)/figpos(4), 250/figpos(3), 250/figpos(4)])
+            A = imagesc(immean); colormap(fire); set(gca, 'XTick', [], 'YTick', [])
+            set(A,'ButtonDownFcn', @HighLightAxis)
+            set(A, 'UserData', (i-2));
+            title(exp_folder(i).name)
+            waitbar((i-2)/numsessions, h1, ['Loading images for session ', num2str(i-2)])
+        catch
+            continue
         end
-        posmat = [1:7,1:7];
-        axes('Position', [((posmat(i-2)-1)*xint+10)/figpos(3), (yint*(yrow)+150)/figpos(4), 250/figpos(3), 250/figpos(4)])
-        A = imagesc(immean); colormap(fire); set(gca, 'XTick', [], 'YTick', [])
-        set(A,'ButtonDownFcn', @HighLightAxis)
-        set(A, 'UserData', (i-2));
-        title(exp_folder(i).name)
-        waitbar((i-2)/numsessions, h1, ['Loading images for session ', num2str(i-2)])
     else
     end
 end
@@ -1650,3 +1650,12 @@ tc_length = length(t);
 uicontrol(gcf, 'Style', 'pushbutton', 'String', {'Set end frame'}, 'Fontsize', 8, 'Units', 'Normalized', 'Position', [0.915 0.45 0.08 0.2], 'Callback', {@SetEndFrame,tc_length})
 uicontrol(gcf, 'Style', 'pushbutton', 'String', {'Clip image '}, 'Fontsize', 8, 'Units', 'Normalized', 'Position', [0.005 0.45 0.08 0.2], 'Callback', {@ClipImageSeriesLength, length(gui_CaImageViewer.GCaMP_Image)})
 set(gcf, 'ToolBar', 'figure')
+
+
+% --- Executes on button press in Autoscale_CheckBox.
+function Autoscale_CheckBox_Callback(hObject, eventdata, handles)
+% hObject    handle to Autoscale_CheckBox (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hint: get(hObject,'Value') returns toggle state of Autoscale_CheckBox
