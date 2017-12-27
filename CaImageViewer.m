@@ -102,6 +102,7 @@ set(gui_CaImageViewer.figure.handles.RedGamma_EditableText, 'KeyPressFcn', @fram
 
 
 %%% Initialize Random Parameters
+%%% Initialize Various Parameters
 gui_CaImageViewer.CurrentCMap = 'RGB';
 gui_CaImageViewer.NewSpineAnalysis = 0;
 gui_CaImageViewer.NewSpineAnalysisInfo.CurrentDate = [];
