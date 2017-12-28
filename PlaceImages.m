@@ -79,13 +79,10 @@ if strcmpi(CommandSource, 'Loader')
             ch1image = filter2(ones(filterwindow, filterwindow)/filterwindow^2, ch1image);
         else
         end
-        set(GreenChild, 'CData', ch1image)
-        caxis([GreenLower, GreenUpper])
     elseif strcmpi(mapchoice, 'Jet')
         gui_CaImageViewer.ch1image = channel1;
         channel1 = filter2(ones(filterwindow, filterwindow)/filterwindow^2, channel1);
         ch1image = channel1;
-        set(GreenChild, 'CData', channel1)
         set(Green_Figure, 'XTick', [])
         set(Green_Figure, 'YTick', [])
         colormap(jet)
@@ -99,7 +96,6 @@ if strcmpi(CommandSource, 'Loader')
         gui_CaImageViewer.ch1image = channel1;
         channel1 = filter2(ones(filterwindow, filterwindow)/filterwindow^2, channel1);
         ch1image = channel1;
-        set(GreenChild, 'CData', channel1)
         set(Green_Figure, 'XTick', [])
         set(Green_Figure, 'YTick', [])
         colormap(hot)
@@ -113,7 +109,6 @@ if strcmpi(CommandSource, 'Loader')
         gui_CaImageViewer.ch1image = channel1;
         channel1 = filter2(ones(filterwindow, filterwindow)/filterwindow^2, channel1);
         ch1image = channel1;
-        set(GreenChild, 'CData', channel1);
         set(Green_Figure, 'XTick', []);
         set(Green_Figure, 'YTick', []);
         colormap(fire);
@@ -355,5 +350,84 @@ elseif strcmpi(CommandSource, 'Stretcher')
         caxis auto
         maps = caxis;
         caxis([GreenLower*maps(2), GreenUpper*maps(2)]);
+elseif strcmpi(CommandSource, 'Adjuster')
+    ImageNum = get(gui_CaImageViewer.figure.handles.ImageSlider_Slider, 'Value');
+    Merge = get(gui_CaImageViewer.figure.handles.Merge_ToggleButton, 'Value');
+    
+    axes(Green_Figure);
+    
+    if strcmpi(mapchoice, 'RGB')
+        if ~Merge
+            if size(channel1,3)>1
+                channel1 = channel1(:,:,2);
+            end
+            dubconv_im = double(channel1);
+            gui_CaImageViewer.ch1image = repmat(dubconv_im/max(max(dubconv_im)),[1 1 3]);
+            gui_CaImageViewer.ch1image(:,:,1) = zeros(size(channel1,1), size(channel1,2));
+            gui_CaImageViewer.ch1image(:,:,3) = zeros(size(channel1,1), size(channel1,2));
+            ch1image = gui_CaImageViewer.ch1image;
+            ch1image = imadjust(ch1image, [0 GreenLower 0; 0.001 GreenUpper 0.001],[], green_gamma);
+            ch1image(:,:,2) = filter2(ones(filterwindow, filterwindow)/filterwindow^2, ch1image(:,:,2));
+            set(GreenChild, 'CData', ch1image)
+            caxis([GreenLower, GreenUpper])
+        elseif Merge
+            gui_CaImageViewer.ch1image = channel1;
+            ch1image = gui_CaImageViewer.ch1image;
+            ch1image = imadjust(ch1image, [RedLower GreenLower 0; RedUpper GreenUpper 0.001],[], green_gamma);
+            ch1image(:,:,1) = filter2(ones(filterwindow, filterwindow)/filterwindow^2, ch1image(:,:,1));
+            ch1image(:,:,2) = filter2(ones(filterwindow, filterwindow)/filterwindow^2, ch1image(:,:,2));
+            set(GreenChild, 'CData', ch1image);
+            caxis([GreenLower, GreenUpper])
+        end
+    elseif strcmpi(mapchoice, 'Jet')
+        gui_CaImageViewer.ch1image = channel1;
+        channel1 = filter2(ones(filterwindow, filterwindow)/filterwindow^2, channel1);
+        set(GreenChild, 'CData', channel1)
+        set(Green_Figure, 'XTick', [])
+        set(Green_Figure, 'YTick', [])
+        colormap(jet)
+        caxis auto
+        maps = caxis;
+        caxis([GreenLower*maps(2), GreenUpper*maps(2)]);
+    elseif strcmpi(mapchoice, 'Hot')
+        gui_CaImageViewer.ch1image = channel1;
+        channel1 = filter2(ones(filterwindow, filterwindow)/filterwindow^2, channel1);
+        set(GreenChild, 'CData', channel1)
+        set(Green_Figure, 'XTick', [])
+        set(Green_Figure, 'YTick', [])
+        colormap(hot)
+        caxis auto
+        maps = caxis;
+        caxis([GreenLower*maps(2), GreenUpper*maps(2)]);
+    elseif strcmpi(mapchoice, 'Fire')
+        gui_CaImageViewer.ch1image = channel1;
+        channel1 = filter2(ones(filterwindow, filterwindow)/filterwindow^2, channel1);
+        set(GreenChild, 'CData', channel1)
+        set(Green_Figure, 'XTick', [])
+        set(Green_Figure, 'YTick', [])
+        colormap(fire)
+        caxis auto
+        maps = caxis;
+        caxis([GreenLower*maps(2), GreenUpper*maps(2)]);
+        end
+    end
+   
+    %%%% Channel 2 (Red) Image %%%%
+    if twochannels == 1;
+        axes(Red_Figure);
+        if size(channel2,3)>1
+            channel2 = channel2(:,:,1);
+        else
+        end
+        dubconv_im = double(channel2);
+        gui_CaImageViewer.ch2image = repmat(dubconv_im/max(max(dubconv_im)),[1 1 3]);
+        gui_CaImageViewer.ch2image(:,:,2) = zeros(size(channel2,1), size(channel2,2));
+        gui_CaImageViewer.ch2image(:,:,3) = zeros(size(channel2,1), size(channel2,2));    
+        ch2image = gui_CaImageViewer.ch2image;
+        ch2image = imadjust(ch2image, [RedLower 0 0; RedUpper 0.001 0.001],[],red_gamma);
+        set(RedChild, 'CData', ch2image)
+        caxis([RedLower, RedUpper])
+    else
+    end
 end
 

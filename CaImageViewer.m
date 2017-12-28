@@ -170,6 +170,7 @@ function varargout = CaImageViewer_OutputFcn(hObject, eventdata, handles)
 varargout{1} = handles.output;
 
 
+end
 
 % --- Executes on slider movement.
 function ImageSlider_Slider_Callback(hObject, eventdata, handles)
@@ -595,6 +596,7 @@ function TwoChannels_CheckBox_Callback(hObject, eventdata, handles)
 
 % Hint: get(hObject,'Value') returns toggle state of TwoChannels_CheckBox
 
+end
 
 % --- Executes on button press in RecoverROIs_PushButton.
 function RecoverROIs_PushButton_Callback(hObject, eventdata, handles)
@@ -1153,7 +1155,6 @@ else
     PlaceImages(channel1, channel2, 'Slider');
     
     CaImageSlider(ImageNum);
-end
     
 
 % --- Executes on button press in SaveROIs_PushButton.
@@ -1453,11 +1454,11 @@ function AveProjection_CheckBox_Callback(hObject, eventdata, handles)
 global gui_CaImageViewer
 
 val = get(handles.AveProjection_CheckBox, 'Value');
-frame = get(handles.Frame_EditableText, 'String');
 
 ImageNum = str2num(get(gui_CaImageViewer.figure.handles.Frame_EditableText, 'String'));
 twochannels = get(gui_CaImageViewer.figure.handles.TwoChannels_CheckBox, 'Value');
 filterwindow = str2num(get(gui_CaImageViewer.figure.handles.SmoothingFactor_EditableText, 'String'));
+merged = get(gui_CaImageViewer.figure.handles.Merge_ToggleButton, 'Value');
 
 if val
     set(handles.MaxProjection_CheckBox, 'Value', 0);
@@ -1467,11 +1468,13 @@ if val
 
     filterwindow = str2num(get(gui_CaImageViewer.figure.handles.SmoothingFactor_EditableText, 'String'));
     
+    
     if filterwindow == 1;
     
         channel1 = immean;
         if twochannels == 1
             channel2 = gui_CaImageViewer.Red_Image{ImageNum};
+            channel2 = [];
         else
             channel2 = [];
         end
@@ -1484,10 +1487,13 @@ if val
     
     else
         smoothing_green = filter2(ones(filterwindow, filterwindow)/filterwindow^2, immean);
+        smoothing_green = filter2(ones(filterwindow, filterwindow)/filterwindow^2, immax);
         channel1 = smoothing_green;
         if twochannels == 1
             smoothing_red = filter2(ones(filterwindow, filterwindow)/filterwindow^2, gui_CaImageViewer.Red_Image{ImageNum});
+            smoothing_red = filter2(ones(filterwindow, filterwindow)/filterwindow^2, Rimmax);
             channel2 = smoothing_red;
+            channel2 = [];
         else
             channel2 = [];
         end
@@ -1504,6 +1510,7 @@ else
         channel2 = gui_CaImageViewer.Red_Image{ImageNum};
     else
         channel2 = [];
+            channel2 = [];
     end
     
     PlaceImages(channel1, channel2, 'Slider');
@@ -1535,6 +1542,7 @@ exp_folder = dir(directory);
 
 numsessions = length(exp_folder)-2;
 
+choice = listdlg('PromptString', 'Which type of projection do you want to use?', 'ListString', {'Average Projection', 'Max Projection'}, 'SelectionMode', 'single');
 
 scrsz = get(0, 'ScreenSize');
 OverSessionsFigure = figure('Position', scrsz, 'Name', 'Multiple Sessions Analysis', 'NumberTitle', 'off');
@@ -1570,6 +1578,7 @@ for i = 3:length(exp_folder)
                 delete(h2)
             im = cat(3, GCaMP_Image{:});
             immean = mean(im,3);
+            end
             figure(OverSessionsFigure);
         %     subplot(2,round(numsessions/2), i-2)
             figpos = get(gcf, 'Position');
@@ -1598,6 +1607,7 @@ end
        figpos = get(gcf, 'Position');
        xint = figpos(3)/7;
        yint = figpos(4)/2;
+%        yint = figpos(4)/2;
 
 
 uicontrol('Style', 'pushbutton', 'String', 'Project to Analysis Window', 'FontSize', 12, 'Units', 'Normalized','Position', [0.4 0.925 0.2 0.05], 'CallBack', @ProjectToAnalysisWindow)
@@ -1660,3 +1670,4 @@ function Autoscale_CheckBox_Callback(hObject, eventdata, handles)
 % handles    structure with handles and user data (see GUIDATA)
 
 % Hint: get(hObject,'Value') returns toggle state of Autoscale_CheckBox
+
