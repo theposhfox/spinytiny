@@ -58,7 +58,7 @@ if isempty(strfind(inputname(1), 'SpineCorrelationTimecourse'))
     corrminimum = 0;
     cuecorrminimum = 0;
     correlatecuewithall = 1;
-    useonlyspinesfromstatreldends = 0;         %%% Use only spines on MOVEMENT-RELATED dendrites (applies to spine analysis, not that of dendrites)
+    useonlyspinesfromstatreldends = 1;         %%% Use only spines on MOVEMENT-RELATED dendrites (applies to spine analysis, not that of dendrites)
         useSTATdends = 0;                      %%% Provides a different contingency option for using only movement-related dendrites for just the "dendritic" portions of the analysis (i.e. not for spines)
     mindendsize = 2;                           %%% Minimum number of spines on a dendrite to be considered for analysis (probably some sensitivity to length of dendrite)
     laplaciantouse = 'Normalized';             %%% Choose 'Normalized' or 'Original'
@@ -482,11 +482,7 @@ if isempty(strfind(inputname(1), 'SpineCorrelationTimecourse'))
                 for d = 1:varargin{i}.NumberofDendrites
                     firstspine = varargin{i}.SpineDendriteGrouping{d}(1);
                     lastspine = varargin{i}.SpineDendriteGrouping{d}(end);
-                    if d == varargin{i}.NumberofDendrites
-                        if lastspine ~= varargin{i}.NumberofSpines
-                            lastspine = varargin{i}.NumberofSpines;
-                        end
-                    end
+                    if d = length(
                     SpinesonCueDend{session}(firstspine:lastspine) = ones(length(firstspine:lastspine),1)*StatClass{session}.CueDends(d);
                     SpinesonMovementDend{session}(firstspine:lastspine) = ones(length(firstspine:lastspine),1)*StatClass{session}.MovementDends(d);
                     SpinesonPreSuccessDend{session}(firstspine:lastspine) = ones(length(firstspine:lastspine),1)*StatClass{session}.PreSuccessDends(d);
@@ -4199,7 +4195,7 @@ else
     scrsz = get(0, 'ScreenSize');
     figure('Position', scrsz); 
     
-    stattype = 'parametric';
+    stattype = 'nonparametric';
     
     subplot(2,5,1)
         flex_plot(1:14, AllClustersCorrwithCue, stattype, black, 2); 

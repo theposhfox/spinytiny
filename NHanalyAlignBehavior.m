@@ -747,22 +747,19 @@ DendSubspinedatatouse = spine_Data_DendriteSubtracted;
 movementduringcue = binarycue'.*binary_behavior;
 % binarycue = binarycue.*binary_behavior';
 
-%%%
-%%% Opt to make success specific to pre-cue
-%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%% Pre-movement/success periods
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-% a = binarycue-failed_behavior;
-% a(a<0) = 0;
-% b = a.*binary_behavior;
-
-b = binary_behavior.*binarycue';
+%%% choose starting matrix (all behavior or just successful behavior, e.g.)
+b = binary_behavior;
 
 window = 0.2; %%% 500ms
 window_frame = round(compressed_behavior_framerate*window);
 
 temp1 = b;
 temp2 = find(diff(temp1)>0); %% Find all rises
-temp3 = temp2-window_frame;         %% Shift start point of movement to 200ms prior to start (for activity correlation purposes)
+temp3 = temp2-window_frame;         %% Shift start point of movement to Xms prior to start (for activity correlation purposes)
 temp3(temp3<0)= 1;
 temp3(temp3==0)=1;
 

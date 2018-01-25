@@ -65,14 +65,16 @@ if ~isempty(ClusteredSpines{1})
     for j = 1:length(ClusteredSpines)
         alreadyused = 0;
                 
-        cue_related = sum(CueSpines(ClusteredSpines{j})) >1; %== length(ClusteredSpines{j});
-        movement_related = sum(MovementSpines(ClusteredSpines{j})) >1; % == length(ClusteredSpines{j});
+        fractionreq = 2;
+        
+        cue_related = sum(CueSpines(ClusteredSpines{j})) >= fractionreq;
+        movement_related = sum(MovementSpines(ClusteredSpines{j})) >= fractionreq;
 %         mixed = sum(CueSpines(ClusteredSpines{j})) > 0 && sum(MovementSpines(ClusteredSpines{j})) > 0; 
-        mixed = sum(CueORMovementSpines(ClusteredSpines{j})) > 1;
-        presuccess_related = sum(PreSuccessSpines(ClusteredSpines{j}))>1;
-        success_related = sum(SuccessSpines(ClusteredSpines{j}))>1; % == length(ClusteredSpines{j});
-        movduringcue_related = sum(MovementDuringCueSpines(ClusteredSpines{j}))>1;
-        reward_related = sum(RewardSpines(ClusteredSpines{j}))>1; % == length(ClusteredSpines{j});
+        mixed = sum(CueORMovementSpines(ClusteredSpines{j})) >= fractionreq;
+        presuccess_related = sum(PreSuccessSpines(ClusteredSpines{j})) >= fractionreq;
+        success_related = sum(SuccessSpines(ClusteredSpines{j})) >= fractionreq;
+        movduringcue_related = sum(MovementDuringCueSpines(ClusteredSpines{j})) >= fractionreq;
+        reward_related = sum(RewardSpines(ClusteredSpines{j}))>= fractionreq;
         
         if cue_related
             cuenum = cuenum+1;

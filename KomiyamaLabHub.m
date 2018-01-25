@@ -357,6 +357,14 @@ elseif Activity == 1 && Behavior == 1
             wrongfile2 = strfind(folder(i).name, 'Poly');
             if ~isempty(ispart) && isempty(wrongfile) && isempty(wrongfile2)
                 load(folder(i).name)
+                eval(['filesesh = ', folder(i).name(1:end-4), '.Session;']);
+                currentanimal = regexp(folder(i).name, '[A-Z]{2,3}0+\d+', 'match');
+                currentanimal = currentanimal{1};
+                usesessions = blacklist(currentanimal);
+                if ~ismember(filesesh,usesessions)
+                    clear(folder(i).name)
+                    continue
+                end
                 numfiles = numfiles+1;
                 filestoanalyze = [filestoanalyze, ',', folder(i).name(1:end-4)];
             end
@@ -392,6 +400,10 @@ elseif Activity == 1 && Behavior == 1
             isfile = strfind(folder(i).name, 'SpineCorrelationTimecourse');
             if sum(ismatch) ~=0 && ~isempty(isfile)
                 load(folder(i).name)
+%                 currentanimal = regexp(folder(i).name, '[A-Z]{2,3}0+\d+', 'match');
+%                 currentanimal = currentanimal{1};
+%                 [usesessions] = blacklist(currentanimal);
+%                 eval([folder(i).name(1:end-4), ' = structfun(@(x) x([', num2str(usesessions), ']), ', folder(i).name(1:end-4), ', ''uni'', false)'])
                 filestoanalyze = [filestoanalyze, ',', folder(i).name(1:end-4)];
             end
             waitbar(i/length(folder), h1, 'Looking for files')
@@ -481,7 +493,7 @@ else
                 animalnum = regexp(folder(i).name, '0{1,3}[A-Z,0-9]*', 'match'); animalnum = animalnum{1};
                 wrkspc = who;
                 combos = nchoosek(user,2);  %%% Cycle through all combinations of the intitials to find the closest match
-                for n = 1:length(combos)
+                for n = 1:size(combos,1)
                     successfullyloaded = [];
                     options{n} = [combos(n,1:2), animalnum, '_SummarizedBehavior'];
                     if sum(~cellfun(@isempty, regexp(who,options{n})))

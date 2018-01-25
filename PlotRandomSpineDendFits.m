@@ -57,6 +57,12 @@ switch method
                     alpha(1:2) = currentstruct.Alphas{ParentDendrite}(1:2,alphapos);
                     plot(dendDataforfit, spineDataforfit, 'ok'); hold on;
                     plot(min(dendDataforfit):max(dendDataforfit)/100:max(dendDataforfit), alpha(2).*[min(dendDataforfit):max(dendDataforfit)/100:max(dendDataforfit)], 'r', 'Linewidth', 2)
+                    if isfield(currentstruct, 'MinAlpha')
+                        minalpha = currentstruct.MinAlpha;
+                    else
+                        minalpha = 0.5;
+                    end
+                    plot(min(dendDataforfit):max(dendDataforfit)/100:max(dendDataforfit), minalpha*(min(dendDataforfit):max(dendDataforfit)/100:max(dendDataforfit)), 'b', 'linewidth', 2)
                     title([files(randnum(scroll)).name(1:12), ',' 'sp', num2str(randspine)], 'Interpreter', 'none', 'FontSize', 8)
                     text(min(dendDataforfit)-4, -max(spineDataforfit)/2, [num2str(round(fractionoverlap)), '%O\L'], 'FontSize', 8, 'Color', 'r', 'Interpreter', 'none')
 

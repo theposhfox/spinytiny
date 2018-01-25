@@ -1,4 +1,4 @@
-function flex_plot(x,y, stattype, colorS, linewidth)
+function [line_handle] = flex_plot(x,y, stattype, colorS, linewidth)
 
 %%% Data should be ordered as: rows = observations to be summarized
 %%% columns = unique sample sets over some dependent variable, e.g. time
@@ -6,13 +6,13 @@ function flex_plot(x,y, stattype, colorS, linewidth)
 hold on;
 if strcmpi(stattype, 'parametric')
     if iscell(y)
-        plot(x,cell2mat(cellfun(@nanmean, y, 'uni', false)),'color', colorS, 'Linewidth', linewidth)
+        line_handle = plot(x,cell2mat(cellfun(@nanmean, y, 'uni', false)),'color', colorS, 'Linewidth', linewidth);
         for i = 1:length(y)
             SEM = nanstd(y{i})/sqrt(sum(~isnan(y{i})));
             line([x(i),x(i)], [nanmean(y{i})-SEM, nanmean(y{i})+SEM], 'linewidth', 0.5, 'color', colorS);
         end
     else
-        plot(x,nanmean(y,1), 'color', colorS, 'Linewidth', linewidth)
+        line_handle = plot(x,nanmean(y,1), 'color', colorS, 'Linewidth', linewidth);
         for i = 1:size(y,2)
             SEM = nanstd(y(:,i))/sqrt(sum(~isnan(y(:,i))));
             line([x(i),x(i)], [nanmean(y(:,i))-SEM, nanmean(y(:,i))+SEM], 'linewidth', 0.5, 'color', colorS);
@@ -21,18 +21,23 @@ if strcmpi(stattype, 'parametric')
 elseif strcmpi(stattype, 'nonparametric')
     bootstrpnum = 1000;
     if iscell(y)
-        plot(x,cell2mat(cellfun(@nanmedian, y, 'uni', false)), 'color', colorS, 'Linewidth', linewidth)
+        line_handle = plot(x,cell2mat(cellfun(@nanmedian, y, 'uni', false)), 'color', colorS, 'Linewidth', linewidth);
         for i = 1:length(y)
 %             Y = prctile(y{i},[25 75]);
-            Y = bootci(bootstrpnum, {@median, y{i}(~isnan(y{i}))}, 'alpha', 0.05);   %%% Bootstrap confidence intervals using the median
-            line([x(i),x(i)], [Y(1), Y(2)], 'linewidth', 0.5, 'color', colorS);
+            if sum(~isnan(y{i})) >1
+                Y = bootci(bootstrpnum, {@median, y{i}(~isnan(y{i}))}, 'alpha', 0.05);   %%% Bootstrap confidence intervals using the median
+                line([x(i),x(i)], [Y(1), Y(2)], 'linewidth', 0.5, 'color', colorS);
+            else
+            end
         end
     else
-        plot(x,nanmedian(y,1), 'color', colorS, 'Linewidth', linewidth)
+        line_handle = plot(x,nanmedian(y,1), 'color', colorS, 'Linewidth', linewidth);
         for i = 1:size(y,2)
 %             Y = prctile(y(:,i),[25 75]);
-            Y = bootci(bootstrpnum, {@median, y(~isnan(y(:,i)),i)}, 'alpha', 0.05);     %%% Bootstrap confidence intervals using the median
-            line([x(i),x(i)], [Y(1), Y(2)], 'linewidth', 0.5, 'color', colorS);
+            if sum(~isnan(y(:,i)))>1
+                Y = bootci(bootstrpnum, {@median, y(~isnan(y(:,i)),i)}, 'alpha', 0.05);     %%% Bootstrap confidence intervals using the median
+                line([x(i),x(i)], [Y(1), Y(2)], 'linewidth', 0.5, 'color', colorS);
+            end
         end
     end
 end
