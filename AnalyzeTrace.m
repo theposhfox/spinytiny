@@ -73,8 +73,7 @@ function [Threshold, DriftBaseline, ProcessedData] = AnalyzeTrace(Data, Options)
         roundnum = roundnum+1;
     end
 
-    truebaseline = medfilt1(smoothed_forbaseline, baselinesmoothwindow);
-    
+    truebaseline = smooth(smoothed_forbaseline, baselinesmoothwindow)';
 
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -131,7 +130,7 @@ function [Threshold, DriftBaseline, ProcessedData] = AnalyzeTrace(Data, Options)
     processed_dFoF = smooth(blsub, smoothwindow);
                 
 %     spread = rawmed+spinevalueslimitfornoise*nanstd(fornoise);
-    spread = nanstd(fornoise);
+    spread = max(fornoise);
     
     med = nanmedian(fornoise);
     
@@ -144,10 +143,14 @@ function [Threshold, DriftBaseline, ProcessedData] = AnalyzeTrace(Data, Options)
     
     %%% Estimate signal by finding peaks
     pks = findpeaks(processed_dFoF, 'MinPeakHeight', spread, 'MinPeakDistance', 200,'sortstr', 'descend');
+    
+%     [f, xi] = ksdensity(blsub);
+%     lowerlimit = prctile(xi,75);
+    
     if isempty(pks)
         thresh = 1;
     else
-        if valueslimitfornoise*spread < 0.25
+        if spread < 0.25
             switch BeingAnalyzed
                 case 'Spine';
                     thresh = 0.25;
@@ -157,7 +160,7 @@ function [Threshold, DriftBaseline, ProcessedData] = AnalyzeTrace(Data, Options)
                     thresh = 0.25;
             end
         else
-            thresh = valueslimitfornoise*spread;
+            thresh =spread;
         end
         signal = nanmean(pks);
         noise = spread;

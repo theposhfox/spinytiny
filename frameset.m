@@ -36,6 +36,6 @@ if strcmpi(eventdata.Key, 'return')
         end
     end
    
-    PlaceImages(channel1, channel2, 'Slider');
+    PlaceImages(channel1, channel2, 'Adjuster');
 else
 end

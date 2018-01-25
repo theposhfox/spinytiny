@@ -314,14 +314,30 @@ if isempty(strfind(inputname(1), 'SpineCorrelationTimecourse'))
     MeanAllCausalClustLength = nan(1,14);
     MaxAllCausalClustLength = nan(1,14);
     
-    NearestMovSpine = cell(1,14);
+    MovSpinetoNearestMovSpine = cell(1,14);
     NextClosest = cell(1,14);
     ThirdClosest = cell(1,14);
     FourthClosest = cell(1,14);
     CorrwithNearestMovSpine = cell(1,14);
+    AllCorrwithNearbyMetaClusters = cell(1,14);
+    AllCorrwithDistantMetaClusters = cell(1,14);
+    MovSpinetoNearestFuncClustMovSpine = cell(1,14);
+    CorrofNearestMetaCluster = cell(1,14);
+    CorrofNextMetaCluster = cell(1,14);
+    CorrofThirdMetaCluster = cell(1,14);
+    CorrofFourthMetaCluster = cell(1,14);
+    RandomMovementPairCorr = cell(1,14);
+    MovSpinetoNextFuncClustMovSpine = cell(1,14);
+    MovSpinetoThirdFuncClustMovSpine = cell(1,14);
+    MovSpinetoFourthFuncClustMovSpine = cell(1,14);
+    FuncClustMovSpinetoNearestFuncClustMovSpine = cell(1,14);
     NearestHighCorrMovSpine = cell(1,14);
+    NextClosestFuncClustMovSpine = cell(1,14);
     NextClosestHighCorrMovSpine = cell(1,14);
+    ThirdClosestFuncClustMovSpine = cell(1,14);
     ThirdClosestHighCorrMovSpine = cell(1,14);
+    FourthClosestFuncClustMovSpine = cell(1,14);
+    FourthClosestHighCorrMovSpine = cell(1,14);
     
     DistanceBetweenAllSpines = cell(1,14);
         CorrelationBetweenAllSpines = cell(1,14);
@@ -401,7 +417,7 @@ if isempty(strfind(inputname(1), 'SpineCorrelationTimecourse'))
     MeanNumberofSpinesinEachCluster = nan(1,14);
     MeanNumberofSpinesinEachCausalCluster = nan(1,14);
     NumMovClusters = nan(1,14);
-    MeanNumberofSpinesinEachMovCluster = nan(1,14);
+    NumberofSpinesinEachMovCluster = cell(1,14);
     
     FractionofClusterThatsMR = nan(1,14);
     FractionofCausalClusterThatsMR = nan(1,14);
@@ -449,10 +465,10 @@ if isempty(strfind(inputname(1), 'SpineCorrelationTimecourse'))
         
         session = varargin{i}.Session;
         SpineToSpineDistance = varargin{i}.DistanceHeatMap;
-        tempC = SpineToSpineDistance;
-        tempD = SpineToSpineDistance';
-        tempC(isnan(tempC) & ~isnan(tempD)) = tempD(isnan(tempC) & ~isnan(tempD));
-        DistanceMap = tempC;
+            tempC = SpineToSpineDistance;
+            tempD = SpineToSpineDistance';
+            tempC(isnan(tempC) & ~isnan(tempD)) = tempD(isnan(tempC) & ~isnan(tempD));
+            DistanceMap = tempC;
         NumClusters(1,session) = 0;
         NumCausalClusters(1,session) = 0;
         
@@ -466,6 +482,11 @@ if isempty(strfind(inputname(1), 'SpineCorrelationTimecourse'))
                 for d = 1:varargin{i}.NumberofDendrites
                     firstspine = varargin{i}.SpineDendriteGrouping{d}(1);
                     lastspine = varargin{i}.SpineDendriteGrouping{d}(end);
+                    if d == varargin{i}.NumberofDendrites
+                        if lastspine ~= varargin{i}.NumberofSpines
+                            lastspine = varargin{i}.NumberofSpines;
+                        end
+                    end
                     SpinesonCueDend{session}(firstspine:lastspine) = ones(length(firstspine:lastspine),1)*StatClass{session}.CueDends(d);
                     SpinesonMovementDend{session}(firstspine:lastspine) = ones(length(firstspine:lastspine),1)*StatClass{session}.MovementDends(d);
                     SpinesonPreSuccessDend{session}(firstspine:lastspine) = ones(length(firstspine:lastspine),1)*StatClass{session}.PreSuccessDends(d);
@@ -532,7 +553,6 @@ if isempty(strfind(inputname(1), 'SpineCorrelationTimecourse'))
             [SpectralData] = SpectralClustering(varargin{i}, SessionCorrData, StatClass, Choices);
 
             
-
             Spatial_Deg{session} = SpectralData.Spatial_Deg;
             Temporal_Deg{session} = SpectralData.Temporal_Deg;
             Spatiotemporal_Deg{session} = SpectralData.Spatiotemporal_Deg;
@@ -591,7 +611,7 @@ if isempty(strfind(inputname(1), 'SpineCorrelationTimecourse'))
                 dendcheckMDC(dendcheckMDC==0) = nan;
                 dendcheckR(dendcheckR==0) = nan;
             else
-                dendcheck = ones(1,length(varargin{i}.deltaF)); %%% Set this variable to one to allow use of ALL spines on ALL (non just stat-rel) dendrites
+                dendcheck = ones(1,length(varargin{i}.deltaF)); %%% Set this variable to one to allow use of ALL spines on ALL (non just feature-related) dendrites
                 dendcheckC = ones(1,length(varargin{i}.deltaF));
                 dendcheckM = ones(1,length(varargin{i}.deltaF));
                 dendcheckPS = ones(1,length(varargin{i}.deltaF));
@@ -715,12 +735,12 @@ if isempty(strfind(inputname(1), 'SpineCorrelationTimecourse'))
             MeanNumberofSpinesinEachCausalCluster(1,session) = nanmean(NumSpinesinCausalCluster);
             ClusterswithMovRelSpines = ClusteredSpines(cellfun(@(x) x(:), cellfun(@(x) sum(x)>1, cellfun(@(x) ismember(x,mov_cluster_ind-Spine1_address), ClusteredSpines, 'UniformOutput', false), 'Uniformoutput', false)));
                         
-            if ~isempty(ClusteredSpines)
-                MeanNumberofSpinesinEachMovCluster(1,session) = mean(cell2mat(cellfun(@length, cellfun(@(x,y) x(y), ClusterswithMovRelSpines, cellfun(@(x) ismember(x,mov_cluster_ind-Spine1_address), ClusterswithMovRelSpines, 'Uni', false), 'Uni', false), 'Uni', false)));
+            if ~isempty(ClusteredSpines) && ~isempty(mov_cluster_ind)
+                NumberofSpinesinEachMovCluster{1,session} = cell2mat(cellfun(@length, cellfun(@(x,y) x(y), ClusterswithMovRelSpines, cellfun(@(x) ismember(x,mov_cluster_ind-Spine1_address), ClusterswithMovRelSpines, 'Uni', false), 'Uni', false), 'Uni', false));
                 NumMovClusters(1,session) = sum(cell2mat(cellfun(@(x) sum(x)>1, cellfun(@(x) ismember(x,mov_cluster_ind-Spine1_address), ClusteredSpines, 'UniformOutput', false), 'Uniformoutput', false)));  %%% Check if each reported cluster is movement-related
             else
-                MeanNumberofSpinesinEachMovCluster(1,session) = NaN;
-                NumMovClusters(1,session) = NaN;
+                NumberofSpinesinEachMovCluster{1,session} = NaN;
+                NumMovClusters(1,session) = 0;
             end            
             
             FractionofCueSpinesThatAreClustered(1,session) = length(cue_cluster_ind)/length(find(CueSpines));
@@ -931,7 +951,7 @@ if isempty(strfind(inputname(1), 'SpineCorrelationTimecourse'))
             
             FarDistanceMap = DistanceMap;
             FarDistanceMap(logical(eye(length(DistanceMap),length(DistanceMap)))) = 0;
-            [r c] = find(isnan(triu(FarDistanceMap)));
+            [r,c] = find(isnan(triu(FarDistanceMap)));
             
             for m = 1:length(r)
                 spine_pos1 = [varargin{i}.ROIPosition{r(m)}(1)+varargin{i}.ROIPosition{r(m)}(3)/2, varargin{i}.ROIPosition{r(m)}(2)+varargin{i}.ROIPosition{r(m)}(4)/2];
@@ -1246,13 +1266,18 @@ if isempty(strfind(inputname(1), 'SpineCorrelationTimecourse'))
                 DistanceBetweenFarSpines{session} = varargin{i}.FarSpineToSpineDistance;
             end
             
+            %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+            %%  Distributions of Movement-related spines
+            %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+            
+            
             if sum(MovementSpines)>1
                 spinelist = find(MovementSpines);
                 for s = 1:length(spinelist)
-                    currentspine = spinelist(s);            %%% Select current spine on the list
+                    currentspine = spinelist(s);                    %%% Select current spine on the list
                     otherspines = setdiff(spinelist, currentspine); %%% Make a list of all other spines in the list
-                    movspinedistlist = sort(cell2mat(arrayfun(@(x) DistanceMap(currentspine,x), otherspines, 'uni', false)));
-                    NearestMovSpine{session}(1,s) = movspinedistlist(1);   %%% Find the smallest distance from the current spine to other spines on the same dendrite
+                    movspinedistlist = sort(cell2mat(arrayfun(@(x) DistanceMap(currentspine,x), otherspines, 'uni', false)));   %%% Make a sorted list of all distances to other movement-related spines
+                    MovSpinetoNearestMovSpine{session}(1,s) = movspinedistlist(1);   %%% Find the smallest distance from the current spine to other spines on the same dendrite
                     if length(movspinedistlist) >1
                         NextClosest{session}(1,s) = movspinedistlist(2);
                     else
@@ -1266,21 +1291,102 @@ if isempty(strfind(inputname(1), 'SpineCorrelationTimecourse'))
                     if length(movspinedistlist) > 3
                         FourthClosest{session}(1,s) = movspinedistlist(4);
                     end
-                    minloc = find(cell2mat(arrayfun(@(x) DistanceMap(currentspine,x), otherspines, 'uni', false)) == movspinedistlist(1));
+                    
+                    minloc = find(cell2mat(arrayfun(@(x) DistanceMap(currentspine,x), otherspines, 'uni', false)) == movspinedistlist(1));  %%% Find the index of the closest movement-related spine in the 'otherspines' list                   
                     if ~isempty(minloc)
-                        CorrwithNearestMovSpine{session}(1,s) = mean(samedendcorrmat(currentspine, otherspines(minloc)));
-                        otherhighcorrspines = mov_cluster_ind-Spine1_address;
-                        distancestoHSCs = sort(cell2mat(arrayfun(@(x) DistanceMap(currentspine,x), otherhighcorrspines, 'uni', false)));
-                        if ismember(currentspine, otherhighcorrspines)
-                            NearestHighCorrMovSpine{session}(1,s) = distancestoHSCs(1);
+                        CorrwithNearestMovSpine{session}(1,s) = mean(samedendcorrmat(currentspine, otherspines(minloc)));   %%% Find the correlation with the nearest movement-related spine (note, sometimes there are multiple at the same distance, so use the mean correlation)
+                        
+                        %%% Distances from movement spines to nearby
+                        %%% functionally clustered spines (meta-clustering)
+                        
+                        otherfuncclustmovspines = mov_cluster_ind-Spine1_address;
+                        roundedcorrmat = round(samedendcorrmat.*100)/100;
+                        
+                        if ~isempty(otherfuncclustmovspines)
+                            [distancestoFCSs, FCdistInd] = sort(cell2mat(arrayfun(@(x) DistanceMap(currentspine,x), otherfuncclustmovspines, 'uni', false)));
+                            assoccorr = cell2mat(arrayfun(@(x) roundedcorrmat(currentspine, x), otherfuncclustmovspines, 'uni', false));
+                            assoccorr = assoccorr(FCdistInd);
+                            
+                            AllCorrwithNearbyMetaClusters{session}= [AllCorrwithNearbyMetaClusters{session}; assoccorr(logical((assoccorr<0.5).*(distancestoFCSs<10)))];
+                            AllCorrwithDistantMetaClusters{session} = [AllCorrwithDistantMetaClusters{session}; assoccorr(logical((assoccorr<0.5).*(distancestoFCSs>15)))];
+                            
+                            if assoccorr(1)<0.5
+                                MovSpinetoNearestFuncClustMovSpine{session}(1,s) = distancestoFCSs(1);  %%% Distances from any given movement spine (irrespective of its functional properties) to a functionally clustered movement spine)
+                                CorrofNearestMetaCluster{session}(1,s) = assoccorr(1);
+                            else
+                                MovSpinetoNearestFuncClustMovSpine{session}(1,s) = NaN;
+                                CorrofNearestMetaCluster{session}(1,s) = NaN;
+                            end
+                            if length(distancestoFCSs)>1
+                                if assoccorr(2)<0.5
+                                    MovSpinetoNextFuncClustMovSpine{session}(1,s) = distancestoFCSs(2);
+                                    CorrofNextMetaCluster{session}(1,s) = assoccorr(2);
+                                else
+                                    MovSpinetoNextFuncClustMovSpine{session}(1,s) = NaN;
+                                    CorrofNextMetaCluster{session}(1,s) = NaN;
+                                end
+                            end
+                            if length(distancestoFCSs)>2
+                                if assoccorr(3)<0.5
+                                    MovSpinetoThirdFuncClustMovSpine{session}(1,s) = distancestoFCSs(3);
+                                    CorrofThirdMetaCluster{session}(1,s) = assoccorr(3);
+                                else
+                                    MovSpinetoThirdFuncClustMovSpine{session}(1,s) = NaN;
+                                    CorrofThirdMetaCluster{session}(1,s) = NaN;
+                                end
+                            end
+                            if length(distancestoFCSs)>3
+                                if assoccorr(4)<0.5
+                                    MovSpinetoFourthFuncClustMovSpine{session}(1,s) = distancestoFCSs(4);
+                                    CorrofFourthMetaCluster{session}(1,s) = assoccorr(4);
+                                else
+                                    MovSpinetoFourthFuncClustMovSpine{session}(1,s) = NaN;
+                                    CorrofFourthMetaCluster{session}(1,s) = NaN;
+                                end
+                            end
+                        else
+                            distancestoFCSs = [];
                         end
-                    if length(distancestoHSCs)>1;
-                        NextClosestHighCorrMovSpine{session}(1,s) = distancestoHSCs(2);
+                        if ismember(currentspine, otherfuncclustmovspines)  %%% if both spines are functionally clustered movement spines
+                            FuncClustMovSpinetoNearestFuncClustMovSpine{session}(1,s) = distancestoFCSs(1); %%% Distances between functionally clustered movement related spines (i.e. both are functionally clustered and movement-related)
+                            otherhighcorrspines = otherfuncclustmovspines(cell2mat(arrayfun(@(x) roundedcorrmat(currentspine, x), otherfuncclustmovspines, 'uni', false))>=0.5);
+                            [distancestoHCSs, HCdistInd] = sort(cell2mat(arrayfun(@(x) DistanceMap(currentspine,x), otherhighcorrspines, 'uni', false)));
+                            if ~isempty(otherhighcorrspines)
+                                NearestHighCorrMovSpine{session}(1,s) = distancestoHCSs(1);
+                            end
+                            if length(distancestoFCSs)>1
+                                NextClosestFuncClustMovSpine{session}(1,s) = distancestoFCSs(2);
+                            end
+                            if length(distancestoHCSs)>1
+                                NextClosestHighCorrMovSpine{session}(1,s) = distancestoHCSs(2);
+                            end
+                            if length(distancestoFCSs)>2
+                                ThirdClosestFuncClustMovSpine{session}(1,s) = distancestoFCSs(3);
+                            end
+                            if length(distancestoHCSs)>2
+                                ThirdClosestHighCorrMovSpine{session}(1,s) = distancestoHCSs(3);
+                            end
+                            if length(distancestoFCSs)>3
+                                FourthClosestFuncClustMovSpine{session}(1,s) = distancestoFCSs(4);
+                            end
+                            if length(distancestoHCSs)>3
+                                FourthClosestHighCorrMovSpine{session}(1,s) = distancestoHCSs(4);
+                            end
+                        end
                     end
-                    if length(distancestoHSCs)>2;
-                        ThirdClosestHighCorrMovSpine{session}(1,s) = distancestoHSCs(3);
+                end
+                s = 1;
+                while s<sum(MovementSpines)/4
+                    randchoice1 = spinelist(randi(length(spinelist)));
+                    randchoice2 = spinelist(randi(length(spinelist)));
+                    while randchoice1 == randchoice2
+                        randchoice2 = spinelist(randi(length(spinelist)));
                     end
-
+                    roundedcorrmat = round(corrmat.*100)/100;
+                    if roundedcorrmat(randchoice1,randchoice2)<0.5
+                        RandomMovementPairCorr{session}(1,s) = roundedcorrmat(randchoice1, randchoice2);
+                        s = s+1;
+                    else
                     end
                 end
             end
@@ -2178,13 +2284,9 @@ if isempty(strfind(inputname(1), 'SpineCorrelationTimecourse'))
             NumSpinesinCausalCluster(NumSpinesinCausalCluster==0) = NaN;
             MeanNumberofSpinesinEachCausalCluster(1,session) = nanmean(NumSpinesinCausalCluster);
             
-            if ~isempty(ClusteredSpines)
-                MeanNumberofSpinesinEachMovCluster(1,session) = nanmean(cellfun(@(x) x(:), cellfun(@(x) sum(x)==length(x), cellfun(@(x) ismember(x,mov_cluster_ind-Spine1_address), ClusteredSpines, 'UniformOutput', false), 'Uniformoutput', false)));
-                NumMovClusters(1,session) = sum(cellfun(@(x) x(:), cellfun(@(x) sum(x)>1, cellfun(@(x) ismember(x,mov_cluster_ind-Spine1_address), ClusteredSpines, 'UniformOutput', false), 'Uniformoutput', false)));  %%% Check if each reported cluster is movement-related
-            else
-                MeanNumberofSpinesinEachMovCluster(1,session) = NaN;
-                NumMovClusters(1,session) = NaN;
-            end
+            NumberofSpinesinEachMovCluster{1,session} = NaN;
+            NumMovClusters(1,session) = NaN;
+
             
             HighlyCorrelatedMovementRelatedSpines{1,session} = [];
             
@@ -2262,7 +2364,7 @@ if isempty(strfind(inputname(1), 'SpineCorrelationTimecourse'))
             
             FarDistanceMap = DistanceMap;
             FarDistanceMap(logical(eye(length(DistanceMap),length(DistanceMap)))) = 0;
-            [r c] = find(isnan(triu(FarDistanceMap)));
+            [r,c] = find(isnan(triu(FarDistanceMap)));
             
             for m = 1:length(r)
                 spine_pos1 = [varargin{i}.ROIPosition{r(m)}(1)+varargin{i}.ROIPosition{r(m)}(3)/2, varargin{i}.ROIPosition{r(m)}(2)+varargin{i}.ROIPosition{r(m)}(4)/2];
@@ -2839,7 +2941,7 @@ if isempty(strfind(inputname(1), 'SpineCorrelationTimecourse'))
     
     
             subplot(sub1, sub2, 6)
-    plot(MeanNumberofSpinesinEachMovCluster, '-o', 'Color', purple, 'Linewidth', 2, 'MarkerFaceColor', purple); hold on
+    plot(cell2mat(cellfun(@nanmean, NumberofSpinesinEachMovCluster, 'Uni', false)), '-o', 'Color', purple, 'Linewidth', 2, 'MarkerFaceColor', purple); hold on
     plot(NumMovClusters, '-ok', 'Linewidth', 2, 'MarkerFaceColor', 'k')
     xlabel('Session', 'Fontsize', 14);
     ylabel('Raw Number', 'Fontsize', 14);
@@ -3222,8 +3324,8 @@ if isempty(strfind(inputname(1), 'SpineCorrelationTimecourse'))
     a.CausalSuccessClusterFrequency = Caus_suc_cluster_freq;
     a.CausalRewardClusterFrequency = Caus_rew_cluster_freq;
     
-    a.DendriteswithMovementClusters = DendswithMovClusts;
-    a.DendriteswithoutMovementClusters = DendsnomovClusts;
+%     a.DendriteswithMovementClusters = DendswithMovClusts;
+%     a.DendriteswithoutMovementClusters = DendsnomovClusts;
     a.DendriteswithClustersFrequency = ClustDendFreq;
     a.DendriteswithoutClustersFrequency = NoClustDendFreq;
     a.DendriteswithCueClustersFrequency = CueClustDendFreq;
@@ -3331,14 +3433,33 @@ if isempty(strfind(inputname(1), 'SpineCorrelationTimecourse'))
     a.MeanCausalAllClustLength = MeanAllCausalClustLength;
     a.MaxCausalAllClustLength = MaxAllCausalClustLength;
     
-    a.NearestMovementRelatedSpine = NearestMovSpine;
+    a.NearestMovementRelatedSpine = MovSpinetoNearestMovSpine;
     a.NextClosestMovementRelatedSpine = NextClosest;
     a.ThirdClosestMovementRelatedSpine = ThirdClosest;
     a.FourthClosestMovementRelatedSpine = FourthClosest;
     a.CorrelationwithNearestMovementRelatedSpine = CorrwithNearestMovSpine; 
+    
+    a.MoveSpinetoNearestFunctionallyClusteredMoveSpine = MovSpinetoNearestFuncClustMovSpine;
+    a.MoveSpinetoNextFunctionallyClusteredMoveSpine = MovSpinetoNextFuncClustMovSpine;
+    a.MoveSpinetoThirdFunctionallyClusteredMoveSpine = MovSpinetoThirdFuncClustMovSpine;
+    a.MoveSpinetoFourthFunctionallyClusteredMoveSpine = MovSpinetoFourthFuncClustMovSpine;
+    
+    a.AllCorrelationswithNearbyMetaClusters = AllCorrwithNearbyMetaClusters;
+    a.AllCorrelationswithDistantMetaClusters = AllCorrwithDistantMetaClusters;
+    a.CorrelationofNearestMetaCluster = CorrofNearestMetaCluster;
+    a.CorrelationofNextMetaCluster = CorrofNextMetaCluster;
+    a.CorrelationofThirdMetaCluster = CorrofThirdMetaCluster;
+    a.CorrelationofFourthMetaCluster = CorrofFourthMetaCluster;
+    a.RandomMovementPairCorrelation = RandomMovementPairCorr;
+    
+    a.NearestFunctionallyClusteredMovementRelatedSpine = FuncClustMovSpinetoNearestFuncClustMovSpine;
     a.NearestHighlyCorrelatedMovementRelatedSpine = NearestHighCorrMovSpine;
-    a.NextClosestHighlyCorrelatedMovementRelatedSpine = NextClosestHighCorrMovSpine;
+    a.NextClosestFunctionallyClusteredMovementRelatedSpine = NextClosestFuncClustMovSpine;
+    a.NextClosestHighlyCorrelatedMovementRelatedSpine = NextClosestHighCorrMovSpine; 
+    a.ThirdClosestFunctionallyClusteredMovementRelatedSpine = ThirdClosestFuncClustMovSpine;
     a.ThirdClosestHighlyCorrelatedMovementRelatedSpine = ThirdClosestHighCorrMovSpine;
+    a.FourthClosestFunctionallyClusteredMovementRelatedSpine = FourthClosestFuncClustMovSpine;
+    a.FourthClosestHighlyCorrelatedMovementRelatedSpine = FourthClosestHighCorrMovSpine; 
     a.DistanceBetweenAllSpines = DistanceBetweenAllSpines;
         a.CorrelationBetweenAllSpines = CorrelationBetweenAllSpines;
         a.CorrelationBetweenAllSpinesMovementPeriods = CorrelationBetweenAllSpinesMovePeriods;
@@ -3369,7 +3490,7 @@ if isempty(strfind(inputname(1), 'SpineCorrelationTimecourse'))
     a.MeanNumberofSpinesinEachCausalCluster = MeanNumberofSpinesinEachCausalCluster;
     a.NumberofClusters = NumClusters;
     a.NumberofCausalClusters = NumCausalClusters;
-    a.MeanNumberofSpinesinEachMovCluster = MeanNumberofSpinesinEachMovCluster;
+    a.MeanNumberofSpinesinEachMovCluster = NumberofSpinesinEachMovCluster;
     a.NumberofMovClusters = NumMovClusters;
     
     a.ClusteredSpines_CorrwithDend = ClusteredSpines_CorrwithDend;
@@ -3442,7 +3563,7 @@ if isempty(strfind(inputname(1), 'SpineCorrelationTimecourse'))
     cd('C:\Users\Komiyama\Desktop\Output Data');
     save(fname, fname);
 else
-    
+    %%
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     %%%%%%%%%%%%%%% Averaging %%%%%%%%%%%%%%%%
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -3450,6 +3571,9 @@ else
     %%%
     %%% Collect Data from input
     %%%
+    
+    
+    %%%% Initialize variables
     
     FractionofMovementRelatedSpinesPerDendrite = cell(1,14);
     SpatialDegree = cell(1,14);
@@ -3474,14 +3598,33 @@ else
     CorrelationBetweenMovementSpinesMovePeriods = cell(1,14);
     CorrelationBetweenMovementSpinesStillPeriods = cell(1,14);
         CorrelationBetweenFarMovementSpines = cell(1,14);
-    NearestMovementRelatedSpine = cell(1,14);
-    NextClosestMovementRelatedSpine= cell(1,14);
-    ThirdClosestMovementRelatedSpine = cell(1,14);
-    FourthClosestMovementRelatedSpine = cell(1,14);
+    MovSpinetoNearestMovementRelatedSpine = cell(1,14);
+    MovSpinetoNextClosestMovementRelatedSpine= cell(1,14);
+    MovSpinetoThirdClosestMovementRelatedSpine = cell(1,14);
+    MovSpinetoFourthClosestMovementRelatedSpine = cell(1,14);
     CorrelationwithNearestMovementRelatedSpine = cell(1,14);
+    MoveSpinetoNearestFunctionallyClusteredMoveSpine = cell(1,14);
+    MoveSpinetoNextFunctionallyClusteredMoveSpine = cell(1,14);
+    MoveSpinetoThirdFunctionallyClusteredMoveSpine = cell(1,14);
+    MoveSpinetoFourthFunctionallyClusteredMoveSpine = cell(1,14);
+    AllCorrelationswithNearbyMetaClusters = cell(1,14);
+    AllCorrelationswithDistantMetaClusters = cell(1,14);
+    CorrofNearestMetaCluster = cell(1,14);
+    CorrofNextMetaCluster = cell(1,14);
+    CorrofThirdMetaCluster = cell(1,14);
+    CorrofFourthMetaCluster = cell(1,14);
+    RandomMovementPairCorr = cell(1,14);
+    NearestFunctionallyClusteredMovementRelatedSpine = cell(1,14);
     NearestHighlyCorrelatedMovementRelatedSpine = cell(1,14);
+    NextClosestFunctionallyClusteredMovementRelatedSpine = cell(1,14);
     NextClosestHighlyCorrelatedMovementRelatedSpine = cell(1,14);
+    ThirdClosestFunctionallyClusteredMovementRelatedSpine = cell(1,14);
     ThirdClosestHighlyCorrelatedMovementRelatedSpine = cell(1,14);
+    FourthClosestFunctionallyClusteredMovementRelatedSpine = cell(1,14);
+    FourthClosestHighlyCorrelatedMovementRelatedSpine = cell(1,14);
+    MovementClusters = cell(length(varargin), 14);
+    
+    
     
     for i = 1:length(varargin)
         AllClustersCorrwithCue(i,1:14) = varargin{i}.ClustCorrwithCue;
@@ -3709,36 +3852,53 @@ else
         FarMovDuringCueClusterLength(i,1:14) = varargin{i}.MeanFarMovDuringCueClustLength;
         FarRewClusterLength(i,1:14) = varargin{i}.MeanFarRewClustLength;
         
-            AllDistancesBetweenAllSpines(1:14) = cellfun(@(x,y) [x,y], AllDistancesBetweenAllSpines, varargin{i}.DistanceBetweenAllSpines, 'Uni', false);
-            CorrelationBetweenAllSpines(1:14) = cellfun(@(x,y) [x,y], CorrelationBetweenAllSpines, varargin{i}.CorrelationBetweenAllSpines, 'Uni', false);
-            CorrelationBetweenAllSpinesMovePeriods(1:14) = cellfun(@(x,y) [x,y], CorrelationBetweenAllSpinesMovePeriods, varargin{i}.CorrelationBetweenAllSpinesMovementPeriods, 'Uni', false);
-            CorrelationBetweenAllSpinesStillPeriods(1:14) = cellfun(@(x,y) [x,y], CorrelationBetweenAllSpinesStillPeriods, varargin{i}.CorrelationBetweenAllSpinesStillPeriods, 'Uni', false);
-            if any(cell2mat(cellfun(@(x,y) length(x)~=length(y), varargin{i}.CorrelationBetweenFarSpines, varargin{i}.DistanceBetweenFarSpines, 'Uni', false)))
-                problemdays = find(cell2mat(cellfun(@(x,y) length(x)~=length(y), varargin{i}.CorrelationBetweenFarSpines, varargin{i}.DistanceBetweenFarSpines, 'Uni', false)));
-                file = inputname(i); file = file(1:5);
-                for c = 1:length(problemdays)
-                    fprintf('Correlation and distance vectors \n not equal for session %d \n from input %2s \n', problemdays(c), file)
-                end
+        AllDistancesBetweenAllSpines(1:14) = cellfun(@(x,y) [x,y], AllDistancesBetweenAllSpines, varargin{i}.DistanceBetweenAllSpines, 'Uni', false);
+        CorrelationBetweenAllSpines(1:14) = cellfun(@(x,y) [x,y], CorrelationBetweenAllSpines, varargin{i}.CorrelationBetweenAllSpines, 'Uni', false);
+        CorrelationBetweenAllSpinesMovePeriods(1:14) = cellfun(@(x,y) [x,y], CorrelationBetweenAllSpinesMovePeriods, varargin{i}.CorrelationBetweenAllSpinesMovementPeriods, 'Uni', false);
+        CorrelationBetweenAllSpinesStillPeriods(1:14) = cellfun(@(x,y) [x,y], CorrelationBetweenAllSpinesStillPeriods, varargin{i}.CorrelationBetweenAllSpinesStillPeriods, 'Uni', false);
+        if any(cell2mat(cellfun(@(x,y) length(x)~=length(y), varargin{i}.CorrelationBetweenFarSpines, varargin{i}.DistanceBetweenFarSpines, 'Uni', false)))
+            problemdays = find(cell2mat(cellfun(@(x,y) length(x)~=length(y), varargin{i}.CorrelationBetweenFarSpines, varargin{i}.DistanceBetweenFarSpines, 'Uni', false)));
+            file = inputname(i); file = file(1:5);
+            for c = 1:length(problemdays)
+                fprintf('Correlation and distance vectors \n not equal for session %d \n from input %2s \n', problemdays(c), file)
             end
-                    AllDistancesBetweenFarSpines(1:14) = cellfun(@(x,y) [x;y], AllDistancesBetweenFarSpines, varargin{i}.DistanceBetweenFarSpines, 'Uni', false);
-                    CorrelationBetweenFarSpines(1:14) = cellfun(@(x,y) [x;y], CorrelationBetweenFarSpines, varargin{i}.CorrelationBetweenFarSpines, 'Uni', false);
-                    NearestMovementRelatedSpine(1:14) = cellfun(@(x,y) [x,y], NearestMovementRelatedSpine, varargin{i}.NearestMovementRelatedSpine, 'Uni', false);
-                    NextClosestMovementRelatedSpine(1:14) = cellfun(@(x,y) [x,y], NextClosestMovementRelatedSpine, varargin{i}.NextClosestMovementRelatedSpine, 'Uni', false);
-                    ThirdClosestMovementRelatedSpine(1:14) = cellfun(@(x,y) [x,y], ThirdClosestMovementRelatedSpine, varargin{i}.ThirdClosestMovementRelatedSpine, 'Uni', false);
-                    FourthClosestMovementRelatedSpine(1:14) = cellfun(@(x,y) [x,y], FourthClosestMovementRelatedSpine, varargin{i}.FourthClosestMovementRelatedSpine, 'Uni', false);
-                    CorrelationwithNearestMovementRelatedSpine(1:14) = cellfun(@(x,y) [x,y], CorrelationwithNearestMovementRelatedSpine, varargin{i}.CorrelationwithNearestMovementRelatedSpine, 'Uni', false);
-                    NearestHighlyCorrelatedMovementRelatedSpine(1:14) =  cellfun(@(x,y) [x,y], NearestHighlyCorrelatedMovementRelatedSpine, varargin{i}.NearestHighlyCorrelatedMovementRelatedSpine, 'Uni', false);
-                    NextClosestHighlyCorrelatedMovementRelatedSpine(1:14) =  cellfun(@(x,y) [x,y], NextClosestHighlyCorrelatedMovementRelatedSpine, varargin{i}.NextClosestHighlyCorrelatedMovementRelatedSpine, 'Uni', false);
-                    ThirdClosestHighlyCorrelatedMovementRelatedSpine(1:14) =  cellfun(@(x,y) [x,y], ThirdClosestHighlyCorrelatedMovementRelatedSpine, varargin{i}.ThirdClosestHighlyCorrelatedMovementRelatedSpine, 'Uni', false);
+        end
+        
+        AllDistancesBetweenFarSpines(1:14) = cellfun(@(x,y) [x;y], AllDistancesBetweenFarSpines, varargin{i}.DistanceBetweenFarSpines, 'Uni', false);
+        CorrelationBetweenFarSpines(1:14) = cellfun(@(x,y) [x;y], CorrelationBetweenFarSpines, varargin{i}.CorrelationBetweenFarSpines, 'Uni', false);
+        MovSpinetoNearestMovementRelatedSpine(1:14) = cellfun(@(x,y) [x,y], MovSpinetoNearestMovementRelatedSpine, varargin{i}.NearestMovementRelatedSpine, 'Uni', false);
+        MovSpinetoNextClosestMovementRelatedSpine(1:14) = cellfun(@(x,y) [x,y], MovSpinetoNextClosestMovementRelatedSpine, varargin{i}.NextClosestMovementRelatedSpine, 'Uni', false);
+        MovSpinetoThirdClosestMovementRelatedSpine(1:14) = cellfun(@(x,y) [x,y], MovSpinetoThirdClosestMovementRelatedSpine, varargin{i}.ThirdClosestMovementRelatedSpine, 'Uni', false);
+        MovSpinetoFourthClosestMovementRelatedSpine(1:14) = cellfun(@(x,y) [x,y], MovSpinetoFourthClosestMovementRelatedSpine, varargin{i}.FourthClosestMovementRelatedSpine, 'Uni', false);
+        CorrelationwithNearestMovementRelatedSpine(1:14) = cellfun(@(x,y) [x,y], CorrelationwithNearestMovementRelatedSpine, varargin{i}.CorrelationwithNearestMovementRelatedSpine, 'Uni', false);
+        MoveSpinetoNearestFunctionallyClusteredMoveSpine(1:14) = cellfun(@(x,y) [x,y], MoveSpinetoNearestFunctionallyClusteredMoveSpine, varargin{i}.MoveSpinetoNearestFunctionallyClusteredMoveSpine, 'Uni', false);
+        MoveSpinetoNextFunctionallyClusteredMoveSpine(1:14) = cellfun(@(x,y) [x,y], MoveSpinetoNextFunctionallyClusteredMoveSpine, varargin{i}.MoveSpinetoNextFunctionallyClusteredMoveSpine, 'Uni', false);
+        MoveSpinetoThirdFunctionallyClusteredMoveSpine(1:14) = cellfun(@(x,y) [x,y], MoveSpinetoThirdFunctionallyClusteredMoveSpine, varargin{i}.MoveSpinetoThirdFunctionallyClusteredMoveSpine, 'Uni', false);
+        MoveSpinetoFourthFunctionallyClusteredMoveSpine(1:14) = cellfun(@(x,y) [x,y], MoveSpinetoFourthFunctionallyClusteredMoveSpine, varargin{i}.MoveSpinetoFourthFunctionallyClusteredMoveSpine, 'Uni', false);
+        AllCorrelationswithNearbyMetaClusters(1:14) = cellfun(@(x,y) [x;y], AllCorrelationswithNearbyMetaClusters, varargin{i}.AllCorrelationswithNearbyMetaClusters, 'Uni', false);
+        AllCorrelationswithDistantMetaClusters(1:14) = cellfun(@(x,y) [x;y], AllCorrelationswithDistantMetaClusters, varargin{i}.AllCorrelationswithDistantMetaClusters, 'uni', false);
+        CorrofNearestMetaCluster(1:14) = cellfun(@(x,y) [x,y], CorrofNearestMetaCluster, varargin{i}.CorrelationofNearestMetaCluster, 'Uni', false);
+        CorrofNextMetaCluster(1:14) = cellfun(@(x,y) [x,y], CorrofNextMetaCluster, varargin{i}.CorrelationofNextMetaCluster, 'uni', false);
+        CorrofThirdMetaCluster(1:14) = cellfun(@(x,y) [x,y], CorrofThirdMetaCluster, varargin{i}.CorrelationofThirdMetaCluster, 'uni', false);
+        CorrofFourthMetaCluster(1:14) = cellfun(@(x,y) [x,y], CorrofFourthMetaCluster, varargin{i}.CorrelationofFourthMetaCluster, 'uni', false);
+        RandomMovementPairCorr(1:14) = cellfun(@(x,y) [x,y,], RandomMovementPairCorr, varargin{i}.RandomMovementPairCorrelation, 'uni', false);
+        NearestFunctionallyClusteredMovementRelatedSpine(1:14) =  cellfun(@(x,y) [x,y], NearestFunctionallyClusteredMovementRelatedSpine, varargin{i}.NearestFunctionallyClusteredMovementRelatedSpine, 'Uni', false);
+        NearestHighlyCorrelatedMovementRelatedSpine(1:14) = cellfun(@(x,y) [x,y], NearestHighlyCorrelatedMovementRelatedSpine, varargin{i}.NearestHighlyCorrelatedMovementRelatedSpine, 'Uni', false);
+        NextClosestFunctionallyClusteredMovementRelatedSpine(1:14) =  cellfun(@(x,y) [x,y], NextClosestFunctionallyClusteredMovementRelatedSpine, varargin{i}.NextClosestFunctionallyClusteredMovementRelatedSpine, 'Uni', false);
+        NextClosestHighlyCorrelatedMovementRelatedSpine(1:14) =  cellfun(@(x,y) [x,y], NextClosestHighlyCorrelatedMovementRelatedSpine, varargin{i}.NextClosestHighlyCorrelatedMovementRelatedSpine, 'Uni', false);
+        ThirdClosestFunctionallyClusteredMovementRelatedSpine(1:14) =  cellfun(@(x,y) [x,y], ThirdClosestFunctionallyClusteredMovementRelatedSpine, varargin{i}.ThirdClosestFunctionallyClusteredMovementRelatedSpine, 'Uni', false);
+        ThirdClosestHighlyCorrelatedMovementRelatedSpine(1:14) =  cellfun(@(x,y) [x,y], ThirdClosestHighlyCorrelatedMovementRelatedSpine, varargin{i}.ThirdClosestHighlyCorrelatedMovementRelatedSpine, 'Uni', false);
+        FourthClosestFunctionallyClusteredMovementRelatedSpine(1:14) =  cellfun(@(x,y) [x,y], FourthClosestFunctionallyClusteredMovementRelatedSpine, varargin{i}.FourthClosestFunctionallyClusteredMovementRelatedSpine, 'Uni', false);
+        FourthClosestHighlyCorrelatedMovementRelatedSpine(1:14) =  cellfun(@(x,y) [x,y], FourthClosestHighlyCorrelatedMovementRelatedSpine, varargin{i}.FourthClosestHighlyCorrelatedMovementRelatedSpine, 'Uni', false);
         DistanceBetweenCueSpines(i,1:14) = varargin{i}.MeanDistanceBetweenCueSpines;
         DistanceBetweenMovementSpines(i,1:14) = varargin{i}.MeanDistanceBetweenMovementSpines;
-            AllDistancesBetweenMovementSpines(1:14) = cellfun(@(x,y) [x,y], AllDistancesBetweenMovementSpines, varargin{i}.DistanceBetweenMovementSpines, 'Uni', false);
-            CorrelationBetweenMovementSpines(1:14) = cellfun(@(x,y) [x,y], CorrelationBetweenMovementSpines, varargin{i}.CorrelationBetweenMovementSpines, 'Uni', false);
-            CorrelationBetweenMovementSpinesMovePeriods(1:14) = cellfun(@(x,y) [x,y], CorrelationBetweenMovementSpinesMovePeriods, varargin{i}.CorrelationBetweenMovementSpinesMovementPeriods, 'Uni', false);
-            CorrelationBetweenMovementSpinesStillPeriods(1:14) = cellfun(@(x,y) [x,y], CorrelationBetweenMovementSpinesStillPeriods, varargin{i}.CorrelationBetweenMovementSpinesStillPeriods, 'Uni', false);
-                AllDistancesBetweenFarMovementSpines(1:14) = cellfun(@(x,y) [x,y], AllDistancesBetweenFarMovementSpines, varargin{i}.DistanceBetweenFarMovementSpines, 'Uni', false);
-                CorrelationBetweenFarMovementSpines(1:14) = cellfun(@(x,y) [x,y], CorrelationBetweenFarMovementSpines, varargin{i}.CorrelationBetweenFarMovementSpines, 'Uni', false);
-                MeanCorrelationBetweenFarMovementSpines(i,1:14) = cell2mat(cellfun(@nanmean, varargin{i}.CorrelationBetweenFarMovementSpines, 'Uni', false));
+        AllDistancesBetweenMovementSpines(1:14) = cellfun(@(x,y) [x,y], AllDistancesBetweenMovementSpines, varargin{i}.DistanceBetweenMovementSpines, 'Uni', false);
+        CorrelationBetweenMovementSpines(1:14) = cellfun(@(x,y) [x,y], CorrelationBetweenMovementSpines, varargin{i}.CorrelationBetweenMovementSpines, 'Uni', false);
+        CorrelationBetweenMovementSpinesMovePeriods(1:14) = cellfun(@(x,y) [x,y], CorrelationBetweenMovementSpinesMovePeriods, varargin{i}.CorrelationBetweenMovementSpinesMovementPeriods, 'Uni', false);
+        CorrelationBetweenMovementSpinesStillPeriods(1:14) = cellfun(@(x,y) [x,y], CorrelationBetweenMovementSpinesStillPeriods, varargin{i}.CorrelationBetweenMovementSpinesStillPeriods, 'Uni', false);
+        AllDistancesBetweenFarMovementSpines(1:14) = cellfun(@(x,y) [x,y], AllDistancesBetweenFarMovementSpines, varargin{i}.DistanceBetweenFarMovementSpines, 'Uni', false);
+        CorrelationBetweenFarMovementSpines(1:14) = cellfun(@(x,y) [x,y], CorrelationBetweenFarMovementSpines, varargin{i}.CorrelationBetweenFarMovementSpines, 'Uni', false);
+        MeanCorrelationBetweenFarMovementSpines(i,1:14) = cell2mat(cellfun(@nanmean, varargin{i}.CorrelationBetweenFarMovementSpines, 'Uni', false));
         DistanceBetweenPreSuccessSpines(i,1:14) = varargin{i}.MeanDistanceBetweenPreSuccessSpines;
         DistanceBetweenSuccessSpines(i,1:14) = varargin{i}.MeanDistanceBetweenSuccessSpines;
         DistanceBetweenMovementDuringCueSpines(i,1:14) = varargin{i}.MeanDistanceBetweenMovementDuringCueSpines;
@@ -3772,9 +3932,9 @@ else
 %         Spatial_Degree(i,1:14) = varargin{i}.MeanDendriticSpatialDegree;
 %         Temporal_Degree(i,1:14) = varargin{i}.MeanDendriticTemporalDegree;
 %         ST_Degree(i,1:14) = varargin{i}.MeanDendriticSpatioTemporalDegree;
+
+        MovementClusters(i,1:14) = varargin{i}.HighlyCorrelatedMovementRelatedSpines;
     end
-    
-    
     
     %%% Save Organized data for stats %%%
         
@@ -3972,10 +4132,10 @@ else
         
         a.DistanceBetweenCueSpines = DistanceBetweenCueSpines;
         a.DistanceBetweenMovementSpines = DistanceBetweenMovementSpines;
-            a.AllDistancesBetweenMovementSpines = AllDistancesBetweenMovementSpines;
-            a.CorrelationBetweenMovementSpines = CorrelationBetweenMovementSpines;
-            a.MeanCorrelationBetweenMovementSpines = MeanCorrelationBetweenMovementSpines;
-            a.MeanCorrelationBetweenFarMovementSpines = MeanCorrelationBetweenFarMovementSpines;
+        a.AllDistancesBetweenMovementSpines = AllDistancesBetweenMovementSpines;
+        a.CorrelationBetweenMovementSpines = CorrelationBetweenMovementSpines;
+        a.MeanCorrelationBetweenMovementSpines = MeanCorrelationBetweenMovementSpines;
+        a.MeanCorrelationBetweenFarMovementSpines = MeanCorrelationBetweenFarMovementSpines;
         a.DistanceBetweenSuccessSpines = DistanceBetweenSuccessSpines;
         a.DistanceBetweenRewardSpines = DistanceBetweenRewardSpines;
         
@@ -4004,510 +4164,10 @@ else
         a.PercentofMovementDuringCueRelatedDendrites = PercentofMovementDuringCueRelatedDendrites;
         a.PercentofRewardRelatedDendrites = PercentofRewardRelatedDendrites;
         
+        a.MovementClusters = MovementClusters; 
+        
     eval('ClusteringAllData = a;')
     save('ClusteringAllData', 'ClusteringAllData');
-        
-    %%%
-    %%% Average all input data
-    %%%
-        MeanAllClustersCorrwithCue = nanmean(AllClustersCorrwithCue,1);
-        MeanNonClusteredCorrwithCue = nanmean(NonClusteredCorrwithCue,1);
-        MeanAllClustersCorrwithMDC = nanmean(AllClustersCorrwithMDC, 1);
-        MeanNonClusteredCorrwithMDC = nanmean(NonClusteredCorrwithMDC,1);
-        MeanAllClustersCorrwithMovement = nanmean(AllClustersCorrwithMovement,1);
-        MeanNonClusteredCorrwithMovement = nanmean(NonClusteredCorrwithMovement,1);
-        MeanAllClustersCorrwithSuccess = nanmean(AllClustersCorrwithSuccess,1);
-        MeanNonClusteredCorrwithSuccess = nanmean(NonClusteredCorrwithSuccess,1);
-        MeanAllClustCorrwithReward = nanmean(AllClustCorrwithReward,1);
-        MeanNonClusteredCorrwithReward = nanmean(NonClusteredCorrwithReward,1);
-        
-        MeanCorrelationofClusters = cellfun(@nanmean, CorrelationofClusters);
-
-        MeanAllCausalClustersCorrwithMovement = nanmean(AllCausalClustersCorrwithMovement,1);
-        MeanCausalNonClusteredCorrwithMovement = nanmean(CausalNonClusteredCorrwithMovement,1);
-        MeanAllCausalClustersCorrwithMDC = nanmean(AllCausalClustersCorrwithMDC,1);
-        MeanCausalNonClusteredCorrwithMDC = nanmean(CausalNonClusteredCorrwithMDC,1);
-        MeanAllCausalClustersCorrwithCue = nanmean(AllCausalClustersCorrwithCue,1);
-        MeanCausalNonClusteredCorrwithCue = nanmean(CausalNonClusteredCorrwithCue,1);
-        MeanAllCausalClustersCorrwithSuccess = nanmean(AllCausalClustersCorrwithSuccess,1);
-        MeanCausalNonClusteredCorrwithSuccess = nanmean(CausalNonClusteredCorrwithSuccess,1);
-        MeanAllCausalClustCorrwithReward = nanmean(AllCausalClustCorrwithReward,1);
-        MeanCausalNonClusteredCorrwithReward = nanmean(CausalNonClusteredCorrwithReward,1);
-        
-        MeanCueRelatedClustersCorrwithCue = nanmean(CueRelatedClustersCorrwithCue,1);
-        MeanCueRelatedNonClusteredCorrwithCue = nanmean(CueRelatedNonClusteredCorrwithCue, 1);
-        MeanMDCRelatedClustersCorrwithMDC = nanmean(MDCRelatedClustersCorrwithMDC,1);
-        MeanMDCRelatedNonClusteredCorrwithMDC = nanmean(MDCRelatedNonClusteredCorrwithMDC, 1);
-        MeanMovementRelatedClustersCorrwithMovement = nanmean(MovementRelatedClustersCorrwithMovement,1);
-        MeanMovementRelatedNonClusteredCorrwithMovement = nanmean(MovementRelatedNonClusteredCorrwithMovement,1);
-        MeanSuccessRelatedClustersCorrwithSuccess = nanmean(SuccessRelatedClustersCorrwithSuccess,1);
-        MeanSuccessRelatedNonClusteredCorrwithSuccess = nanmean(SuccessRelatedNonClusteredCorrwithSuccess);
-        MeanRewardRelatedClustersCorrwithReward = nanmean(RewardRelatedClustersCorrwithReward,1);
-        MeanRewardRelatedNonClusteredCorrwithReward = nanmean(RewardRelatedNonClusteredCorrwithReward, 1);
-        
-        MeanCausalCueRelatedClustersCorrwithCue = nanmean(CausalCueRelatedClustersCorrwithCue,1);
-        MeanCausalCueRelatedNonClusteredCorrwithCue = nanmean(CausalCueRelatedNonClusteredCorrwithCue, 1);
-        MeanCausalMDCRelatedClustersCorrwithMDC = nanmean(CausalMDCRelatedClustersCorrwithMDC, 1);
-        MeanCausalMDCRelatedNonClusteredCorrwithMDC = nanmean(CausalMDCRelatedNonClusteredCorrwithMDC,1);
-        MeanCausalMovementRelatedClustersCorrwithMovement = nanmean(CausalMovementRelatedClustersCorrwithMovement,1);
-        MeanCausalMovementRelatedNonClusteredCorrwithMovement = nanmean(CausalMovementRelatedNonClusteredCorrwithMovement,1);
-        MeanCausalSuccessRelatedClustersCorrwithSuccess = nanmean(CausalSuccessRelatedClustersCorrwithSuccess,1);
-        MeanCausalSuccessRelatedNonClusteredCorrwithSuccess = nanmean(CausalSuccessRelatedNonClusteredCorrwithSuccess);
-        MeanCausalRewardRelatedClustersCorrwithReward = nanmean(CausalRewardRelatedClustersCorrwithReward,1);
-        MeanCausalRewardRelatedNonClusteredCorrwithReward = nanmean(CausalRewardRelatedNonClusteredCorrwithReward, 1);
-        
-        MeanFractionofCueSpinesThatAreClustered = nanmean(FractionofCueSpinesThatAreClustered,1);
-        MeanFractionofMovementSpinesThatAreClustered = nanmean(FractionofMovementSpinesThatAreClustered,1);
-        MeanFractionofPreSuccessSpinesThatAreClustered = nanmean(FractionofPreSuccessSpinesThatAreClustered,1);
-        MeanFractionofSuccessSpinesThatAreClustered = nanmean(FractionofSuccessSpinesThatAreClustered,1);
-        MeanFractionofMovementDuringCueSpinesThatAreClustered = nanmean(FractionofMovementDuringCueSpinesThatAreClustered,1);
-        MeanFractionofRewardSpinesThatAreClustered = nanmean(FractionofRewardSpinesThatAreClustered,1);
-        
-    
-        MeanSpatioTemporalDegree = cellfun(@nanmean, SpatioTemporalDegree);
-        MeanSpatialMovementCorrelation = cellfun(@nanmean, SpatialMovementCorrelation);
-        MeanTemporalMovementCorrelation = cellfun(@nanmean, TemporalMovementCorrelation);
-        MeanSpatioTemporalMovementCorrelation = cellfun(@nanmean, SpatioTemporalMovementCorrelation);
-        MeanDendSpatialFiedlerValue = cellfun(@(x) nanmean(x(:,1)),DendClusteringDegree);
-        MeanDendTemporalFiedlerValue = cellfun(@(x) nanmean(x(:,2)),DendClusteringDegree);
-        MeanDendSpatioTemporalFiedlerValue = cellfun(@(x) nanmean(x(:,3)),DendClusteringDegree);
-        MeanSpatioTemporalOverlap = cellfun(@nanmean, SpatioTemporalOverlap);
-        MeanSpatialDegree = cellfun(@nanmean, SpatialDegree);
-        MeanTemporalDegree = cellfun(@nanmean, TemporalDegree);
-        MeanSpatialDegreeofCueSpines = nanmean(SpatialDegreeofCueSpines,1);
-        MeanTemporalDegreeofCueSpines = nanmean(TemporalDegreeofCueSpines,1);
-        MeanSpatioTemporalDegreeofCueSpines = nanmean(SpatioTemporalDegreeofCueSpines,1);
-        MeanSpatialDegreeofMovementSpines = nanmean(SpatialDegreeofMovementSpines,1);
-        MeanTemporalDegreeofMovementSpines = nanmean(TemporalDegreeofMovementSpines,1);
-        MeanSpatioTemporalDegreeofMovementSpines = nanmean(SpatioTemporalDegreeofMovementSpines,1);
-        MeanSpatialDegreeofMovementDuringCueSpines = nanmean(SpatialDegreeofMovementDuringCueSpines,1);
-        MeanTemporalDegreeofMovementDuringCueSpines = nanmean(TemporalDegreeofMovementDuringCueSpines,1);
-        MeanSpatioTemporalDegreeofMovementDuringCueSpines = nanmean(SpatioTemporalDegreeofMovementDuringCueSpines,1);
-        MeanSpatialDegreeofPreSuccessSpines = nanmean(SpatialDegreeofPreSuccessSpines,1);
-        MeanTemporalDegreeofPreSuccessSpines = nanmean(TemporalDegreeofPreSuccessSpines,1);
-        MeanSpatioTemporalDegreeofPreSuccessSpines = nanmean(SpatioTemporalDegreeofPreSuccessSpines,1);
-        MeanSpatialDegreeofSuccessSpines = nanmean(SpatialDegreeofSuccessSpines,1);
-        MeanTemporalDegreeofSuccessSpines = nanmean(TemporalDegreeofSuccessSpines,1);
-        MeanSpatioTemporalDegreeofSuccessSpines = nanmean(SpatioTemporalDegreeofSuccessSpines,1);
-        MeanSpatialDegreeofRewardSpines = nanmean(SpatialDegreeofRewardSpines,1);
-        MeanTemporalDegreeofRewardSpines = nanmean(TemporalDegreeofRewardSpines,1);
-        MeanSpatioTemporalDegreeofRewardSpines = nanmean(SpatioTemporalDegreeofRewardSpines,1);
-       
-        
-        MeanClusterFreq = nanmean(ClusterFreq,1);
-        MeanNonClusteredFreq = nanmean(NonClusteredFreq,1);
-        MeanCueClusterFrequency = nanmean(CueClusterFrequency,1);
-        MeanMovementClusterFrequency = nanmean(MovementClusterFrequency,1);
-        MeanMovementDuringCueClusterFrequency = nanmean(MovementDuringCueClusterFrequency, 1);
-        MeanPreSuccessClusterFrequency = nanmean(PreSuccessClusterFrequency,1);
-        MeanSuccessClusterFrequency = nanmean(SuccessClusterFrequency,1);
-        MeanRewardClusterFrequency = nanmean(RewardClusterFrequency,1);
-        MeanCausalClusterFreq = nanmean(CausalClusterFreq,1);
-        MeanNonClusteredCausalFreq = nanmean(NonClusteredCausalFreq,1);
-        MeanCausalCueClusterFrequency = nanmean(CausalCueClusterFrequency,1);
-        MeanCausalMovementClusterFrequency = nanmean(CausalMovementClusterFrequency,1);
-        MeanCausalMovementDuringCueClusterFrequency = nanmean(CausalMovementDuringCueClusterFrequency,1);
-        MeanCausalPreSuccessClusterFrequency = nanmean(CausalPreSuccessClusterFrequency,1);
-        MeanCausalSuccessClusterFrequency = nanmean(CausalSuccessClusterFrequency,1);
-        MeanCausalRewardClusterFrequency = nanmean(CausalRewardClusterFrequency,1);
-
-        MeanClusteredSpineAmp = nanmean(ClusteredSpineAmp,1);
-        MeanNonClusteredSpineAmp = nanmean(NonClusteredSpineAmp,1);
-        MeanClusteredCueSpineAmp = nanmean(ClusteredCueSpineAmp,1);
-        MeanClusteredMoveSpineAmp = nanmean(ClusteredMoveSpineAmp,1);
-        MeanClusteredMovDuringCueSpineAmp = nanmean(ClusteredMovDuringCueSpineAmp,1);
-        MeanClusteredPreSuccessSpineAmp = nanmean(ClusteredPreSuccessSpineAmp,1);
-        MeanClusteredSuccessSpineAmp = nanmean(ClusteredSuccessSpineAmp,1);
-        MeanClusteredRewardSpineAmp = nanmean(ClusteredRewardSpineAmp,1);
-        MeanCausalClusteredSpineAmp = nanmean(CausalClusteredSpineAmp,1);
-        MeanCausalNonClusteredSpineAmp = nanmean(CausalNonClusteredSpineAmp, 1);
-        MeanCausalClusteredCueSpineAmp = nanmean(CausalClusteredCueSpineAmp,1);
-        MeanCausalClusteredMoveSpineAmp = nanmean(CausalClusteredMoveSpineAmp,1);
-        MeanCausalClusteredMovDuringCueSpineAmp = nanmean(CausalClusteredMovDuringCueSpineAmp,1);
-        MeanCausalClusteredPreSuccessSpineAmp = nanmean(CausalClusteredPreSuccessSpineAmp,1);
-        MeanCausalClusteredSuccessSpineAmp = nanmean(CausalClusteredSuccessSpineAmp,1);
-        MeanCausalClusteredRewardSpineAmp = nanmean(CausalClusteredRewardSpineAmp,1);
-        
-        MeanClustDendFreq = nanmean(ClustDendFreq,1);
-        MeanNonClustDendFreq = nanmean(NonClustDendFreq,1);
-        MeanCueClustDendFreq = nanmean(CueClustDendFreq,1);
-        MeanMovClustDendFreq = nanmean(MovClustDendFreq,1);
-        MeanMovDuringCueClustDendFreq = nanmean(MovDuringCueClustDendFreq,1);
-        MeanPreSucClustDendFreq = nanmean(PreSucClustDendFreq,1);
-        MeanSucClustDendFreq = nanmean(SucClustDendFreq,1);
-        MeanRewClustDendFreq = nanmean(RewClustDendFreq,1);
-        MeanNonMovClustDendFreq = nanmean(NonMovClustDendFreq,1);
-        
-        MeanNumCueRelSpines = nanmean(NumCueRelSpines,1);
-        MeanNumMovRelSpines = nanmean(NumMovRelSpines,1);
-        MeanNumCueORMovRelSpines = nanmean(NumCueORMovRelSpines,1);
-        MeanNumPreSucRelSpines = nanmean(NumPreSucRelSpines,1);
-        MeanNumSucRelSpines = nanmean(NumSucRelSpines,1);
-        MeanNumMovDuringCueRelSpines = nanmean(NumMovDuringCueRelSpines,1);
-        MeanNumRewRelSpines = nanmean(NumRewRelSpines,1);
-        MeanNumCausalMovSpines = nanmean(NumCausalMovSpines,1);
-        MeanNumCausalSucSpines = nanmean(NumCausalSucSpines,1);
-        MeanNumCausalCueSpines = nanmean(NumCausalCueSpines,1);
-        
-        MeanNumClustSpines = nanmean(NumClustSpines,1);
-        MeanNumClustCueSpines = nanmean(NumClustCueSpines,1);
-        MeanNumClustMovSpines = nanmean(NumClustMovSpines,1);
-        MeanNumClustMixSpines = nanmean(NumClustMixSpines,1);
-        MeanNumClustPreSucSpines = nanmean(NumClustPreSucSpines,1);
-        MeanNumClustSucSpines = nanmean(NumClustSucSpines,1);
-        MeanNumClustMovDuringCueSpines = nanmean(NumClustMovDuringCueSpines,1);
-        MeanNumClustRewSpines = nanmean(NumClustRewSpines,1);
-        MeanNumFarClustSpines = nanmean(NumFarClustSpines,1);
-        MeanNumFarClustCueSpines = nanmean(NumFarClustCueSpines,1);
-        MeanNumFarClustMovSpines = nanmean(NumFarClustMovSpines,1);
-        MeanNumFarClustMixSpines = nanmean(NumFarClustMixSpines,1);
-        MeanNumFarClustPreSucSpines = nanmean(NumFarClustPreSucSpines,1);
-        MeanNumFarClustSucSpines = nanmean(NumFarClustSucSpines,1);
-        MeanNumFarClustMovDuringCueSpines = nanmean(NumFarClustMovDuringCueSpines,1);
-        MeanNumFarClustRewSpines = nanmean(NumFarClustRewSpines,1);
-        MeanNumCausClustSpines = nanmean(NumCausClustSpines,1);
-        MeanNumCausClustCueSpines = nanmean(NumCausClustCueSpines,1);
-        MeanNumCausClustMovSpines = nanmean(NumCausClustMovSpines,1);
-        MeanNumCausClustMovDuringCueSpines = nanmean(NumCausClustMovDuringCueSpines,1);
-        MeanNumCausClustPreSucSpines = nanmean(NumCausClustPreSucSpines,1);
-        MeanNumCausClustSucSpines = nanmean(NumCausClustSucSpines,1);
-        MeanNumCausClustRewSpines = nanmean(NumCausClustRewSpines,1);
-
-        
-        MeanNumberofClusters = nanmean(NumberofClusters,1);
-        MeanNumberofCausalClusters = nanmean(NumberofCausalClusters,1);
-        MeanNumberofSpinesinEachCluster = nanmean(NumberofSpinesinEachCluster,1);
-        MeanNumberofSpinesinEachCausalCluster = nanmean(NumberofSpinesinEachCausalCluster,1);
-        MeanNumberofMovClusters = nanmean(NumberofMovClusters,1);
-        MeanNumberofSpinesinEachMovCluster = nanmean(NumberofSpinesinEachMovCluster,1);
-        
-        MeanCueClusterLength = nanmean(CueClusterLength,1);
-        MeanCueClusterMax = nanmean(CueClusterMax,1);
-        MeanMovClusterLength = nanmean(MovClusterLength,1);
-        MeanMovClusterMax = nanmean(MovClusterMax,1);
-        MeanMixClusterLength = nanmean(MixClusterLength,1);
-        MeanMixClusterMax = nanmean(MixClusterMax,1);
-        MeanPreSucClusterLength = nanmean(PreSucClusterLength,1);
-        MeanPreSucClusterMax = nanmean(PreSucClusterMax,1);
-        MeanSucClusterLength = nanmean(SucClusterLength,1);
-        MeanSucClusterMax = nanmean(SucClusterMax,1);
-        MeanMovDuringCueClusterLength = nanmean(MovDuringCueClusterLength,1);
-        MeanMovDuringCueClusterMax = nanmean(MovDuringCueClusterMax, 1);
-        MeanRewClusterLength = nanmean(RewClusterLength,1);
-        MeanRewClusterMax = nanmean(RewClusterMax,1);
-        MeanAllClusterLength = nanmean(AllClusterLength,1);
-        MeanAllClusterMax = nanmean(AllClusterMax,1);
-        MeanCausalCueClusterLength = nanmean(CausalCueClusterLength,1);
-        MeanCausalCueClusterMax = nanmean(CausalCueClusterMax,1);
-        MeanCausalMovClusterLength = nanmean(CausalMovClusterLength,1);
-        MeanCausalMovClusterMax = nanmean(CausalMovClusterMax,1);
-        MeanCausalSucClusterLength = nanmean(CausalSucClusterLength,1);
-        MeanCausalSucClusterMax = nanmean(CausalSucClusterMax,1);
-        MeanCausalRewClusterLength = nanmean(CausalRewClusterLength,1);
-        MeanCausalRewClusterMax = nanmean(CausalRewClusterMax,1);
-        MeanAllCausalClusterLength = nanmean(AllCausalClusterLength,1);
-        MeanAllCausalClusterMax = nanmean(AllCausalClusterMax,1);
-        
-        MeanFarCueClusterLength = nanmean(FarCueClusterLength,1);
-        MeanFarMovClusterLength = nanmean(FarMovClusterLength,1);
-        MeanFarMixClusterLength = nanmean(FarMixClusterLength,1);
-        MeanFarPreSucClusterLength = nanmean(FarPreSucClusterLength,1);
-        MeanFarSucClusterLength = nanmean(FarSucClusterLength,1);
-        MeanFarMovDuringCueClusterLength = nanmean(FarMovDuringCueClusterLength,1);
-        MeanFarRewClusterLength = nanmean(FarRewClusterLength,1);
-        MeanAllFarClusterLength = nanmean(AllFarClusterLength,1);
-
-        
-        MeanDistanceBetweenCueSpines = nanmean(DistanceBetweenCueSpines,1);
-        MeanDistanceBetweenMovementSpines = nanmean(DistanceBetweenMovementSpines,1);
-        MeanDistanceBetweenPreSuccessSpines = nanmean(DistanceBetweenPreSuccessSpines,1);
-        MeanDistanceBetweenSuccessSpines = nanmean(DistanceBetweenSuccessSpines,1);
-        MeanDistanceBetweenMovementDuringCueSpines = nanmean(DistanceBetweenMovementDuringCueSpines,1);
-        MeanDistanceBetweenRewardSpines = nanmean(DistanceBetweenRewardSpines,1);
-        
-        MeanClusteredSpines_CorrwithDend = nanmean(ClusteredSpines_CorrwithDend,1);
-        MeanFilteredClusteredSpines_CorrwithDend = nanmean(FilteredClusteredSpines_CorrwithDend,1);
-        MeanNonClusteredSpines_CorrwithDend = nanmean(NonClusteredSpines_CorrwithDend,1);
-        MeanCausalClusteredSpines_CorrwithDend = nanmean(CausalClusteredSpines_CorrwithDend,1);
-        MeanFilteredCausalClusteredSpines_CorrwithDend = nanmean(FilteredCausalClusteredSpines_CorrwithDend,1);
-        MeanNonCausalClusteredSpines_CorrwithDend = nanmean(NonCausalClusteredSpines_CorrwithDend,1);
-        MeanCueRelClusteredSpines_CorrwithDend = nanmean(CueRelClusteredSpines_CorrwithDend,1);
-        MeanMovRelClusteredSpines_CorrwithDend = nanmean(MovRelClusteredSpines_CorrwithDend,1);
-        MeanSucRelClusteredSpines_CorrwithDend = nanmean(SucRelClusteredSpines_CorrwithDend,1);
-        MeanRewRelClusteredSpines_CorrwithDend = nanmean(RewRelClusteredSpines_CorrwithDend,1);
-        MeanCueRelCausalClusteredSpines_CorrwithDend = nanmean(CueRelCausalClusteredSpines_CorrwithDend,1);
-        MeanMovRelCausalClusteredSpines_CorrwithDend = nanmean(MovRelCausalClusteredSpines_CorrwithDend,1);
-        MeanSucRelCausalClusteredSpines_CorrwithDend = nanmean(SucRelCausalClusteredSpines_CorrwithDend,1);
-        MeanRewRelCausalClusteredSpines_CorrwithDend = nanmean(RewRelCausalClusteredSpines_CorrwithDend,1);
-        
-        AllMeanCorrelationBetweenFarMovementSpines = nanmean(MeanCorrelationBetweenFarMovementSpines,1);
-        
-%         MeanFractionofClusterThatsMovementRelated = nanmean(FractionofClusterThatsMovementRelated,1);
-%         MeanFractionofCausalClusterThatsMovementRelated = nanmean(FractionofCausalClusterThatsMovementRelated,1);
-
-        MeanPercentofCueRelatedDendrites = nanmean(PercentofCueRelatedDendrites,1);
-        MeanPercentofMovementRelatedDendrites = nanmean(PercentofMovementRelatedDendrites,1);
-        MeanPercentofPreSuccessRelatedDendrites = nanmean(PercentofPreSuccessRelatedDendrites,1);
-        MeanPercentofSuccessRelatedDendrites = nanmean(PercentofSuccessRelatedDendrites,1);
-        MeanPercentofMovementDuringCueRelatedDendrites = nanmean(PercentofMovementDuringCueRelatedDendrites, 1);
-        MeanPercentofRewardRelatedDendrites = nanmean(PercentofRewardRelatedDendrites,1);
-
-    for i = 1:14
-        MeanSpatialDegree(1,i) = nanmean(SpatialDegree{i});
-        MeanTemporalDegree(1,i) = nanmean(TemporalDegree{i});
-    end
-    
-    %%%
-    %%% Determine error of input data
-    %%%
-    
-    for i = 1:14
-        AllClustersCorrwithMovementSEM(1,i) = nanstd(AllClustersCorrwithMovement(:,i),0,1)/sqrt(sum(~isnan(AllClustersCorrwithMovement(:,i))));
-        NonClusteredCorrwithMovementSEM(1,i) = nanstd(NonClusteredCorrwithMovement(:,i),0,1)/sqrt(sum(~isnan(NonClusteredCorrwithMovement(:,i))));
-        AllClustersCorrwithCueSEM(1,i) = nanstd(AllClustersCorrwithCue(:,i),0,1)/sqrt(sum(~isnan(AllClustersCorrwithCue(:,i))));
-        NonClusteredCorrwithCueSEM(1,i) = nanstd(NonClusteredCorrwithCue(:,i),0,1)/sqrt(sum(~isnan(NonClusteredCorrwithCue(:,i))));
-        AllClustersCorrwithMDCSEM(1,i) = nanstd(AllClustersCorrwithMDC(:,i),0,1)/sqrt(sum(~isnan(AllClustersCorrwithMDC(:,i))));
-        NonClusteredCorrwithMDCSEM(1,i) = nanstd(NonClusteredCorrwithMDC(:,i),0,1)/sqrt(sum(~isnan(NonClusteredCorrwithCue(:,i))));
-        AllClustersCorrwithSuccessSEM(1,i) = nanstd(AllClustersCorrwithSuccess(:,i),0,1)/sqrt(sum(~isnan(AllClustersCorrwithSuccess(:,i))));
-        NonClusteredCorrwithSuccessSEM(1,i) = nanstd(NonClusteredCorrwithSuccess(:,i),0,1)/sqrt(sum(~isnan(NonClusteredCorrwithSuccess(:,i))));
-        AllClustCorrwithRewardSEM(1,i) = nanstd(AllClustCorrwithReward(:,i),0,1)/sqrt(sum(~isnan(AllClustCorrwithReward(:,i))));
-        NonClusteredCorrwithRewardSEM(1,i) = nanstd(NonClusteredCorrwithReward(:,i),0,1)/sqrt(sum(~isnan(NonClusteredCorrwithReward(:,i))));
-        
-        CorrelationofClustersSEM(1,i) = nanstd(CorrelationofClusters{i},0,1)/sqrt(sum(~isnan(CorrelationofClusters{i})));
-        
-        AllCausalClustersCorrwithMovementSEM(1,i) = nanstd(AllCausalClustersCorrwithMovement(:,i),0,1)/sqrt(sum(~isnan(AllCausalClustersCorrwithMovement(:,i))));
-        CausalNonClusteredCorrwithMovementSEM(1,i) = nanstd(CausalNonClusteredCorrwithMovement(:,i),0,1)/sqrt(sum(~isnan(CausalNonClusteredCorrwithMovement(:,i))));
-        AllCausalClustersCorrwithCueSEM(1,i) = nanstd(AllCausalClustersCorrwithCue(:,i),0,1)/sqrt(sum(~isnan(AllCausalClustersCorrwithCue(:,i))));
-        CausalNonClusteredCorrwithCueSEM(1,i) = nanstd(CausalNonClusteredCorrwithCue(:,i),0,1)/sqrt(sum(~isnan(CausalNonClusteredCorrwithCue(:,i))));
-        AllCausalClustersCorrwithMDCSEM(1,i) = nanstd(AllCausalClustersCorrwithMDC(:,i),0,1)/sqrt(sum(~isnan(AllCausalClustersCorrwithMDC(:,i))));
-        CausalNonClusteredCorrwithMDCSEM(1,i) = nanstd(CausalNonClusteredCorrwithMDC(:,i),0,1)/sqrt(sum(~isnan(CausalNonClusteredCorrwithMDC(:,i))));
-        AllCausalClustersCorrwithSuccessSEM(1,i) = nanstd(AllCausalClustersCorrwithSuccess(:,i),0,1)/sqrt(sum(~isnan(AllCausalClustersCorrwithSuccess(:,i))));
-        CausalNonClusteredCorrwithSuccessSEM(1,i) = nanstd(CausalNonClusteredCorrwithSuccess(:,i),0,1)/sqrt(sum(~isnan(CausalNonClusteredCorrwithSuccess(:,i))));
-        AllCausalClustCorrwithRewardSEM(1,i) = nanstd(AllCausalClustCorrwithReward(:,i),0,1)/sqrt(sum(~isnan(AllCausalClustCorrwithReward(:,i))));
-        CausalNonClusteredCorrwithRewardSEM(1,i) = nanstd(CausalNonClusteredCorrwithReward(:,i),0,1)/sqrt(sum(~isnan(CausalNonClusteredCorrwithReward(:,i))));
-        
-        CueRelatedClustersCorrwithCueSEM(1,i) = nanstd(CueRelatedClustersCorrwithCue(:,i),0,1)/sqrt(sum(~isnan(CueRelatedClustersCorrwithCue(:,i))));
-        CueRelatedNonClusteredCorrwithCueSEM(1,i) = nanstd(CueRelatedNonClusteredCorrwithCue(:,i),0,1)/sqrt(sum(~isnan(CueRelatedNonClusteredCorrwithCue(:,i))));
-        MovementRelatedClustersCorrwithMovementSEM(1,i) = nanstd(MovementRelatedClustersCorrwithMovement(:,i),0,1)/sqrt(sum(~isnan(MovementRelatedClustersCorrwithMovement(:,i))));
-        MovementRelatedNonClusteredCorrwithMovementSEM(1,i) = nanstd(MovementRelatedNonClusteredCorrwithMovement(:,i),0,1)/sqrt(sum(~isnan(MovementRelatedNonClusteredCorrwithMovement(:,i))));
-        MDCRelatedClustersCorrwithMDCSEM(1,i) = nanstd(MDCRelatedClustersCorrwithMDC(:,i),0,1)/sqrt(sum(~isnan(MDCRelatedClustersCorrwithMDC(:,i))));
-        MDCRelatedNonClusteredCorrwithMDCSEM(1,i) = nanstd(MDCRelatedNonClusteredCorrwithMDC(:,i),0,1)/sqrt(sum(~isnan(MDCRelatedNonClusteredCorrwithMDC(:,i))));
-        SuccessRelatedClustersCorrwithSuccessSEM(1,i) = nanstd(SuccessRelatedClustersCorrwithSuccess(:,i),0,1)/sqrt(sum(~isnan(SuccessRelatedClustersCorrwithSuccess(:,i))));
-        SuccessRelatedNonClusteredCorrwithSuccessSEM(1,i) = nanstd(SuccessRelatedNonClusteredCorrwithSuccess(:,i),0,1)/sqrt(sum(~isnan(SuccessRelatedNonClusteredCorrwithSuccess(:,i))));
-        RewardRelatedClustersCorrwithRewardSEM(1,i) = nanstd(RewardRelatedClustersCorrwithReward(:,i),0,1)/sqrt(sum(~isnan(RewardRelatedClustersCorrwithReward(:,i))));
-        RewardRelatedNonClusteredCorrwithRewardSEM(1,i) = nanstd(RewardRelatedNonClusteredCorrwithReward(:,i),0,1)/sqrt(sum(~isnan(RewardRelatedNonClusteredCorrwithReward(:,i))));
-        
-        CausalCueRelatedClustersCorrwithCueSEM(1,i) = nanstd(CausalCueRelatedClustersCorrwithCue(:,i),0,1)/sqrt(sum(~isnan(CausalCueRelatedClustersCorrwithCue(:,i))));
-        CausalCueRelatedNonClusteredCorrwithCueSEM(1,i) = nanstd(CausalCueRelatedNonClusteredCorrwithCue(:,i),0,1)/sqrt(sum(~isnan(CausalCueRelatedNonClusteredCorrwithCue(:,i))));
-        CausalMovementRelatedClustersCorrwithMovementSEM(1,i) = nanstd(CausalMovementRelatedClustersCorrwithMovement(:,i),0,1)/sqrt(sum(~isnan(CausalMovementRelatedClustersCorrwithMovement(:,i))));
-        CausalMovementRelatedNonClusteredCorrwithMovementSEM(1,i) = nanstd(CausalMovementRelatedNonClusteredCorrwithMovement(:,i),0,1)/sqrt(sum(~isnan(CausalMovementRelatedNonClusteredCorrwithMovement(:,i))));
-        CausalMDCRelatedClustersCorrwithMDCSEM(1,i) = nanstd(CausalMDCRelatedClustersCorrwithMDC(:,i),0,1)/sqrt(sum(~isnan(CausalMDCRelatedClustersCorrwithMDC(:,i))));
-        CausalMDCRelatedNonClusteredCorrwithMDCSEM(1,i) = nanstd(CausalMDCRelatedNonClusteredCorrwithMDC(:,i),0,1)/sqrt(sum(~isnan(CausalMDCRelatedNonClusteredCorrwithMDC(:,i))));
-        CausalSuccessRelatedClustersCorrwithSuccessSEM(1,i) = nanstd(CausalSuccessRelatedClustersCorrwithSuccess(:,i),0,1)/sqrt(sum(~isnan(CausalSuccessRelatedClustersCorrwithSuccess(:,i))));
-        CausalSuccessRelatedNonClusteredCorrwithSuccessSEM(1,i) = nanstd(CausalSuccessRelatedNonClusteredCorrwithSuccess(:,i),0,1)/sqrt(sum(~isnan(CausalSuccessRelatedNonClusteredCorrwithSuccess(:,i))));
-        CausalRewardRelatedClustersCorrwithRewardSEM(1,i) = nanstd(CausalRewardRelatedClustersCorrwithReward(:,i),0,1)/sqrt(sum(~isnan(CausalRewardRelatedClustersCorrwithReward(:,i))));
-        CausalRewardRelatedNonClusteredCorrwithRewardSEM(1,i) = nanstd(CausalRewardRelatedNonClusteredCorrwithReward(:,i),0,1)/sqrt(sum(~isnan(CausalRewardRelatedNonClusteredCorrwithReward(:,i))));
-        
-        FractionofCueSpinesThatAreClusteredSEM(1,i) = nanstd(FractionofCueSpinesThatAreClustered(:,i),0,1)/sqrt(sum(~isnan(FractionofCueSpinesThatAreClustered(:,i))));
-        FractionofMovementSpinesThatAreClusteredSEM(1,i) = nanstd(FractionofMovementSpinesThatAreClustered(:,i),0,1)/sqrt(sum(~isnan(FractionofMovementSpinesThatAreClustered(:,i))));
-        FractionofPreSuccessSpinesThatAreClusteredSEM(1,i) = nanstd(FractionofPreSuccessSpinesThatAreClustered(:,i),0,1)/sqrt(sum(~isnan(FractionofPreSuccessSpinesThatAreClustered(:,i))));
-        FractionofSuccessSpinesThatAreClusteredSEM(1,i) = nanstd(FractionofSuccessSpinesThatAreClustered(:,i),0,1)/sqrt(sum(~isnan(FractionofSuccessSpinesThatAreClustered(:,i))));
-        FractionofMovementDuringCueSpinesThatAreClusteredSEM(1,i) = nanstd(FractionofMovementDuringCueSpinesThatAreClustered(:,i),0,1)/sqrt(sum(~isnan(FractionofMovementDuringCueSpinesThatAreClustered(:,i))));
-        FractionofRewardSpinesThatAreClusteredSEM(1,i) = nanstd(FractionofRewardSpinesThatAreClustered(:,i),0,1)/sqrt(sum(~isnan(FractionofRewardSpinesThatAreClustered(:,i))));
-        
-        SpatioTemporalDegreeSEM(1,i) = nanstd(SpatioTemporalDegree{i},0,1)/sqrt(sum(~isnan(SpatioTemporalDegree{i})));
-        SpatialMovementCorrelationSEM(1,i) = nanstd(SpatialMovementCorrelation{i},0,1)/sqrt(sum(~isnan(SpatialMovementCorrelation{i})));
-        TemporalMovementCorrelationSEM(1,i) = nanstd(TemporalMovementCorrelation{i},0,1)/sqrt(sum(~isnan(TemporalMovementCorrelation{i})));
-        SpatioTemporalMovementCorrelationSEM(1,i) = nanstd(SpatioTemporalMovementCorrelation{i},0,1)/sqrt(sum(~isnan(SpatioTemporalMovementCorrelation{i})));
-        DendSpatialFiedlerValueSEM(1,i) = nanstd(DendClusteringDegree{i}(:,1),0,1)/sqrt(sum(~isnan(DendClusteringDegree{i}(:,1))));
-        DendTemporalFiedlerValueSEM(1,i) = nanstd(DendClusteringDegree{i}(:,2),0,1)/sqrt(sum(~isnan(DendClusteringDegree{i}(:,2))));
-        DendSpatioTemporalFiedlerValueSEM(1,i) = nanstd(DendClusteringDegree{i}(:,3),0,1)/sqrt(sum(~isnan(DendClusteringDegree{i}(:,3))));
-        SpatialDegreeSEM(1,i) = nanstd(SpatialDegree{i},0,1)/sqrt(sum(~isnan(SpatialDegree{i})));
-        TemporalDegreeSEM(1,i) = nanstd(TemporalDegree{i},0,1)/sqrt(sum(~isnan(TemporalDegree{i})));
-        
-        ClusterFreqSEM(1,i) = nanstd(ClusterFreq(:,i),0,1)/sqrt(sum(~isnan(ClusterFreq(:,i))));
-        NonClusteredFreqSEM(1,i) = nanstd(NonClusteredFreq(:,i),0,1)/sqrt(sum(~isnan(NonClusteredFreq(:,i))));
-        CueClusterFrequencySEM(1,i) = nanstd(CueClusterFrequency(:,i),0,1)/sqrt(sum(~isnan(CueClusterFrequency(:,i))));
-        MovementClusterFrequencySEM(1,i) = nanstd(MovementClusterFrequency(:,i),0,1)/sqrt(sum(~isnan(MovementClusterFrequency(:,i))));
-        MovementDuringCueClusterFrequencySEM(1,i) = nanstd(MovementDuringCueClusterFrequency(:,i),0,1)/sqrt(sum(~isnan(MovementDuringCueClusterFrequency(:,i))));
-        PreSuccessClusterFrequencySEM(1,i) = nanstd(PreSuccessClusterFrequency(:,i),0,1)/sqrt(sum(~isnan(PreSuccessClusterFrequency(:,i))));
-        SuccessClusterFrequencySEM(1,i) = nanstd(SuccessClusterFrequency(:,i),0,1)/sqrt(sum(~isnan(SuccessClusterFrequency(:,i))));
-        RewardClusterFrequencySEM(1,i) = nanstd(RewardClusterFrequency(:,i),0,1)/sqrt(sum(~isnan(RewardClusterFrequency(:,i))));
-        CausalClusterFreqSEM(1,i) = nanstd(CausalClusterFreq(:,i),0,1)/sqrt(sum(~isnan(CausalClusterFreq(:,i))));
-        NonClusteredCausalFreqSEM(1,i) = nanstd(NonClusteredCausalFreq(:,i),0,1)/sqrt(sum(~isnan(NonClusteredCausalFreq(:,i))));
-        CausalCueClusterFrequencySEM(1,i) = nanstd(CausalCueClusterFrequency(:,i),0,1)/sqrt(sum(~isnan(CausalCueClusterFrequency(:,i))));
-        CausalMovementClusterFrequencySEM(1,i) = nanstd(CausalMovementClusterFrequency(:,i),0,1)/sqrt(sum(~isnan(CausalMovementClusterFrequency(:,i))));
-        CausalMovementDuringCueClusterFrequencySEM(1,i) = nanstd(CausalMovementDuringCueClusterFrequency(:,i),0,1)/sqrt(sum(~isnan(CausalMovementDuringCueClusterFrequency(:,i))));
-        CausalPreSuccessClusterFrequencySEM(1,i) = nanstd(CausalPreSuccessClusterFrequency(:,i),0,1)/sqrt(sum(~isnan(CausalPreSuccessClusterFrequency(:,i))));
-        CausalSuccessClusterFrequencySEM(1,i) = nanstd(CausalSuccessClusterFrequency(:,i),0,1)/sqrt(sum(~isnan(CausalSuccessClusterFrequency(:,i))));
-        CausalRewardClusterFrequencySEM(1,i) = nanstd(CausalRewardClusterFrequency(:,i),0,1)/sqrt(sum(~isnan(CausalRewardClusterFrequency(:,i))));
-
-        ClusteredSpineAmpSEM(1,i) = nanstd(ClusteredSpineAmp(:,i),0,1)/sqrt(sum(~isnan(ClusteredSpineAmp(:,i))));
-        NonClusteredSpineAmpSEM(1,i) = nanstd(NonClusteredSpineAmp(:,i),0,1)/sqrt(sum(~isnan(NonClusteredSpineAmp(:,i))));
-        ClusteredCueSpineAmpSEM(1,i) = nanstd(ClusteredCueSpineAmp(:,i),0,1)/sqrt(sum(~isnan(ClusteredCueSpineAmp(:,i))));
-        ClusteredMoveSpineAmpSEM(1,i) = nanstd(ClusteredMoveSpineAmp(:,i),0,1)/sqrt(sum(~isnan(ClusteredMoveSpineAmp(:,i))));
-        ClusteredSuccessSpineAmpSEM(1,i) = nanstd(ClusteredSuccessSpineAmp(:,i),0,1)/sqrt(sum(~isnan(ClusteredSuccessSpineAmp(:,i))));
-        ClusteredRewardSpineAmpSEM(1,i) = nanstd(ClusteredRewardSpineAmp(:,i),0,1)/sqrt(sum(~isnan(ClusteredRewardSpineAmp(:,i))));
-        CausalClusteredSpineAmpSEM(1,i) = nanstd(CausalClusteredSpineAmp(:,i),0,1)/sqrt(sum(~isnan(CausalClusteredSpineAmp(:,i))));
-        CausalNonClusteredSpineAmpSEM(1,i) = nanstd(CausalNonClusteredSpineAmp(:,i),0,1)/sqrt(sum(~isnan(CausalNonClusteredSpineAmp(:,i))));
-        CausalClusteredCueSpineAmpSEM(1,i) = nanstd(CausalClusteredCueSpineAmp(:,i),0,1)/sqrt(sum(~isnan(CausalClusteredCueSpineAmp(:,i))));
-        CausalClusteredMoveSpineAmpSEM(1,i) = nanstd(CausalClusteredMoveSpineAmp(:,i),0,1)/sqrt(sum(~isnan(CausalClusteredMoveSpineAmp(:,i))));
-        CausalClusteredSuccessSpineAmpSEM(1,i) = nanstd(CausalClusteredSuccessSpineAmp(:,i),0,1)/sqrt(sum(~isnan(CausalClusteredSuccessSpineAmp(:,i))));
-        CausalClusteredRewardSpineAmpSEM(1,i) = nanstd(CausalClusteredRewardSpineAmp(:,i),0,1)/sqrt(sum(~isnan(CausalClusteredRewardSpineAmp(:,i))));
-        
-        ClustDendFreqSEM(1,i) = nanstd(ClustDendFreq(:,i),0,1)/sqrt(sum(~isnan(ClustDendFreq(:,i))));
-        NonClustDendFreqSEM(1,i) = nanstd(NonClustDendFreq(:,i),0,1)/sqrt(sum(~isnan(NonClustDendFreq(:,i))));
-        CueClustDendFreqSEM(1,i) = nanstd(CueClustDendFreq(:,i),0,1)/sqrt(sum(~isnan(CueClustDendFreq(:,i))));
-        MovClustDendFreqSEM(1,i) = nanstd(MovClustDendFreq(:,i),0,1)/sqrt(sum(~isnan(MovClustDendFreq(:,i))));
-        MovDuringCueClustDendFreqSEM(1,i) = nanstd(MovDuringCueClustDendFreq(:,i),0,1)/sqrt(sum(~isnan(MovDuringCueClustDendFreq(:,i))));
-        PreSucClustDendFreqSEM(1,i) = nanstd(PreSucClustDendFreq(:,i),0,1)/sqrt(sum(~isnan(PreSucClustDendFreq(:,i))));
-        SucClustDendFreqSEM(1,i) = nanstd(SucClustDendFreq(:,i),0,1)/sqrt(sum(~isnan(SucClustDendFreq(:,i))));
-        RewClustDendFreqSEM(1,i) = nanstd(RewClustDendFreq(:,i),0,1)/sqrt(sum(~isnan(RewClustDendFreq(:,i))));
-        NonMovClustDendFreqSEM(1,i) = nanstd(NonMovClustDendFreq(:,i),0,1)/sqrt(sum(~isnan(NonMovClustDendFreq(:,i))));
-        
-        NumCueRelSpinesSEM(1,i) = nanstd(NumCueRelSpines(:,i),0,1)/sqrt(sum(~isnan(NumCueRelSpines(:,i))));
-        NumMovRelSpinesSEM(1,i) = nanstd(NumMovRelSpines(:,i),0,1)/sqrt(sum(~isnan(NumMovRelSpines(:,i))));
-        NumCueORMovRelSpinesSEM(1,i) = nanstd(NumCueORMovRelSpines(:,i),0,1)/sqrt(sum(~isnan(NumCueORMovRelSpines(:,i))));
-        NumPreSucRelSpinesSEM(1,i) = nanstd(NumPreSucRelSpines(:,i),0,1)/sqrt(sum(~isnan(NumPreSucRelSpines(:,i))));
-        NumSucRelSpinesSEM(1,i) = nanstd(NumSucRelSpines(:,i),0,1)/sqrt(sum(~isnan(NumSucRelSpines(:,i))));
-        NumMovDuringCueRelSpinesSEM(1,i) = nanstd(NumMovDuringCueRelSpines(:,i),0,1)/sqrt(sum(~isnan(NumMovDuringCueRelSpines(:,i))));
-        NumRewRelSpinesSEM(1,i) = nanstd(NumRewRelSpines(:,i),0,1)/sqrt(sum(~isnan(NumRewRelSpines(:,i))));
-        NumCausalMovSpinesSEM(1,i) = nanstd(NumCausalMovSpines(:,i),0,1)/sqrt(sum(~isnan(NumCausalMovSpines(:,i))));
-        NumCausalSucSpinesSEM(1,i) = nanstd(NumCausalSucSpines(:,i),0,1)/sqrt(sum(~isnan(NumCausalSucSpines(:,i))));
-        NumCausalCueSpinesSEM(1,i) = nanstd(NumCausalCueSpines(:,i),0,1)/sqrt(sum(~isnan(NumCausalCueSpines(:,i))));
-        
-        NumClustSpinesSEM(1,i) = nanstd(NumClustSpines(:,i),0,1)/sqrt(sum(~isnan(NumClustSpines(:,i))));
-        NumClustCueSpinesSEM(1,i) = nanstd(NumClustCueSpines(:,i),0,1)/sqrt(sum(~isnan(NumClustCueSpines(:,i))));
-        NumClustMovSpinesSEM(1,i) = nanstd(NumClustMovSpines(:,i),0,1)/sqrt(sum(~isnan(NumClustMovSpines(:,i))));
-        NumClustMixSpinesSEM(1,i) = nanstd(NumClustMixSpines(:,i),0,1)/sqrt(sum(~isnan(NumClustMixSpines(:,i))));
-        NumClustPreSucSpinesSEM(1,i) = nanstd(NumClustPreSucSpines(:,i),0,1)/sqrt(sum(~isnan(NumClustPreSucSpines(:,i))));
-        NumClustSucSpinesSEM(1,i) = nanstd(NumClustSucSpines(:,i),0,1)/sqrt(sum(~isnan(NumClustSucSpines(:,i))));
-        NumClustMovDuringCueSpinesSEM(1,i) = nanstd(NumClustMovDuringCueSpines(:,i),0,1)/sqrt(sum(~isnan(NumClustMovDuringCueSpines(:,i))));
-        NumClustRewSpinesSEM(1,i) = nanstd(NumClustRewSpines(:,i),0,1)/sqrt(sum(~isnan(NumClustRewSpines(:,i))));
-        
-        NumFarClustSpinesSEM(1,i) = nanstd(NumFarClustSpines(:,i),0,1)/sqrt(sum(~isnan(NumFarClustSpines(:,i))));
-        NumFarClustCueSpinesSEM(1,i) = nanstd(NumFarClustCueSpines(:,i),0,1)/sqrt(sum(~isnan(NumFarClustCueSpines(:,i))));
-        NumFarClustMovSpinesSEM(1,i) = nanstd(NumFarClustMovSpines(:,i),0,1)/sqrt(sum(~isnan(NumFarClustMovSpines(:,i))));
-        NumFarClustMixSpinesSEM(1,i) = nanstd(NumFarClustMixSpines(:,i),0,1)/sqrt(sum(~isnan(NumFarClustMixSpines(:,i))));
-        NumFarClustPreSucSpinesSEM(1,i) = nanstd(NumFarClustPreSucSpines(:,i),0,1)/sqrt(sum(~isnan(NumFarClustPreSucSpines(:,i))));
-        NumFarClustSucSpinesSEM(1,i) = nanstd(NumFarClustSucSpines(:,i),0,1)/sqrt(sum(~isnan(NumFarClustSucSpines(:,i))));
-        NumFarClustMovDuringCueSpinesSEM(1,i) = nanstd(NumFarClustMovDuringCueSpines(:,i),0,1)/sqrt(sum(~isnan(NumFarClustMovDuringCueSpines(:,i))));
-        NumFarClustRewSpinesSEM(1,i) = nanstd(NumFarClustRewSpines(:,i),0,1)/sqrt(sum(~isnan(NumFarClustRewSpines(:,i))));
-
-        NumCausClustSpinesSEM(1,i) = nanstd(NumCausClustSpines(:,i),0,1)/sqrt(sum(~isnan(NumCausClustSpines(:,i))));
-        NumCausClustCueSpinesSEM(1,i) = nanstd(NumCausClustCueSpines(:,i),0,1)/sqrt(sum(~isnan(NumCausClustCueSpines(:,i))));
-        NumCausClustMovSpinesSEM(1,i) = nanstd(NumCausClustMovSpines(:,i),0,1)/sqrt(sum(~isnan(NumCausClustMovSpines(:,i))));
-        NumCausClustMovDuringCueSpinesSEM(1,i) = nanstd(NumCausClustMovDuringCueSpines(:,i),0,1)/sqrt(sum(~isnan(NumCausClustMovDuringCueSpines(:,i))));
-        NumCausClustPreSucSpinesSEM(1,i) = nanstd(NumCausClustPreSucSpines(:,i),0,1)/sqrt(sum(~isnan(NumCausClustPreSucSpines(:,i))));
-        NumCausClustSucSpinesSEM(1,i) = nanstd(NumCausClustSucSpines(:,i),0,1)/sqrt(sum(~isnan(NumCausClustSucSpines(:,i))));
-        NumCausClustRewSpinesSEM(1,i) = nanstd(NumCausClustRewSpines(:,i),0,1)/sqrt(sum(~isnan(NumCausClustRewSpines(:,i))));
-
-        NumberofClustersSEM(1,i) = nanstd(NumberofClusters(:,i),0,1)/sqrt(sum(~isnan(NumberofClusters(:,i))));
-        NumberofCausalClustersSEM(1,i) = nanstd(NumberofCausalClusters(:,i),0,1)/sqrt(sum(~isnan(NumberofCausalClusters(:,i))));
-        NumberofSpinesinEachClusterSEM(1,i) = nanstd(NumberofSpinesinEachCluster(:,i),0,1)/sqrt(sum(~isnan(NumberofSpinesinEachCluster(:,i))));
-        NumberofSpinesinEachCausalClusterSEM(1,i) = nanstd(NumberofSpinesinEachCausalCluster(:,i),0,1)/sqrt(sum(~isnan(NumberofSpinesinEachCausalCluster(:,i))));
-        NumberofMovClustersSEM(1,i) = nanstd(NumberofMovClusters(:,i),0,1)/sqrt(sum(~isnan(NumberofMovClusters(:,i))));
-        NumberofSpinesinEachMovClusterSEM(1,i) = nanstd(NumberofSpinesinEachMovCluster(:,i),0,1)/sqrt(sum(~isnan(NumberofSpinesinEachMovCluster(:,i))));
-        
-        CueClusterLengthSEM(1,i) = nanstd(CueClusterLength(:,i),0,1)/sqrt(sum(~isnan(CueClusterLength(:,i))));
-        CueClusterMaxSEM(1,i) = nanstd(CueClusterMax(:,i),0,1)/sqrt(sum(~isnan(CueClusterMax(:,i))));
-        MovClusterLengthSEM(1,i) = nanstd(MovClusterLength(:,i),0,1)/sqrt(sum(~isnan(MovClusterLength(:,i))));
-        MovClusterMaxSEM(1,i) = nanstd(MovClusterMax(:,i),0,1)/sqrt(sum(~isnan(MovClusterMax(:,i))));
-        MixClusterLengthSEM(1,i) = nanstd(MixClusterLength(:,i),0,1)/sqrt(sum(~isnan(MixClusterLength(:,i))));
-        MixClusterMaxSEM(1,i) = nanstd(MixClusterMax(:,i),0,1)/sqrt(sum(~isnan(MixClusterMax(:,i))));
-        PreSucClusterLengthSEM(1,i) = nanstd(PreSucClusterLength(:,i),0,1)/sqrt(sum(~isnan(PreSucClusterLength(:,i))));
-        PreSucClusterMaxSEM(1,i) = nanstd(PreSucClusterMax(:,i),0,1)/sqrt(sum(~isnan(PreSucClusterMax(:,i))));
-        SucClusterLengthSEM(1,i) = nanstd(SucClusterLength(:,i),0,1)/sqrt(sum(~isnan(SucClusterLength(:,i))));
-        SucClusterMaxSEM(1,i) = nanstd(SucClusterMax(:,i),0,1)/sqrt(sum(~isnan(SucClusterMax(:,i))));
-        MovDuringCueClusterLengthSEM(1,i) = nanstd(MovDuringCueClusterLength(:,i),0,1)/sqrt(sum(~isnan(MovDuringCueClusterLength(:,i))));
-        MovDuringCueClusterMaxSEM(1,i) = nanstd(MovDuringCueClusterMax(:,i),0,1)/sqrt(sum(~isnan(MovDuringCueClusterMax(:,i))));
-        RewClusterLengthSEM(1,i) = nanstd(RewClusterLength(:,i),0,1)/sqrt(sum(~isnan(RewClusterLength(:,i))));
-        RewClusterMaxSEM(1,i) = nanstd(RewClusterMax(:,i),0,1)/sqrt(sum(~isnan(RewClusterMax(:,i))));
-        AllClusterLengthSEM(1,i) = nanstd(AllClusterLength(:,i),0,1)/sqrt(sum(~isnan(AllClusterLength(:,i))));
-        AllClusterMaxSEM(1,i) = nanstd(AllClusterMax(:,i),0,1)/sqrt(sum(~isnan(AllClusterMax(:,i))));
-        CausalCueClusterLengthSEM(1,i) = nanstd(CausalCueClusterLength(:,i),0,1)/sqrt(sum(~isnan(CausalCueClusterLength(:,i))));
-        CausalCueClusterMaxSEM(1,i) = nanstd(CausalCueClusterMax(:,i),0,1)/sqrt(sum(~isnan(CausalCueClusterMax(:,i))));
-        CausalMovClusterLengthSEM(1,i) = nanstd(CausalMovClusterLength(:,i),0,1)/sqrt(sum(~isnan(CausalMovClusterLength(:,i))));
-        CausalMovClusterMaxSEM(1,i) = nanstd(CausalMovClusterMax(:,i),0,1)/sqrt(sum(~isnan(CausalMovClusterMax(:,i))));
-        AllCausalClusterLengthSEM(1,i) = nanstd(AllCausalClusterLength(:,i),0,1)/sqrt(sum(~isnan(AllCausalClusterLength(:,i))));
-        AllCausalClusterMaxSEM(1,i) = nanstd(AllCausalClusterMax(:,i),0,1)/sqrt(sum(~isnan(AllCausalClusterMax(:,i))));
-        
-        FarCueClusterLengthSEM(1,i) = nanstd(FarCueClusterLength(:,i),0,1)/sqrt(sum(~isnan(FarCueClusterLength(:,i))));
-        FarMovClusterLengthSEM(1,i) = nanstd(FarMovClusterLength(:,i),0,1)/sqrt(sum(~isnan(FarMovClusterLength(:,i))));
-        FarMixClusterLengthSEM(1,i) = nanstd(FarMixClusterLength(:,i),0,1)/sqrt(sum(~isnan(FarMixClusterLength(:,i))));
-        FarPreSucClusterLengthSEM(1,i) = nanstd(FarPreSucClusterLength(:,i),0,1)/sqrt(sum(~isnan(FarPreSucClusterLength(:,i))));
-        FarSucClusterLengthSEM(1,i) = nanstd(FarSucClusterLength(:,i),0,1)/sqrt(sum(~isnan(FarSucClusterLength(:,i))));
-        FarMovDuringCueClusterLengthSEM(1,i) = nanstd(FarMovDuringCueClusterLength(:,i),0,1)/sqrt(sum(~isnan(FarMovDuringCueClusterLength(:,i))));
-        FarRewClusterLengthSEM(1,i) = nanstd(FarRewClusterLength(:,i),0,1)/sqrt(sum(~isnan(FarRewClusterLength(:,i))));
-        AllFarClusterLengthSEM(1,i) = nanstd(AllFarClusterLength(:,i),0,1)/sqrt(sum(~isnan(AllFarClusterLength(:,i))));
-
-        
-        DistanceBetweenCueSpinesSEM(1,i) = nanstd(DistanceBetweenCueSpines(:,i),0,1)/sqrt(sum(~isnan(DistanceBetweenCueSpines(:,i))));
-        DistanceBetweenMovementSpinesSEM(1,i) = nanstd(DistanceBetweenMovementSpines(:,i),0,1)/sqrt(sum(~isnan(DistanceBetweenMovementSpines(:,i))));
-        DistanceBetweenPreSuccessSpinesSEM(1,i) = nanstd(DistanceBetweenPreSuccessSpines(:,i),0,1)/sqrt(sum(~isnan(DistanceBetweenPreSuccessSpines(:,i))));
-        DistanceBetweenSuccessSpinesSEM(1,i) = nanstd(DistanceBetweenSuccessSpines(:,i),0,1)/sqrt(sum(~isnan(DistanceBetweenSuccessSpines(:,i))));
-        DistanceBetweenMovementDuringCueSpinesSEM(1,i) = nanstd(DistanceBetweenMovementDuringCueSpines(:,i),0,1)/sqrt(sum(~isnan(DistanceBetweenMovementDuringCueSpines(:,i))));
-        DistanceBetweenRewardSpinesSEM(1,i) = nanstd(DistanceBetweenRewardSpines(:,i),0,1)/sqrt(sum(~isnan(DistanceBetweenRewardSpines(:,i))));
-        
-        ClusteredSpines_CorrwithDendSEM(1,i) = nanstd(ClusteredSpines_CorrwithDend(:,i),0,1)/sqrt(sum(~isnan(ClusteredSpines_CorrwithDend(:,i))));
-        FilteredClusteredSpines_CorrwithDendSEM(1,i) = nanstd(FilteredClusteredSpines_CorrwithDend(:,i),0,1)/sqrt(sum(~isnan(FilteredClusteredSpines_CorrwithDend(:,i))));
-        NonClusteredSpines_CorrwithDendSEM(1,i) = nanstd(NonClusteredSpines_CorrwithDend(:,i),0,1)/sqrt(sum(~isnan(NonClusteredSpines_CorrwithDend(:,i))));
-        CausalClusteredSpines_CorrwithDendSEM(1,i) = nanstd(CausalClusteredSpines_CorrwithDend(:,i),0,1)/sqrt(sum(~isnan(CausalClusteredSpines_CorrwithDend(:,i))));
-        FilteredCausalClusteredSpines_CorrwithDendSEM(1,i) = nanstd(FilteredCausalClusteredSpines_CorrwithDend(:,i),0,1)/sqrt(sum(~isnan(FilteredCausalClusteredSpines_CorrwithDend(:,i))));
-        NonCausalClusteredSpines_CorrwithDendSEM(1,i) = nanstd(NonCausalClusteredSpines_CorrwithDend(:,i),0,1)/sqrt(sum(~isnan(NonCausalClusteredSpines_CorrwithDend(:,i))));
-        CueRelClusteredSpines_CorrwithDendSEM(1,i) = nanstd(CueRelClusteredSpines_CorrwithDend(:,i),0,1)/sqrt(sum(~isnan(CueRelClusteredSpines_CorrwithDend(:,i))));
-        MovRelClusteredSpines_CorrwithDendSEM(1,i) = nanstd(MovRelClusteredSpines_CorrwithDend(:,i),0,1)/sqrt(sum(~isnan(MovRelClusteredSpines_CorrwithDend(:,i))));
-        SucRelClusteredSpines_CorrwithDendSEM(1,i) = nanstd(SucRelClusteredSpines_CorrwithDend(:,i),0,1)/sqrt(sum(~isnan(SucRelClusteredSpines_CorrwithDend(:,i))));
-        RewRelClusteredSpines_CorrwithDendSEM(1,i) = nanstd(RewRelClusteredSpines_CorrwithDend(:,i),0,1)/sqrt(sum(~isnan(RewRelClusteredSpines_CorrwithDend(:,i))));
-        CueRelCausalClusteredSpines_CorrwithDendSEM(1,i) = nanstd(CueRelCausalClusteredSpines_CorrwithDend(:,i),0,1)/sqrt(sum(~isnan(CueRelCausalClusteredSpines_CorrwithDend(:,i))));
-        MovRelCausalClusteredSpines_CorrwithDendSEM(1,i) = nanstd(MovRelCausalClusteredSpines_CorrwithDend(:,i),0,1)/sqrt(sum(~isnan(MovRelCausalClusteredSpines_CorrwithDend(:,i))));
-        SucRelCausalClusteredSpines_CorrwithDendSEM(1,i) = nanstd(SucRelCausalClusteredSpines_CorrwithDend(:,i),0,1)/sqrt(sum(~isnan(SucRelCausalClusteredSpines_CorrwithDend(:,i))));
-        RewRelCausalClusteredSpines_CorrwithDendSEM(1,i) = nanstd(RewRelCausalClusteredSpines_CorrwithDend(:,i),0,1)/sqrt(sum(~isnan(RewRelCausalClusteredSpines_CorrwithDend(:,i))));
-        
-        MeanCorrelationBetweenMovementSpinesSEM(1,i) = nanstd(MeanCorrelationBetweenMovementSpines(:,i), 0,1)/sqrt(sum(~isnan(MeanCorrelationBetweenMovementSpines(:,i))));
-        MeanCorrelationBetweenFarMovementSpinesSEM(1,i) = nanstd(MeanCorrelationBetweenFarMovementSpines(:,i),0,1)/sqrt(sum(~isnan(MeanCorrelationBetweenFarMovementSpines(:,i))));
-        
-%         FractionofClusterThatsMovementRelatedSEM(1,i) = nanstd(FractionofClusterThatsMovementRelated(:,i),0,1)/sqrt(sum(~isnan(FractionofClusterThatsMovementRelated(:,i))));
-%         FractionofCausalClusterThatsMovementRelatedSEM(1,i) = nanstd(FractionofCausalClusterThatsMovementRelated(:,i),0,1)/sqrt(sum(~isnan(FractionofCausalClusterThatsMovementRelated(:,i))));
-
-        PercentofCueRelatedDendritesSEM(1,i) = nanstd(PercentofCueRelatedDendrites(:,i),0,1)/sqrt(sum(~isnan(PercentofCueRelatedDendrites(:,i))));
-        PercentofMovementRelatedDendritesSEM(1,i) = nanstd(PercentofMovementRelatedDendrites(:,i),0,1)/sqrt(sum(~isnan(PercentofMovementRelatedDendrites(:,i))));
-        PercentofPreSuccessRelatedDendritesSEM(1,i) = nanstd(PercentofPreSuccessRelatedDendrites(:,i),0,1)/sqrt(sum(~isnan(PercentofPreSuccessRelatedDendrites(:,i))));
-        PercentofSuccessRelatedDendritesSEM(1,i) = nanstd(PercentofSuccessRelatedDendrites(:,i),0,1)/sqrt(sum(~isnan(PercentofSuccessRelatedDendrites(:,i))));        
-        PercentofMovementDuringCueRelatedDendritesSEM(1,i) = nanstd(PercentofMovementDuringCueRelatedDendrites(:,i),0,1)/sqrt(sum(~isnan(PercentofMovementDuringCueRelatedDendrites(:,i))));
-        PercentofRewardRelatedDendritesSEM(1,i) = nanstd(PercentofRewardRelatedDendrites(:,i),0,1)/sqrt(sum(~isnan(PercentofRewardRelatedDendrites(:,i))));
-
-        try
-            SpatialDegreeSEM(1,i) = nanstd(SpatialDegree{i},0,1)/sqrt(sum(~isnan(SpatialDegree{i})));
-            TemporalDegreeSEM(1,i) = nanstd(TemporalDegree{i},0,1)/sqrt(sum(~isnan(TemporalDegree{i})));
-        catch
-            SpatialDegreeSEM(1,i) = nan;
-            TemporalDegreeSEM(1,i) = nan;
-        end
-        
-        SpatialDegreeofCueSpinesSEM(1,i) = nanstd(SpatialDegreeofCueSpines(:,i),0,1)/sqrt(sum(~isnan(SpatialDegreeofCueSpines(:,i))));
-        TemporalDegreeofCueSpinesSEM(1,i) = nanstd(TemporalDegreeofCueSpines(:,i),0,1)/sqrt(sum(~isnan(TemporalDegreeofCueSpines(:,i))));
-        SpatioTemporalDegreeofCueSpinesSEM(1,i) = nanstd(SpatioTemporalDegreeofCueSpines(:,i),0,1)/sqrt(sum(~isnan(SpatioTemporalDegreeofCueSpines(:,i))));
-        SpatialDegreeofMovementSpinesSEM(1,i) = nanstd(SpatialDegreeofMovementSpines(:,i),0,1)/sqrt(sum(~isnan(SpatialDegreeofMovementSpines(:,i))));
-        TemporalDegreeofMovementSpinesSEM(1,i) = nanstd(TemporalDegreeofMovementSpines(:,i),0,1)/sqrt(sum(~isnan(TemporalDegreeofMovementSpines(:,i))));
-        SpatioTemporalDegreeofMovementSpinesSEM(1,i) = nanstd(SpatioTemporalDegreeofMovementSpines(:,i),0,1)/sqrt(sum(~isnan(SpatioTemporalDegreeofMovementSpines(:,i))));
-        SpatialDegreeofMovementDuringCueSpinesSEM(1,i) = nanstd(SpatialDegreeofMovementDuringCueSpines(:,i),0,1)/sqrt(sum(~isnan(SpatialDegreeofMovementDuringCueSpines(:,i))));
-        TemporalDegreeofMovementDuringCueSpinesSEM(1,i) = nanstd(TemporalDegreeofMovementDuringCueSpines(:,i),0,1)/sqrt(sum(~isnan(TemporalDegreeofMovementDuringCueSpines(:,i))));
-        SpatioTemporalDegreeofMovementDuringCueSpinesSEM(1,i) = nanstd(SpatioTemporalDegreeofMovementDuringCueSpines(:,i),0,1)/sqrt(sum(~isnan(SpatioTemporalDegreeofMovementDuringCueSpines(:,i))));  
-        SpatialDegreeofPreSuccessSpinesSEM(1,i) = nanstd(SpatialDegreeofPreSuccessSpines(:,i),0,1)/sqrt(sum(~isnan(SpatialDegreeofPreSuccessSpines(:,i))));
-        TemporalDegreeofPreSuccessSpinesSEM(1,i) = nanstd(TemporalDegreeofPreSuccessSpines(:,i),0,1)/sqrt(sum(~isnan(TemporalDegreeofPreSuccessSpines(:,i))));
-        SpatioTemporalDegreeofPreSuccessSpinesSEM(1,i) = nanstd(SpatioTemporalDegreeofPreSuccessSpines(:,i),0,1)/sqrt(sum(~isnan(SpatioTemporalDegreeofPreSuccessSpines(:,i))));
-        SpatialDegreeofSuccessSpinesSEM(1,i) = nanstd(SpatialDegreeofSuccessSpines(:,i),0,1)/sqrt(sum(~isnan(SpatialDegreeofSuccessSpines(:,i))));
-        TemporalDegreeofSuccessSpinesSEM(1,i) = nanstd(TemporalDegreeofSuccessSpines(:,i),0,1)/sqrt(sum(~isnan(TemporalDegreeofSuccessSpines(:,i))));
-        SpatioTemporalDegreeofSuccessSpinesSEM(1,i) = nanstd(SpatioTemporalDegreeofSuccessSpines(:,i),0,1)/sqrt(sum(~isnan(SpatioTemporalDegreeofSuccessSpines(:,i))));
-        SpatialDegreeofRewardSpinesSEM(1,i) = nanstd(SpatialDegreeofRewardSpines(:,i),0,1)/sqrt(sum(~isnan(SpatialDegreeofRewardSpines(:,i))));
-        TemporalDegreeofRewardSpinesSEM(1,i) = nanstd(TemporalDegreeofRewardSpines(:,i),0,1)/sqrt(sum(~isnan(TemporalDegreeofRewardSpines(:,i))));
-        SpatioTemporalDegreeofRewardSpinesSEM(1,i) = nanstd(SpatioTemporalDegreeofRewardSpines(:,i),0,1)/sqrt(sum(~isnan(SpatioTemporalDegreeofRewardSpines(:,i))));
-        
-    end
-    
-    SpatioTemporalOverlapSEM = cellfun(@(x) nanstd(x)/sqrt(sum(~isnan(x))), SpatioTemporalOverlap);
-    
     
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     %%%%%%%%%% Plots %%%%%%%%%%%%
@@ -4525,7 +4185,7 @@ else
     magenta = [0.93 0.22 0.55]; purple = [0.57 0.15 0.56];
     pink = [0.9 0.6 0.6];       lpurple  = [0.7 0.15 1];
     red = [0.85 0.11 0.14];     black = [0.1 0.1 0.15];
-    dred = [0.6 0 0];          dorange = [0.8 0.3 0.03];
+    dred = [0.6 0 0];           dorange = [0.8 0.3 0.03];
     bgreen = [0 0.6 0.7];
     colorj = {red,lblue,green,lgreen,gray,brown,yellow,blue,purple,lpurple,magenta,pink,orange,brown,lbrown};
     rnbo = {dred, red, dorange, orange, yellow, lgreen, green, bgreen, blue, lblue, purple, magenta, lpurple, pink}; 
@@ -4538,144 +4198,107 @@ else
     
     scrsz = get(0, 'ScreenSize');
     figure('Position', scrsz); 
+    
+    stattype = 'parametric';
+    
     subplot(2,5,1)
-        plot(MeanAllClustersCorrwithCue, 'Color', black, 'Linewidth', 2); hold on;
-        plot(MeanNonClusteredCorrwithCue, 'Color', dred, 'Linewidth', 2);
-        plot(MeanCueRelatedClustersCorrwithCue, 'Color', blue, 'Linewidth', 2)
-        plot(MeanCueRelatedNonClusteredCorrwithCue, 'Color', gray, 'Linewidth', 2)
+        flex_plot(1:14, AllClustersCorrwithCue, stattype, black, 2); 
+        flex_plot(1:14, NonClusteredCorrwithCue, stattype, dred, 2);
+        flex_plot(1:14, CueRelatedClustersCorrwithCue, stattype, blue, 2)
+        flex_plot(1:14, CueRelatedNonClusteredCorrwithCue, stattype, gray, 2)
         title('Synaptic Events with Cue', 'Fontsize', 14)
         xlim([0 15])
-        r_errorbar(1:14, MeanAllClustersCorrwithCue, AllClustersCorrwithCueSEM, black)
-        r_errorbar(1:14, MeanNonClusteredCorrwithCue, NonClusteredCorrwithCueSEM, dred)
-        r_errorbar(1:14, MeanCueRelatedClustersCorrwithCue, CueRelatedClustersCorrwithCueSEM, blue)
-        r_errorbar(1:14, MeanCueRelatedNonClusteredCorrwithCue, CueRelatedNonClusteredCorrwithCueSEM, gray)
         xlabel('Session', 'Fontsize', 14)
         set(gca, 'XTick', 0:15); set(gca, 'XTickLabel', 0:15)
         ylabel('Correlation', 'Fontsize', 14)
     subplot(2,5,2)
-        plot(MeanAllClustersCorrwithMDC, 'Color', black, 'Linewidth', 2); hold on;
-        plot(MeanNonClusteredCorrwithMDC, 'Color', dred, 'Linewidth', 2);
-        plot(MeanMDCRelatedClustersCorrwithMDC, 'Color', blue, 'Linewidth', 2);
-        plot(MeanMDCRelatedNonClusteredCorrwithMDC, 'Color', gray, 'Linewidth', 2);
+        flex_plot(1:14, AllClustersCorrwithMDC, stattype, black, 2); 
+        flex_plot(1:14, NonClusteredCorrwithMDC, stattype, dred, 2);
+        flex_plot(1:14, MDCRelatedClustersCorrwithMDC, stattype, blue, 2);
+        flex_plot(1:14, MDCRelatedNonClusteredCorrwithMDC, stattype, gray, 2);
         title('Synaptic Events with Cue', 'Fontsize', 14)
         xlim([0 15])
-        r_errorbar(1:14, MeanAllClustersCorrwithMDC, AllClustersCorrwithMDCSEM, black)
-        r_errorbar(1:14, MeanNonClusteredCorrwithMDC, NonClusteredCorrwithMDCSEM, dred)
-        r_errorbar(1:14, MeanMDCRelatedClustersCorrwithMDC, MDCRelatedClustersCorrwithMDCSEM, blue)
-        r_errorbar(1:14, MeanMDCRelatedNonClusteredCorrwithMDC, MDCRelatedNonClusteredCorrwithMDCSEM, gray)
         xlabel('Session', 'Fontsize', 14)
         set(gca, 'XTick', 0:15); set(gca, 'XTickLabel', 0:15)
         ylabel('Correlation', 'Fontsize', 14)
     subplot(2,5,3)
-        plot(MeanAllClustersCorrwithMovement, 'Color', black, 'Linewidth', 2); hold on;
-        plot(MeanNonClusteredCorrwithMovement, 'Color', dred, 'Linewidth', 2);
-        plot(MeanMovementRelatedClustersCorrwithMovement, 'Color', blue, 'Linewidth', 2);
-        plot(MeanMovementRelatedNonClusteredCorrwithMovement, 'Color', gray, 'Linewidth', 2);
+        flex_plot(1:14, AllClustersCorrwithMovement, stattype, black, 2);
+        flex_plot(1:14, NonClusteredCorrwithMovement, stattype, dred, 2);
+        flex_plot(1:14, MovementRelatedClustersCorrwithMovement, stattype, blue, 2);
+        flex_plot(1:14, MovementRelatedNonClusteredCorrwithMovement,stattype, gray, 2);
         title('Synaptic Events with Movement', 'Fontsize', 14)
         xlim([0 15])
-        r_errorbar(1:14, MeanAllClustersCorrwithMovement, AllClustersCorrwithMovementSEM, black)
-        r_errorbar(1:14, MeanNonClusteredCorrwithMovement, NonClusteredCorrwithMovementSEM, dred)
-        r_errorbar(1:14, MeanMovementRelatedClustersCorrwithMovement, MovementRelatedClustersCorrwithMovementSEM, blue)
-        r_errorbar(1:14, MeanMovementRelatedNonClusteredCorrwithMovement, MovementRelatedNonClusteredCorrwithMovementSEM, gray)
         xlabel('Session', 'Fontsize', 14)
         set(gca, 'XTick', 0:15); set(gca, 'XTickLabel', 0:15)
         ylabel('Correlation', 'Fontsize', 14)
     subplot(2,5,4)
-        plot(MeanAllClustersCorrwithSuccess, 'Color', black, 'Linewidth', 2); hold on;
-        plot(MeanNonClusteredCorrwithSuccess, 'Color', dred', 'Linewidth', 2);
-        plot(MeanSuccessRelatedClustersCorrwithSuccess, 'Color', blue, 'Linewidth', 2);
-        plot(MeanSuccessRelatedNonClusteredCorrwithSuccess, 'Color', gray, 'Linewidth', 2);
+        flex_plot(1:14, AllClustersCorrwithSuccess, stattype, black,  2); hold on;
+        flex_plot(1:14, NonClusteredCorrwithSuccess, stattype, dred',  2);
+        flex_plot(1:14, SuccessRelatedClustersCorrwithSuccess, stattype, blue, 2);
+        flex_plot(1:14, SuccessRelatedNonClusteredCorrwithSuccess, stattype, gray, 2);
         title([{'Synaptic Events with'}, {'Successful Movements'}], 'Fontsize', 14)
         xlim([0 15])
-        r_errorbar(1:14, MeanAllClustersCorrwithSuccess, AllClustersCorrwithSuccessSEM, black)
-        r_errorbar(1:14, MeanNonClusteredCorrwithSuccess, NonClusteredCorrwithSuccessSEM, dred)
-        r_errorbar(1:14, MeanSuccessRelatedClustersCorrwithSuccess, SuccessRelatedClustersCorrwithSuccessSEM, blue)
-        r_errorbar(1:14, MeanSuccessRelatedNonClusteredCorrwithSuccess, SuccessRelatedNonClusteredCorrwithSuccessSEM, gray);
         xlabel('Session', 'Fontsize', 14)
         set(gca, 'XTick', 0:15); set(gca, 'XTickLabel', 0:15)
         ylabel('Correlation', 'Fontsize', 14)
     subplot(2,5,5)
-        plot(MeanAllClustCorrwithReward, 'Color', black, 'Linewidth', 2); hold on;
-        plot(MeanNonClusteredCorrwithReward, 'Color', dred', 'Linewidth', 2);
-        plot(MeanRewardRelatedClustersCorrwithReward, 'Color', blue, 'Linewidth', 2);
-        plot(MeanRewardRelatedNonClusteredCorrwithReward, 'Color', gray, 'Linewidth', 2)
+        a = flex_plot(1:14, AllClustCorrwithReward, stattype, black, 2); hold on;
+        b = flex_plot(1:14, NonClusteredCorrwithReward, stattype, dred', 2);
+        c = flex_plot(1:14, RewardRelatedClustersCorrwithReward, stattype, blue, 2);
+        d = flex_plot(1:14, RewardRelatedNonClusteredCorrwithReward, stattype, gray, 2);
         title('Synaptic Events with Reward', 'Fontsize', 14)
         xlim([0 15])
-        legend({'Clustered Spines', 'Nonclustered spines', '(Function)-related clustered spines', '(Function)-related nonclustered spines'})
-        r_errorbar(1:14, MeanAllClustCorrwithReward, AllClustCorrwithRewardSEM, black)
-        r_errorbar(1:14, MeanNonClusteredCorrwithReward, NonClusteredCorrwithRewardSEM, dred)
-        r_errorbar(1:14, MeanRewardRelatedClustersCorrwithReward, RewardRelatedClustersCorrwithRewardSEM, blue)
-        r_errorbar(1:14, MeanRewardRelatedNonClusteredCorrwithReward, RewardRelatedNonClusteredCorrwithRewardSEM, gray)
+        legend([a,b,c,d],{'Clustered Spines', 'Nonclustered spines', '(Function)-related clustered spines', '(Function)-related nonclustered spines'});
         xlabel('Session', 'Fontsize', 14)
         set(gca, 'XTick', 0:15); set(gca, 'XTickLabel', 0:15)
         ylabel('Correlation', 'Fontsize', 14)
     subplot(2,5,6)
-        plot(MeanAllCausalClustersCorrwithCue, 'Color', black, 'Linewidth', 2); hold on;
-        plot(MeanCausalNonClusteredCorrwithCue, 'Color', dred, 'Linewidth', 2);
-        plot(MeanCausalCueRelatedClustersCorrwithCue, 'Color', blue, 'Linewidth', 2);
-        plot(MeanCausalCueRelatedNonClusteredCorrwithCue, 'Color', gray, 'Linewidth', 2)
+        flex_plot(1:14, AllCausalClustersCorrwithCue, stattype, black, 2); hold on;
+        flex_plot(1:14, CausalNonClusteredCorrwithCue, stattype, dred, 2);
+        flex_plot(1:14, CausalCueRelatedClustersCorrwithCue, stattype, blue, 2);
+        flex_plot(1:14, CausalCueRelatedNonClusteredCorrwithCue, stattype, gray, 2)
         xlim([0 15])
         title('Causal Events with Cue', 'Fontsize', 14)
-        r_errorbar(1:14, MeanAllCausalClustersCorrwithCue, AllCausalClustersCorrwithCueSEM, black)
-        r_errorbar(1:14, MeanCausalNonClusteredCorrwithCue, CausalNonClusteredCorrwithCue, dred)
-        r_errorbar(1:14, MeanCausalCueRelatedClustersCorrwithCue, CausalCueRelatedClustersCorrwithCueSEM, blue)
-        r_errorbar(1:14, MeanCausalCueRelatedNonClusteredCorrwithCue, CausalCueRelatedNonClusteredCorrwithCueSEM, gray)
         xlabel('Session', 'Fontsize', 14)
         set(gca, 'XTick', 0:15); set(gca, 'XTickLabel', 0:15)
         ylabel('Correlation', 'Fontsize', 14)
     subplot(2,5,7)
-        plot(MeanAllCausalClustersCorrwithMDC, 'Color', black, 'Linewidth', 2); hold on;
-        plot(MeanCausalNonClusteredCorrwithMDC, 'Color', dred, 'Linewidth', 2);
-        plot(MeanCausalMDCRelatedClustersCorrwithMDC, 'Color', blue, 'Linewidth', 2);
-        plot(MeanCausalMDCRelatedNonClusteredCorrwithMDC, 'Color', gray, 'Linewidth', 2);
-        title('Synaptic Events with Cue', 'Fontsize', 14)
+        flex_plot(1:14, AllCausalClustersCorrwithMDC, stattype, black, 2); hold on;
+        flex_plot(1:14, CausalNonClusteredCorrwithMDC, stattype, dred, 2);
+        flex_plot(1:14, CausalMDCRelatedClustersCorrwithMDC, stattype, blue, 2);
+        flex_plot(1:14, CausalMDCRelatedNonClusteredCorrwithMDC, stattype, gray, 2);
+        title('Synaptic Events with MDC', 'Fontsize', 14)
         xlim([0 15])
-        r_errorbar(1:14, MeanAllCausalClustersCorrwithMDC, AllCausalClustersCorrwithMDCSEM, black)
-        r_errorbar(1:14, MeanCausalNonClusteredCorrwithMDC, CausalNonClusteredCorrwithMDCSEM, dred)
-        r_errorbar(1:14, MeanCausalMDCRelatedClustersCorrwithMDC, CausalMDCRelatedClustersCorrwithMDCSEM, blue)
-        r_errorbar(1:14, MeanCausalMDCRelatedNonClusteredCorrwithMDC, CausalMDCRelatedNonClusteredCorrwithMDCSEM, gray)
         xlabel('Session', 'Fontsize', 14)
         set(gca, 'XTick', 0:15); set(gca, 'XTickLabel', 0:15)
         ylabel('Correlation', 'Fontsize', 14)
     subplot(2,5,8)
-        plot(MeanAllCausalClustersCorrwithMovement, 'Color', black, 'Linewidth', 2); hold on;
-        plot(MeanCausalNonClusteredCorrwithMovement, 'Color', dred, 'Linewidth', 2);
-        plot(MeanCausalMovementRelatedClustersCorrwithMovement, 'Color', blue, 'Linewidth', 2);
-        plot(MeanCausalMovementRelatedNonClusteredCorrwithMovement, 'Color', gray, 'Linewidth', 2);
+        flex_plot(1:14, AllCausalClustersCorrwithMovement, stattype, black, 2); hold on;
+        flex_plot(1:14, CausalNonClusteredCorrwithMovement, stattype, dred, 2);
+        flex_plot(1:14, CausalMovementRelatedClustersCorrwithMovement, stattype, blue, 2);
+        flex_plot(1:14, CausalMovementRelatedNonClusteredCorrwithMovement, stattype, gray, 2);
         xlim([0 15])
         title('Causal Events with Movement', 'Fontsize', 14)
-        r_errorbar(1:14, MeanAllCausalClustersCorrwithMovement, AllCausalClustersCorrwithMovementSEM, black)
-        r_errorbar(1:14, MeanCausalNonClusteredCorrwithMovement, CausalNonClusteredCorrwithMovementSEM, dred)
-        r_errorbar(1:14, MeanCausalMovementRelatedClustersCorrwithMovement, CausalMovementRelatedClustersCorrwithMovementSEM, blue)
-        r_errorbar(1:14, MeanCausalMovementRelatedNonClusteredCorrwithMovement, CausalMovementRelatedNonClusteredCorrwithMovementSEM, gray)
         xlabel('Session', 'Fontsize', 14)
         set(gca, 'XTick', 0:15); set(gca, 'XTickLabel', 0:15)
         ylabel('Correlation', 'Fontsize', 14)
     subplot(2,5,9)
-        plot(MeanAllCausalClustersCorrwithSuccess, 'Color', black, 'Linewidth', 2); hold on;
-        plot(MeanCausalNonClusteredCorrwithSuccess, 'Color', dred, 'Linewidth', 2);
-        plot(MeanCausalSuccessRelatedClustersCorrwithSuccess, 'Color', blue, 'Linewidth', 2);
-        plot(MeanCausalSuccessRelatedNonClusteredCorrwithSuccess, 'Color', gray, 'Linewidth', 2);
+        flex_plot(1:14, AllCausalClustersCorrwithSuccess, stattype, black, 2); hold on;
+        flex_plot(1:14, CausalNonClusteredCorrwithSuccess, stattype, dred, 2);
+        flex_plot(1:14, CausalSuccessRelatedClustersCorrwithSuccess, stattype, blue, 2);
+        flex_plot(1:14, CausalSuccessRelatedNonClusteredCorrwithSuccess, stattype, gray, 2);
         xlim([0 15])
         title([{'Causal Events with'}, {'Successful Movements'}], 'Fontsize', 14)
-        r_errorbar(1:14, MeanAllCausalClustersCorrwithSuccess, AllCausalClustersCorrwithSuccessSEM, black)
-        r_errorbar(1:14, MeanCausalNonClusteredCorrwithSuccess, CausalNonClusteredCorrwithSuccessSEM, dred)
-        r_errorbar(1:14, MeanCausalSuccessRelatedClustersCorrwithSuccess, CausalSuccessRelatedClustersCorrwithSuccessSEM, blue)
-        r_errorbar(1:14, MeanCausalSuccessRelatedNonClusteredCorrwithSuccess, CausalSuccessRelatedNonClusteredCorrwithSuccessSEM, gray);
         xlabel('Session', 'Fontsize', 14)
         set(gca, 'XTick', 0:15); set(gca, 'XTickLabel', 0:15)
         ylabel('Correlation', 'Fontsize', 14)
     subplot(2,5,10)
-        plot(MeanAllCausalClustCorrwithReward, 'Color', black, 'Linewidth', 2); hold on;
-        plot(MeanCausalNonClusteredCorrwithReward, 'Color', dred, 'Linewidth', 2);
-        plot(MeanCausalRewardRelatedClustersCorrwithReward, 'Color', blue, 'Linewidth', 2);
-        plot(MeanCausalRewardRelatedNonClusteredCorrwithReward, 'Color', gray, 'Linewidth', 2)
+        flex_plot(1:14, AllCausalClustCorrwithReward, stattype, black, 2); hold on;
+        flex_plot(1:14, CausalNonClusteredCorrwithReward, stattype, dred, 2);
+        flex_plot(1:14, CausalRewardRelatedClustersCorrwithReward, stattype, blue, 2);
+        flex_plot(1:14, CausalRewardRelatedNonClusteredCorrwithReward, stattype, gray, 2)
         xlim([0 15])
         title('Causal Events with Reward', 'Fontsize', 14)
-        r_errorbar(1:14, MeanAllCausalClustCorrwithReward, AllCausalClustCorrwithRewardSEM, black)
-        r_errorbar(1:14, MeanCausalNonClusteredCorrwithReward, CausalNonClusteredCorrwithRewardSEM, dred)
-        r_errorbar(1:14, MeanCausalRewardRelatedClustersCorrwithReward, CausalRewardRelatedClustersCorrwithRewardSEM, blue)
-        r_errorbar(1:14, MeanCausalRewardRelatedNonClusteredCorrwithReward, CausalRewardRelatedNonClusteredCorrwithRewardSEM, gray)
         xlabel('Session', 'Fontsize', 14)
         set(gca, 'XTick', 0:15); set(gca, 'XTickLabel', 0:15)
         ylabel('Correlation', 'Fontsize', 14)
@@ -4685,95 +4308,68 @@ else
     %%% Figure 2: Clustered vs. nonclustered frequency, amp, etc. and
     %%%           dendrite information
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    
+        
     figure('Position', scrsz);
     subplot(2,3,1);
-        plot(MeanClusterFreq, 'Color', black, 'Linewidth', 2); hold on;
-        plot(MeanCausalClusterFreq, 'Color', bgreen, 'Linewidth', 2); hold on;
-        plot(MeanNonClusteredFreq, 'Color', dred, 'Linewidth', 2);
-        plot(MeanNonClusteredCausalFreq, 'Color', gray, 'Linewidth', 2);
+        a = flex_plot(1:14, ClusterFreq, stattype, black, 2); hold on;
+        b = flex_plot(1:14, CausalClusterFreq, stattype, bgreen, 2); hold on;
+        c = flex_plot(1:14, NonClusteredFreq, stattype, dred, 2);
+        d = flex_plot(1:14, NonClusteredCausalFreq, stattype, gray, 2);
         ylabel('Event Frequency', 'FontSize', 14)
         xlabel('Session', 'FontSize', 14)
         xlim([0 15])
-        r_errorbar(1:14, MeanClusterFreq, ClusterFreqSEM, black)
-        r_errorbar(1:14, MeanCausalClusterFreq, CausalClusterFreqSEM, bgreen)
-        r_errorbar(1:14, MeanNonClusteredFreq, NonClusteredFreqSEM, dred)
-        r_errorbar(1:14, MeanNonClusteredCausalFreq, NonClusteredCausalFreqSEM, bgreen)
-    legend({'Clustered', 'Causal', 'Nonclustered', 'NonClust Caus'});
+    legend([a,b,c,d], {'Clustered', 'Causal', 'Nonclustered', 'NonClust Caus'});
     subplot(2,3,2)
-        plot(MeanClusteredSpineAmp, 'Color', black, 'Linewidth', 2); hold on;
-        plot(MeanCausalClusteredSpineAmp, 'Color', bgreen, 'Linewidth', 2);
-        plot(MeanNonClusteredSpineAmp, 'Color', dred, 'Linewidth', 2)
-        plot(MeanCausalNonClusteredSpineAmp, 'Color', gray, 'Linewidth', 2);
-        legend({'Clustered', 'Causal clustered', 'Nonclustered', 'Causal nonclustered'})
+        a = flex_plot(1:14, ClusteredSpineAmp, stattype, black, 2); hold on;
+        b = flex_plot(1:14, CausalClusteredSpineAmp, stattype, bgreen, 2);
+        c = flex_plot(1:14, NonClusteredSpineAmp, stattype, dred, 2);
+        d = flex_plot(1:14, CausalNonClusteredSpineAmp, stattype, gray, 2);
+        legend([a,b,c,d],{'Clustered', 'Causal clustered', 'Nonclustered', 'Causal nonclustered'})
         ylabel('Event Amp', 'FontSize', 14);
         xlabel('Session', 'FontSize', 14);
         xlim([0 15])
-        r_errorbar(1:14, MeanClusteredSpineAmp, ClusteredSpineAmpSEM, black)
-        r_errorbar(1:14, MeanCausalClusteredSpineAmp, CausalClusteredSpineAmpSEM, bgreen)
-        r_errorbar(1:14, MeanNonClusteredSpineAmp, NonClusteredSpineAmpSEM, dred)
-        r_errorbar(1:14, MeanCausalNonClusteredSpineAmp, CausalNonClusteredSpineAmpSEM, gray)
     subplot(2,3,3)
-        plot(MeanClustDendFreq, 'Color', black, 'Linewidth', 2); hold on;
-        plot(MeanNonClustDendFreq, 'Color', dred, 'Linewidth', 2); 
+        a = flex_plot(1:14, ClustDendFreq, stattype, black, 2); hold on;
+        b = flex_plot(1:14, NonClustDendFreq, stattype, dred, 2); 
         ylabel('Event Frequency', 'Fontsize', 14);
         xlabel('Session', 'Fontsize', 14)
         xlim([0 15])
-        legend({'Dendrites with Clusters', 'Dendrites w/o Clusters'})
-        r_errorbar(1:14, MeanClustDendFreq, ClustDendFreqSEM, black)
-        r_errorbar(1:14, MeanNonClustDendFreq, NonClustDendFreqSEM, dred)
+        legend([a,b], {'Dendrites with Clusters', 'Dendrites w/o Clusters'})
     subplot(2,3,4); 
-        plot(MeanCueClusterFrequency, 'Color', lgreen, 'Linewidth', 2); hold on;
-        plot(MeanMovementClusterFrequency, 'Color', black, 'Linewidth', 2);
-        plot(MeanMovementDuringCueClusterFrequency, 'Color', green, 'Linewidth', 2);
-        plot(MeanPreSuccessClusterFrequency, 'Color', bgreen, 'Linewidth', 2);
-        plot(MeanSuccessClusterFrequency, 'Color', lblue, 'Linewidth', 2);
-        plot(MeanRewardClusterFrequency, 'Color', purple, 'Linewidth', 2);
+        flex_plot(1:14, CueClusterFrequency, stattype, lgreen, 2); hold on;
+        flex_plot(1:14, MovementClusterFrequency, stattype, black, 2);
+        flex_plot(1:14, MovementDuringCueClusterFrequency, stattype, green, 2);
+        flex_plot(1:14, PreSuccessClusterFrequency, stattype, bgreen, 2);
+        flex_plot(1:14, SuccessClusterFrequency, stattype, lblue, 2);
+        flex_plot(1:14, RewardClusterFrequency, stattype, purple, 2);
         title([{'Frequency of Functionally relevant'}, {'clustered spines'}])
         ylabel('Event Frequency', 'Fontsize', 14);
         xlabel('Session', 'Fontsize', 14);
         xlim([0 15])
-        r_errorbar(1:14, MeanCueClusterFrequency, CueClusterFrequencySEM, lgreen)
-        r_errorbar(1:14, MeanMovementClusterFrequency, MovementClusterFrequencySEM, black)
-        r_errorbar(1:14, MeanMovementDuringCueClusterFrequency, MovementDuringCueClusterFrequencySEM, green)
-        r_errorbar(1:14, MeanPreSuccessClusterFrequency, PreSuccessClusterFrequencySEM, bgreen)
-        r_errorbar(1:14, MeanSuccessClusterFrequency, SuccessClusterFrequencySEM, lblue)
-        r_errorbar(1:14, MeanRewardClusterFrequency, RewardClusterFrequencySEM, purple)
     subplot(2,3,5);
-        plot(MeanClusteredCueSpineAmp, 'Color', lgreen, 'Linewidth', 2); hold on;
-        plot(MeanClusteredMoveSpineAmp, 'Color', black, 'Linewidth', 2);
-        plot(MeanClusteredMovDuringCueSpineAmp, 'Color', green, 'Linewidth', 2);
-        plot(MeanClusteredPreSuccessSpineAmp, 'Color', bgreen, 'Linewidth', 2);
-        plot(MeanClusteredSuccessSpineAmp, 'Color', lblue, 'Linewidth', 2);
-        plot(MeanClusteredRewardSpineAmp, 'Color', purple, 'Linewidth', 2);
+        flex_plot(1:14, ClusteredCueSpineAmp, stattype, lgreen, 2); hold on;
+        flex_plot(1:14, ClusteredMoveSpineAmp, stattype, black, 2);
+        flex_plot(1:14, ClusteredMovDuringCueSpineAmp, stattype, green, 2);
+        flex_plot(1:14, ClusteredPreSuccessSpineAmp, stattype, bgreen, 2);
+        flex_plot(1:14, ClusteredSuccessSpineAmp, stattype, lblue, 2);
+        flex_plot(1:14, ClusteredRewardSpineAmp, stattype, purple, 2);
         title([{'Amp. of Functionally relevant'}, {'clustered spines'}])
         ylabel('Event Amp', 'FontSize', 14);
         xlabel('Session', 'FontSize', 14);
         xlim([0 15])
-        r_errorbar(1:14, MeanClusteredCueSpineAmp, ClusteredCueSpineAmpSEM, lgreen)
-        r_errorbar(1:14, MeanClusteredMoveSpineAmp, ClusteredMoveSpineAmpSEM, black)
-        r_errorbar(1:14, MeanClusteredSuccessSpineAmp, ClusteredSuccessSpineAmpSEM, lblue)
-        r_errorbar(1:14, MeanClusteredRewardSpineAmp, ClusteredRewardSpineAmpSEM, purple)
     subplot(2,3,6)
-        plot(MeanCueClustDendFreq, 'Color', lgreen, 'Linewidth', 2); hold on;
-        plot(MeanMovClustDendFreq, 'Color', black, 'Linewidth', 2);
-        plot(MeanMovDuringCueClustDendFreq, 'Color', green, 'Linewidth', 2);
-        plot(MeanPreSucClustDendFreq, 'Color', bgreen, 'Linewidth', 2);
-        plot(MeanSucClustDendFreq, 'Color', lblue, 'Linewidth', 2);
-        plot(MeanRewClustDendFreq, 'Color', purple, 'Linewidth', 2);
-        plot(MeanNonMovClustDendFreq, 'Color', dred, 'Linewidth', 2);
+        a = flex_plot(1:14, CueClustDendFreq, stattype, lgreen, 2); hold on;
+        b = flex_plot(1:14, MovClustDendFreq, stattype, black, 2);
+        c = flex_plot(1:14, MovDuringCueClustDendFreq, stattype, green, 2);
+        d = flex_plot(1:14, PreSucClustDendFreq, stattype, bgreen, 2);
+        f = flex_plot(1:14, SucClustDendFreq, stattype, lblue, 2);
+        g = flex_plot(1:14, RewClustDendFreq, stattype, purple, 2);
+        h = flex_plot(1:14, NonMovClustDendFreq, stattype, dred, 2);
         title([{'Frequency of dendrites with functionally'}, {'relevant clustered spines'}])
         ylabel('Event Frequency', 'Fontsize', 14);
         xlabel('Session', 'Fontsize', 14)
         xlim([0 15])
-        legend({'Dends with CueClusts','Dends with MovClusts', 'Dends with SucClusts', 'Dends with RewClusts', 'Dends w/o MovClusts'})
-        r_errorbar(1:14, MeanCueClustDendFreq, CueClustDendFreqSEM,lgreen)
-        r_errorbar(1:14, MeanMovClustDendFreq, MovClustDendFreqSEM, black)
-        r_errorbar(1:14, MeanMovDuringCueClustDendFreq, MovDuringCueClustDendFreqSEM, green)
-        r_errorbar(1:14, MeanPreSucClustDendFreq, PreSucClustDendFreqSEM, bgreen)
-        r_errorbar(1:14, MeanSucClustDendFreq, SucClustDendFreqSEM, lblue)
-        r_errorbar(1:14, MeanRewClustDendFreq, RewClustDendFreqSEM, purple)
-        r_errorbar(1:14, MeanNonMovClustDendFreq, NonMovClustDendFreqSEM, dred)
+        legend([a b c d f g h],{'Dends with CueClusts','Dends with MovClusts', 'Dends with SucClusts', 'Dends with RewClusts', 'Dends w/o MovClusts'});
 
   
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -4785,150 +4381,108 @@ else
     sub1 = 3;
     sub2 = 3;
     subplot(sub1,sub2,1)
-        plot(MeanNumCueRelSpines,'Color', lgreen, 'Linewidth', 2); hold on;
-        plot(MeanNumMovRelSpines,'Color', black, 'Linewidth', 2);
-        plot(MeanNumCueORMovRelSpines, 'Color', red, 'Linewidth', 2);
-        plot(MeanNumPreSucRelSpines, 'Color', bgreen, 'Linewidth', 2);
-        plot(MeanNumSucRelSpines,'Color', lblue, 'Linewidth', 2);
-        plot(MeanNumMovDuringCueRelSpines, 'Color', green, 'Linewidth', 2);
-        plot(MeanNumRewRelSpines,'Color', purple, 'Linewidth', 2);
-        legend({'All Cue Spines', 'All Mvmt Spines', 'Cue OR Mov Spines', 'Pre Success Spines', 'All Success Spines', 'Mov. during Cue Spines', 'All Reward Spines'})
-        r_errorbar(1:14, MeanNumCueRelSpines, NumCueRelSpinesSEM, lgreen)
-        r_errorbar(1:14, MeanNumMovRelSpines, NumMovRelSpinesSEM, black)
-        r_errorbar(1:14, MeanNumCueORMovRelSpines, NumCueORMovRelSpinesSEM, red)
-        r_errorbar(1:14, MeanNumPreSucRelSpines, NumPreSucRelSpinesSEM, bgreen)
-        r_errorbar(1:14, MeanNumSucRelSpines, NumSucRelSpinesSEM, lblue)
-        r_errorbar(1:14, MeanNumMovDuringCueRelSpines, NumMovDuringCueRelSpinesSEM, green)
-        r_errorbar(1:14, MeanNumRewRelSpines, NumRewRelSpinesSEM, purple)
-        xlim([0 15])
-        xlabel('Session', 'FontSize', 14)
-        ylabel('Fraction of total spines', 'FontSize', 14)
-        title('Classes of Spines', 'Fontsize', 14)
+        a = flex_plot(1:14, NumCueRelSpines,stattype, lgreen, 2); hold on;
+        b = flex_plot(1:14, NumMovRelSpines,stattype, black, 2);
+        c = flex_plot(1:14, NumCueORMovRelSpines, stattype, red, 2);
+        d = flex_plot(1:14, NumPreSucRelSpines, stattype, bgreen, 2);
+        f = flex_plot(1:14, NumSucRelSpines,stattype, lblue, 2);
+        g = flex_plot(1:14, NumMovDuringCueRelSpines, stattype, green, 2);
+        h = flex_plot(1:14, NumRewRelSpines,stattype, purple, 2);
+        legend([a b c d f g h], {'All Cue Spines', 'All Mvmt Spines', 'Cue OR Mov Spines', 'Pre Success Spines', 'All Success Spines', 'Mov. during Cue Spines', 'All Reward Spines'});
+        xlim([0 15]);
+        xlabel('Session', 'FontSize', 14);
+        ylabel('Fraction of total spines', 'FontSize', 14);
+        title('Classes of Spines', 'Fontsize', 14);
     
     subplot(sub1,sub2,2)
-        plot(MeanNumClustSpines, 'Color', black, 'Linewidth', 2); hold on;
-        plot(MeanNumCausClustSpines, 'Color', dred, 'Linewidth', 2)
-        plot(MeanNumFarClustSpines, 'Color', gray, 'Linewidth', 2)
-        legend({'Clustered', 'Causal Clustered', 'Far'})
-        r_errorbar(1:14, MeanNumClustSpines, NumClustSpinesSEM, black)
-        r_errorbar(1:14, MeanNumCausClustSpines, NumCausClustSpinesSEM, dred)
-        r_errorbar(1:14, MeanNumFarClustSpines, NumFarClustSpinesSEM, gray)
+        a = flex_plot(1:14, NumClustSpines, stattype, black, 2); hold on;
+        b = flex_plot(1:14, NumCausClustSpines, stattype, dred, 2);
+        c = flex_plot(1:14, NumFarClustSpines, stattype, gray, 2);
+        legend([a b c],{'Clustered', 'Causal Clustered', 'Far'});
         xlabel('Session','FontSize', 14)
         xlim([0 15])
         ylabel('Fraction of total spines','FontSize', 14)
     
     subplot(sub1,sub2,3)
-        plot(MeanNumberofClusters, '-', 'Color', black, 'Linewidth', 2); hold on;
-        plot(MeanNumberofCausalClusters, '-', 'Color', bgreen, 'Linewidth', 2)
-        plot(MeanNumberofSpinesinEachCluster, '-', 'Color', gray, 'Linewidth', 2)
-        plot(MeanNumberofSpinesinEachCausalCluster, '-', 'Color', dorange, 'Linewidth', 2)
-        legend({'Number of Clusters', 'Number of Causal Clusters', 'Spines in each cluster', 'Spines in each causal cluster'})
-        r_errorbar(1:14, MeanNumberofClusters, NumberofClustersSEM, black)
-        r_errorbar(1:14, MeanNumberofCausalClusters, NumberofCausalClustersSEM, bgreen)
-        r_errorbar(1:14, MeanNumberofSpinesinEachCluster, NumberofSpinesinEachClusterSEM, gray)
-        r_errorbar(1:14, MeanNumberofSpinesinEachCausalCluster, NumberofSpinesinEachCausalClusterSEM, dorange)
+        a = flex_plot(1:14, NumberofClusters, stattype, black, 2); hold on;
+        b = flex_plot(1:14, NumberofCausalClusters, stattype, bgreen, 2);
+        c = flex_plot(1:14, NumberofSpinesinEachCluster, stattype, gray, 2);
+        d = flex_plot(1:14, NumberofSpinesinEachCausalCluster, stattype, dorange, 2);
+        legend([a b c d], {'Number of Clusters', 'Number of Causal Clusters', 'Spines in each cluster', 'Spines in each causal cluster'});
         xlabel('Session', 'FontSize', 14)
         xlim([0 15])
         ylabel('Raw Number', 'FontSize', 14)
         
     subplot(sub1,sub2,4)
-        plot(MeanPercentofCueRelatedDendrites, 'Color', lgreen, 'Linewidth', 2); hold on;
-        plot(MeanPercentofMovementRelatedDendrites, 'Color', black, 'Linewidth', 2); 
-        plot(MeanPercentofPreSuccessRelatedDendrites, 'Color', bgreen, 'Linewidth', 2);
-        plot(MeanPercentofSuccessRelatedDendrites, 'Color', lblue, 'Linewidth', 2); 
-        plot(MeanPercentofMovementDuringCueRelatedDendrites, 'Color', green, 'Linewidth', 2);
-        plot(MeanPercentofRewardRelatedDendrites, 'Color', purple, 'Linewidth', 2);
+        a = flex_plot(1:14, PercentofCueRelatedDendrites, stattype, lgreen, 2); hold on;
+        b = flex_plot(1:14, PercentofMovementRelatedDendrites, stattype, black, 2); 
+        c = flex_plot(1:14, PercentofPreSuccessRelatedDendrites, stattype, bgreen, 2);
+        d = flex_plot(1:14, PercentofSuccessRelatedDendrites, stattype, lblue, 2); 
+        f = flex_plot(1:14, PercentofMovementDuringCueRelatedDendrites, stattype, green, 2);
+        g = flex_plot(1:14, PercentofRewardRelatedDendrites, stattype, purple, 2);
         xlim([0 15])
-        legend({'Cue Dends', 'Mov Dends', 'PreSuc Dends','Suc Dends', 'Mov During Cue Dends', 'Rew Dends'})
-        r_errorbar(1:14, MeanPercentofCueRelatedDendrites, PercentofCueRelatedDendritesSEM, lgreen)
-        r_errorbar(1:14, MeanPercentofMovementRelatedDendrites, PercentofMovementRelatedDendritesSEM, black)
-        r_errorbar(1:14, MeanPercentofPreSuccessRelatedDendrites, PercentofPreSuccessRelatedDendritesSEM, bgreen)
-        r_errorbar(1:14, MeanPercentofSuccessRelatedDendrites, PercentofSuccessRelatedDendritesSEM, lblue)
-        r_errorbar(1:14, MeanPercentofMovementDuringCueRelatedDendrites, PercentofMovementDuringCueRelatedDendritesSEM, green)
-        r_errorbar(1:14, MeanPercentofRewardRelatedDendrites, PercentofRewardRelatedDendritesSEM, purple)
+        legend([a b c d f g],{'Cue Dends', 'Mov Dends', 'PreSuc Dends','Suc Dends', 'Mov During Cue Dends', 'Rew Dends'})
         xlabel('Session', 'FontSize', 14)
         ylabel('Fraction of dendrites', 'FontSize', 14)
         
     subplot(sub1,sub2,5)
-        plot(MeanNumClustCueSpines, 'Color', lgreen, 'Linewidth', 2); hold on;
-            plot(MeanNumCausClustCueSpines, '--', 'Color', lgreen, 'Linewidth', 2);
-        plot(MeanNumClustMovSpines, 'Color', black, 'Linewidth', 2)
-            plot(MeanNumCausClustMovSpines, '--', 'Color', black, 'Linewidth', 2);
-        plot(MeanNumClustMixSpines, 'Color', red, 'Linewidth', 2)
-        plot(MeanNumClustPreSucSpines, 'Color', bgreen, 'Linewidth', 2)
-            plot(MeanNumCausClustPreSucSpines, '--', 'Color', bgreen, 'Linewidth', 2);
-        plot(MeanNumClustSucSpines, 'Color', lblue, 'Linewidth', 2)
-            plot(MeanNumCausClustSucSpines, '--', 'Color', lblue, 'Linewidth', 2);
-        plot(MeanNumClustMovDuringCueSpines, 'Color', green, 'Linewidth', 2)
-            plot(MeanNumCausClustMovDuringCueSpines, '--', 'Color', green, 'Linewidth', 2);
-        plot(MeanNumClustRewSpines, 'Color', purple, 'Linewidth', 2)
-            plot(MeanNumCausClustRewSpines, '--', 'Color', purple, 'Linewidth', 2);
-        xlim([0 15])
-        legend({'Clust. Cue Spines','Clust Caus Cue', 'Clust. Mov. Spines','Clust Caus Mov', 'Clust. Mixed Spines', 'Clust Pre suc.','Clust Caus Presuc', 'Clust. Suc. Spines','Clust Caus Suc', 'Clust Mov during Cue','Clust Caus MDC', 'Clust Rew. Spines', 'Clust Caus Rew'})
-        r_errorbar(1:14, MeanNumClustCueSpines, NumClustCueSpinesSEM, lgreen)
-            r_errorbar(1:14, MeanNumCausClustCueSpines, NumCausClustCueSpinesSEM, lgreen)
-        r_errorbar(1:14, MeanNumClustMovSpines, NumClustMovSpinesSEM, black)
-            r_errorbar(1:14, MeanNumCausClustMovSpines, NumCausClustMovSpinesSEM, black)
-        r_errorbar(1:14, MeanNumClustMixSpines, NumClustMixSpinesSEM, red)
-        r_errorbar(1:14, MeanNumClustPreSucSpines, NumClustPreSucSpinesSEM, bgreen)
-            r_errorbar(1:14, MeanNumCausClustPreSucSpines, NumCausClustPreSucSpinesSEM, bgreen)
-        r_errorbar(1:14, MeanNumClustSucSpines, NumClustSucSpinesSEM, lblue)
-            r_errorbar(1:14, MeanNumCausClustSucSpines, NumCausClustSucSpinesSEM, lblue)
-        r_errorbar(1:14, MeanNumClustMovDuringCueSpines, NumClustMovDuringCueSpinesSEM, green) 
-            r_errorbar(1:14, MeanNumCausClustMovDuringCueSpines, NumCausClustMovDuringCueSpinesSEM, green) 
-        r_errorbar(1:14, MeanNumClustRewSpines, NumClustRewSpinesSEM, purple)
-            r_errorbar(1:14, MeanNumCausClustRewSpines, NumCausClustRewSpinesSEM, purple)
-        xlabel('Session', 'FontSize', 14)
-        ylabel('Fraction of total spines', 'FontSize', 14)
-        title('Clustered function-related spines')
+        a = flex_plot(1:14, NumClustCueSpines, stattype, lgreen, 2); hold on;
+%             flex_plot(1:14, NumCausClustCueSpines, '--', stattype, lgreen, 2);
+        b = flex_plot(1:14, NumClustMovSpines, stattype, black, 2);
+%             flex_plot(1:14, NumCausClustMovSpines, '--', stattype, black, 2);
+        c = flex_plot(1:14, NumClustMixSpines, stattype, red, 2);
+        d = flex_plot(1:14, NumClustPreSucSpines, stattype, bgreen, 2);
+%             flex_plot(1:14, NumCausClustPreSucSpines, '--', stattype, bgreen, 2);
+        f = flex_plot(1:14, NumClustSucSpines, stattype, lblue, 2);
+%             flex_plot(1:14, NumCausClustSucSpines, '--', stattype, lblue, 2);
+        g = flex_plot(1:14, NumClustMovDuringCueSpines, stattype, green, 2);
+%             flex_plot(1:14, NumCausClustMovDuringCueSpines, '--', stattype, green, 2);
+        h = flex_plot(1:14, NumClustRewSpines, stattype, purple, 2);
+%             flex_plot(1:14, NumCausClustRewSpines, '--', stattype, purple, 2);
+        xlim([0 15]);
+        legend([a b c d f g h],{'Clust. Cue Spines','Clust. Mov. Spines', 'Clust. Mixed Spines', 'Clust Pre suc.', 'Clust. Suc. Spines', 'Clust Mov during Cue', 'Clust Rew. Spines'});
+        xlabel('Session', 'FontSize', 14);
+        ylabel('Fraction of total spines', 'FontSize', 14);
+        title('Clustered function-related spines');
+        
         
     subplot(sub1,sub2,6)
-        plot(MeanNumberofMovClusters, '-', 'Color', black, 'Linewidth', 2); hold on;
-        plot(MeanNumberofSpinesinEachMovCluster, '-', 'Color', gray, 'Linewidth', 2)
-        legend({'Number of Mov Clusters', 'Spines in each mov cluster'})
-        r_errorbar(1:14, MeanNumberofMovClusters, NumberofMovClustersSEM, black)
-        r_errorbar(1:14, MeanNumberofSpinesinEachMovCluster, NumberofSpinesinEachMovClusterSEM, gray)
+        for i = 1:14
+            MovClustCount{i} = cell2mat(cellfun(@(x) x(:), NumberofSpinesinEachMovCluster(:,i), 'Uni', false));
+            MovClustCount{i} = MovClustCount{i}(~isnan(MovClustCount{i}));
+        end
+        a = flex_plot(1:14, NumberofMovClusters, stattype, black, 2); hold on;
+        b = flex_plot(1:14, MovClustCount, stattype, blue, 2);
+        legend([a b],{'Number of Mov Clusters', 'Spines in each mov cluster'});
         xlabel('Session', 'FontSize', 14)
         xlim([0 15])
         ylabel('Raw Number', 'FontSize', 14)
         
     subplot(sub1,sub2,7)
-        plot(MeanNumFarClustCueSpines, 'Color', lgreen, 'Linewidth', 2); hold on;
-        plot(MeanNumFarClustMovSpines, 'Color', black, 'Linewidth', 2)
-        plot(MeanNumFarClustPreSucSpines, 'Color', bgreen, 'Linewidth', 2)
-        plot(MeanNumFarClustSucSpines, 'Color', lblue, 'Linewidth', 2)
-        plot(MeanNumFarClustMovDuringCueSpines, 'Color', green, 'Linewidth', 2)
-        plot(MeanNumFarClustRewSpines, 'Color', purple, 'Linewidth', 2)
+        a = flex_plot(1:14, NumFarClustCueSpines, stattype, lgreen, 2); hold on;
+        b = flex_plot(1:14, NumFarClustMovSpines, stattype, black, 2);
+        c = flex_plot(1:14, NumFarClustPreSucSpines, stattype, bgreen, 2);
+        d = flex_plot(1:14, NumFarClustSucSpines, stattype, lblue, 2);
+        f = flex_plot(1:14, NumFarClustMovDuringCueSpines, stattype, green, 2);
+        g = flex_plot(1:14, NumFarClustRewSpines, stattype, purple, 2);
         xlim([0 15])
-        legend({'Clust. Cue Spines' 'Clust. Mov. Spines','Clust Pre suc.','Clust. Suc. Spines','Clust Mov during Cue', 'Clust Rew. Spines'})
-        r_errorbar(1:14, MeanNumFarClustCueSpines, NumFarClustCueSpinesSEM, lgreen)
-        r_errorbar(1:14, MeanNumFarClustMovSpines, NumFarClustMovSpinesSEM, black)
-        r_errorbar(1:14, MeanNumFarClustPreSucSpines, NumFarClustPreSucSpinesSEM, bgreen)
-        r_errorbar(1:14, MeanNumFarClustSucSpines, NumFarClustSucSpinesSEM, lblue)
-        r_errorbar(1:14, MeanNumFarClustMovDuringCueSpines, NumFarClustMovDuringCueSpinesSEM, green) 
-        r_errorbar(1:14, MeanNumFarClustRewSpines, NumFarClustRewSpinesSEM, purple)
+        legend([a b c d f g],{'Clust. Cue Spines' 'Clust. Mov. Spines','Clust Pre suc.','Clust. Suc. Spines','Clust Mov during Cue', 'Clust Rew. Spines'});
         xlabel('Session', 'FontSize', 14)
         ylabel('Fraction of total spines', 'FontSize', 14)
         title('Correlated spines on sep. dendrites')
 
     subplot(sub1,sub2,8)
-        plot(MeanFractionofCueSpinesThatAreClustered, 'Color', lgreen, 'Linewidth', 2); hold on;
-        plot(MeanFractionofMovementSpinesThatAreClustered, 'Color', black, 'Linewidth', 2);
-        plot(MeanFractionofPreSuccessSpinesThatAreClustered, 'Color', bgreen, 'Linewidth', 2);
-        plot(MeanFractionofSuccessSpinesThatAreClustered, 'Color', lblue, 'Linewidth', 2)
-        plot(MeanFractionofMovementDuringCueSpinesThatAreClustered, 'Color', green, 'Linewidth', 2)
-        plot(MeanFractionofRewardSpinesThatAreClustered, 'Color', purple, 'Linewidth', 2)
+        a = flex_plot(1:14, FractionofCueSpinesThatAreClustered, stattype, lgreen, 2); hold on;
+        b = flex_plot(1:14, FractionofMovementSpinesThatAreClustered, stattype, black, 2);
+        c = flex_plot(1:14, FractionofPreSuccessSpinesThatAreClustered, stattype, bgreen, 2);
+        d = flex_plot(1:14, FractionofSuccessSpinesThatAreClustered, stattype, lblue, 2);
+        f = flex_plot(1:14, FractionofMovementDuringCueSpinesThatAreClustered, stattype, green, 2);
+        g = flex_plot(1:14, FractionofRewardSpinesThatAreClustered, stattype, purple, 2);
         xlim([0 15])
         xlabel('Session', 'Fontsize', 14)
         ylabel('Fraction of Function-related Spines', 'Fontsize', 14)
         title([{'Fraction of (function) spines'},{'that are clustered'}], 'Fontsize', 14)
-        legend({'Cue related','Movement related', 'Pre Success', 'Success related', 'MovDuringCue', 'Reward related'})
-        r_errorbar(1:14, MeanFractionofCueSpinesThatAreClustered, FractionofCueSpinesThatAreClusteredSEM, lgreen)
-        r_errorbar(1:14, MeanFractionofMovementSpinesThatAreClustered, FractionofMovementSpinesThatAreClusteredSEM, black)
-        r_errorbar(1:14, MeanFractionofPreSuccessSpinesThatAreClustered, FractionofPreSuccessSpinesThatAreClusteredSEM, bgreen)
-        r_errorbar(1:14, MeanFractionofSuccessSpinesThatAreClustered, FractionofSuccessSpinesThatAreClusteredSEM, lblue)
-        r_errorbar(1:14, MeanFractionofMovementDuringCueSpinesThatAreClustered, FractionofMovementDuringCueSpinesThatAreClusteredSEM, green)
-        r_errorbar(1:14, MeanFractionofRewardSpinesThatAreClustered, FractionofRewardSpinesThatAreClusteredSEM, purple)
+        legend([a b c d f g],{'Cue related','Movement related', 'Pre Success', 'Success related', 'MovDuringCue', 'Reward related'})
     
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     %%% Figure 4: Spatial extent of clusters
@@ -4937,91 +4491,65 @@ else
     
     figure('Position', scrsz);
     subplot(2,3,1)
-        plot(MeanAllClusterLength, 'Color', black, 'Linewidth', 2); hold on;
-        plot(MeanAllCausalClusterLength, 'Color', bgreen, 'Linewidth', 2)
-        legend({'Clustered spines', 'Caus. clust.'})
-        r_errorbar(1:14, MeanAllClusterLength, AllClusterLengthSEM, black)
-        r_errorbar(1:14, MeanAllCausalClusterLength, AllCausalClusterLengthSEM, bgreen);
+        a = flex_plot(1:14, AllClusterLength, stattype, black, 2); hold on;
+        b = flex_plot(1:14, AllCausalClusterLength, stattype, bgreen, 2);
+        legend([a b],{'Clustered spines', 'Caus. clust.'})
         xlabel('Session', 'FontSize', 14)
         xlim([0 15])
         ylabel('Ave. Dist. between spines', 'FontSize', 14)
         title('Mean Spatial Extent of Clusters', 'Fontsize', 14)
     subplot(2,3,2)
-        plot(MeanAllClusterMax, 'Color', black, 'Linewidth', 2); hold on;
-        plot(MeanAllCausalClusterMax, 'Color', bgreen, 'Linewidth', 2)
-        legend({'Clustered spines', 'Caus. clust.'})
-        r_errorbar(1:14, MeanAllClusterMax, AllClusterMaxSEM, black)
-        r_errorbar(1:14, MeanAllCausalClusterMax, AllCausalClusterMaxSEM, bgreen);
+        a = flex_plot(1:14, AllClusterMax, stattype, black, 2); hold on;
+        b = flex_plot(1:14, AllCausalClusterMax, stattype, bgreen, 2);
+        legend([a b],{'Clustered spines', 'Caus. clust.'})
         xlabel('Session', 'FontSize', 14)
         xlim([0 15])
         ylabel('Max Dist. between spines', 'FontSize', 14)
         title('MAX Spatial Extent of Clusters', 'Fontsize', 14)
     subplot(2,3,3)
-        plot(MeanDistanceBetweenCueSpines, 'Color', lgreen, 'Linewidth', 2); hold on;
-        plot(MeanDistanceBetweenMovementSpines, 'Color', black, 'Linewidth', 2)
-        plot(MeanDistanceBetweenSuccessSpines, 'Color', lblue, 'Linewidth', 2)
-        plot(MeanDistanceBetweenRewardSpines, 'Color', purple, 'Linewidth', 2);
+        a = flex_plot(1:14, DistanceBetweenCueSpines, stattype, lgreen, 2); hold on;
+        b = flex_plot(1:14, DistanceBetweenMovementSpines, stattype, black, 2);
+        c = flex_plot(1:14, DistanceBetweenSuccessSpines, stattype, lblue, 2);
+        d = flex_plot(1:14, DistanceBetweenRewardSpines, stattype, purple, 2);
         xlabel('Session', 'FontSize', 14)
         ylabel('Distance (um)', 'FontSize', 14)
         ylim([0 30])
         xlim([0 15])
-        legend({'Cue Spines', 'Movement Spines', 'Success Spines', 'Reward Spines'})
-        r_errorbar(1:14, MeanDistanceBetweenCueSpines, DistanceBetweenCueSpinesSEM, lgreen)
-        r_errorbar(1:14, MeanDistanceBetweenMovementSpines, DistanceBetweenMovementSpinesSEM, black)
-        r_errorbar(1:14, MeanDistanceBetweenSuccessSpines, DistanceBetweenSuccessSpinesSEM, lblue)
-        r_errorbar(1:14, MeanDistanceBetweenRewardSpines, DistanceBetweenRewardSpinesSEM, purple)
+        legend([a b c d],{'Cue Spines', 'Movement Spines', 'Success Spines', 'Reward Spines'})
 
     subplot(2,3,4)
-        plot(MeanCueClusterLength, 'Color', lgreen, 'LineWidth', 2); hold on;
-        plot(MeanMovClusterLength, 'Color', black, 'LineWidth', 2)
-        plot(MeanMixClusterLength, 'Color', red, 'Linewidth', 2)
-        plot(MeanPreSucClusterLength, 'Color', bgreen, 'Linewidth', 2)
-        plot(MeanSucClusterLength, 'Color', lblue, 'Linewidth', 2)
-        plot(MeanMovDuringCueClusterLength, 'Color', green, 'Linewidth', 2)
-        plot(MeanRewClusterLength, 'Color', purple, 'Linewidth', 2)
-        legend({'Cue Clusters', 'Mov clusters', 'Mix Clusters', 'PreSuc', 'Suc Clusters', 'MovDuringCue', 'Rew Clusters'});
-        r_errorbar(1:14, MeanCueClusterLength, CueClusterLengthSEM, lgreen)
-        r_errorbar(1:14, MeanMovClusterLength, MovClusterLengthSEM, black)
-        r_errorbar(1:14, MeanMixClusterLength, MixClusterLengthSEM, red)
-        r_errorbar(1:14, MeanPreSucClusterLength, PreSucClusterLengthSEM, bgreen)
-        r_errorbar(1:14, MeanSucClusterLength, SucClusterLengthSEM, lblue)
-        r_errorbar(1:14, MeanMovDuringCueClusterLength, MovDuringCueClusterLengthSEM, green)
-        r_errorbar(1:14, MeanRewClusterLength, RewClusterLengthSEM, purple)
+        a = flex_plot(1:14, CueClusterLength, stattype, lgreen, 2); hold on;
+        b = flex_plot(1:14, MovClusterLength, stattype, black, 2);
+        c = flex_plot(1:14, MixClusterLength, stattype, red, 2);
+        d = flex_plot(1:14, PreSucClusterLength, stattype, bgreen, 2);
+        f = flex_plot(1:14, SucClusterLength, stattype, lblue, 2);
+        g = flex_plot(1:14, MovDuringCueClusterLength, stattype, green, 2);
+        h = flex_plot(1:14, RewClusterLength, stattype, purple, 2);
+        legend([a b c d f g h],{'Cue Clusters', 'Mov clusters', 'Mix Clusters', 'PreSuc', 'Suc Clusters', 'MovDuringCue', 'Rew Clusters'});
         xlabel('Session', 'FontSize', 14)
         ylabel('Mean spatial extent of clusters', 'FontSize', 14)
         ylim([0 30])
         xlim([0 15])
     subplot(2,3,5)
-        plot(MeanCueClusterMax, 'Color', lgreen, 'LineWidth', 2); hold on;
-        plot(MeanMovClusterMax, 'Color', black, 'LineWidth', 2)
-        plot(MeanMixClusterMax, 'Color', red, 'Linewidth', 2)
-        plot(MeanSucClusterMax, 'Color', lblue, 'Linewidth', 2)
-        plot(MeanRewClusterMax, 'Color', purple, 'Linewidth', 2)
-        legend({'Cue Clusters', 'Mov clusters', 'Mix Clusters', 'Suc Clusters', 'Rew Clusters'});
-        r_errorbar(1:14, MeanCueClusterMax, CueClusterMaxSEM, lgreen)
-        r_errorbar(1:14, MeanMovClusterMax, MovClusterMaxSEM, black)
-        r_errorbar(1:14, MeanMixClusterMax, MixClusterMaxSEM, red)
-        r_errorbar(1:14, MeanSucClusterMax, SucClusterMaxSEM, lblue)
-        r_errorbar(1:14, MeanRewClusterMax, RewClusterMaxSEM, purple)
+        a = flex_plot(1:14, CueClusterMax, stattype, lgreen, 2); hold on;
+        b = flex_plot(1:14, MovClusterMax, stattype, black, 2);
+        c = flex_plot(1:14, MixClusterMax, stattype, red, 2);
+        d = flex_plot(1:14, SucClusterMax, stattype, lblue, 2);
+        f = flex_plot(1:14, RewClusterMax, stattype, purple, 2);
+        legend([a b c d f],{'Cue Clusters', 'Mov clusters', 'Mix Clusters', 'Suc Clusters', 'Rew Clusters'});
         xlabel('Session', 'FontSize', 14)
         ylabel('Max spatial extent of clusters', 'FontSize', 14)
         ylim([0 30])
         xlim([0 15])
         
     subplot(2,3,6)
-        plot(MeanFarCueClusterLength, 'Color', lgreen, 'Linewidth', 2); hold on; 
-        plot(MeanFarMovClusterLength, 'Color', black, 'Linewidth', 2);
-        plot(MeanFarMixClusterLength, 'Color', red, 'Linewidth', 2);
-        plot(MeanFarSucClusterLength, 'Color', lblue, 'Linewidth', 2);
-        plot(MeanFarRewClusterLength, 'Color', purple, 'Linewidth', 2);
-        plot(MeanAllFarClusterLength, 'Color', gray, 'Linewidth', 2);
-        legend({'Far Cue', 'Far Mov', 'Far Mix', 'Far Suc', 'Far Rew', 'Far All'})
-        r_errorbar(1:14, MeanFarCueClusterLength, FarCueClusterLengthSEM, lgreen)
-        r_errorbar(1:14, MeanFarMovClusterLength, FarMovClusterLengthSEM, black)
-        r_errorbar(1:14, MeanFarMixClusterLength, FarMixClusterLengthSEM, red)
-        r_errorbar(1:14, MeanFarSucClusterLength, FarSucClusterLengthSEM, lblue)
-        r_errorbar(1:14, MeanFarRewClusterLength, FarRewClusterLengthSEM, purple)
-        r_errorbar(1:14, MeanAllFarClusterLength, AllFarClusterLengthSEM, gray)
+        a = flex_plot(1:14, FarCueClusterLength, stattype, lgreen, 2); hold on; 
+        b = flex_plot(1:14, FarMovClusterLength, stattype, black, 2);
+        c = flex_plot(1:14, FarMixClusterLength, stattype, red, 2);
+        d = flex_plot(1:14, FarSucClusterLength, stattype, lblue, 2);
+        f = flex_plot(1:14, FarRewClusterLength, stattype, purple, 2);
+        g = flex_plot(1:14, AllFarClusterLength, stattype, gray, 2);
+        legend([a b c d f g],{'Far Cue', 'Far Mov', 'Far Mix', 'Far Suc', 'Far Rew', 'Far All'})
         
     %%%
     %%% Figure 5: Correlation with Dendrite
@@ -5030,31 +4558,23 @@ else
     figure('Position', scrsz);
     
     subplot(3,2,1)
-        plot(MeanClusteredSpines_CorrwithDend, 'Color',black, 'LineWidth', 2); hold on;
-        plot(MeanFilteredClusteredSpines_CorrwithDend, '--','Color', orange, 'Linewidth', 2);
-        plot(MeanNonClusteredSpines_CorrwithDend, '--','Color',dred, 'LineWidth', 2);
+        a = flex_plot(1:14, ClusteredSpines_CorrwithDend, stattype,black, 2); hold on;
+        b = flex_plot(1:14, FilteredClusteredSpines_CorrwithDend,stattype, orange, 2);
+        c = flex_plot(1:14, NonClusteredSpines_CorrwithDend,stattype,dred, 2);
 
-        legend({'Clust','Filt Clust','Non Clust'})
-    
-        r_errorbar(1:14, MeanClusteredSpines_CorrwithDend, ClusteredSpines_CorrwithDendSEM, black)
-        r_errorbar(1:14, MeanFilteredClusteredSpines_CorrwithDend, FilteredClusteredSpines_CorrwithDendSEM, orange)
-        r_errorbar(1:14, MeanNonClusteredSpines_CorrwithDend, NonClusteredSpines_CorrwithDendSEM, dred)
-    
+        legend([a b c],{'Clust','Filt Clust','Non Clust'})
+        
         ylabel('Correlation with dendrite', 'Fontsize', 14)
         xlabel('Session', 'Fontsize', 14)
         title('Clustered Spines', 'Fontsize', 14)
         xlim([0 15])
 
     subplot(3,2,2)
-        plot(MeanCausalClusteredSpines_CorrwithDend, 'Color',black, 'Linewidth', 2); hold on;
-        plot(MeanFilteredCausalClusteredSpines_CorrwithDend, 'Color', orange, 'Linewidth', 2);
-        plot(MeanNonCausalClusteredSpines_CorrwithDend, 'Color',dred, 'Linewidth', 2)
+        a = flex_plot(1:14, CausalClusteredSpines_CorrwithDend, stattype,black, 2); hold on;
+        b = flex_plot(1:14, FilteredCausalClusteredSpines_CorrwithDend, stattype, orange, 2);
+        c = flex_plot(1:14, NonCausalClusteredSpines_CorrwithDend, stattype,dred, 2);
     
-        legend({'Caus Clust','Filt Caus Clust', 'Caus Non Clust'})
-
-        r_errorbar(1:14, MeanCausalClusteredSpines_CorrwithDend, CausalClusteredSpines_CorrwithDendSEM, 'k')
-        r_errorbar(1:14, MeanFilteredCausalClusteredSpines_CorrwithDend, FilteredCausalClusteredSpines_CorrwithDendSEM, orange)
-        r_errorbar(1:14, MeanNonCausalClusteredSpines_CorrwithDend, NonCausalClusteredSpines_CorrwithDendSEM, 'r')
+        legend([a b c],{'Caus Clust','Filt Caus Clust', 'Caus Non Clust'});
 
         ylabel('Correlation with dendrite', 'Fontsize', 14)
         xlabel('Session', 'Fontsize', 14)
@@ -5062,8 +4582,7 @@ else
         xlim([0 15])
         
     subplot(3,2,3)
-        plot(MeanCorrelationofClusters, 'Color', black, 'Linewidth', 2); hold on;
-        r_errorbar(1:14, MeanCorrelationofClusters, CorrelationofClustersSEM, black)
+        flex_plot(1:14, CorrelationofClusters, stattype, black, 2); hold on;
         
         ylabel('Correlation', 'Fontsize', 14)
         xlabel('Session', 'Fontsize', 14)
@@ -5071,47 +4590,35 @@ else
         xlim([0 15])
         
     subplot(3,2,4)
-        plot(nanmean(MeanCorrelationBetweenMovementSpines,1), 'Color', black, 'Linewidth', 2); hold on;
-        plot(AllMeanCorrelationBetweenFarMovementSpines, 'Color', gray)
-        legend({'Mov spines same dend', 'Mov spines sep dends'})
-        r_errorbar(1:14, nanmean(MeanCorrelationBetweenMovementSpines,1), MeanCorrelationBetweenMovementSpinesSEM, black)
-        r_errorbar(1:14, AllMeanCorrelationBetweenFarMovementSpines, MeanCorrelationBetweenFarMovementSpinesSEM, gray)
+        a = flex_plot(1:14, CorrelationBetweenMovementSpines, stattype, black, 2);
+        b = flex_plot(1:14, CorrelationBetweenFarMovementSpines, stattype, gray, 2);
+        legend([a b],{'Mov spines same dend', 'Mov spines sep dends'});
         xlim([0 15])
         ylabel('Correlation', 'Fontsize', 14)
         xlabel('Session', 'Fontsize', 14)
         title('Correlation between mov spines', 'Fontsize', 14);
 
     subplot(3,2,5)
-        plot(MeanCueRelClusteredSpines_CorrwithDend, 'Color', lgreen, 'Linewidth', 2); hold on;
-        plot(MeanMovRelClusteredSpines_CorrwithDend, 'Color', black, 'LineWidth', 2);
-        plot(MeanSucRelClusteredSpines_CorrwithDend, 'Color', lblue, 'Linewidth', 2)
-        plot(MeanRewRelClusteredSpines_CorrwithDend, 'Color', purple, 'Linewidth', 2)
+        a = flex_plot(1:14, CueRelClusteredSpines_CorrwithDend, stattype, lgreen, 2); hold on;
+        b = flex_plot(1:14, MovRelClusteredSpines_CorrwithDend, stattype, black, 2);
+        c = flex_plot(1:14, SucRelClusteredSpines_CorrwithDend, stattype, lblue, 2);
+        d = flex_plot(1:14, RewRelClusteredSpines_CorrwithDend, stattype, purple, 2);
         
-        legend({'Cue rel clusters', 'Mov-rel clusters', 'Suc-rel clusters', 'Rew-rel clusters'})
-        
-        r_errorbar(1:14, MeanCueRelClusteredSpines_CorrwithDend, CueRelClusteredSpines_CorrwithDendSEM, lgreen)
-        r_errorbar(1:14, MeanMovRelClusteredSpines_CorrwithDend, MovRelClusteredSpines_CorrwithDendSEM, black)
-        r_errorbar(1:14, MeanSucRelClusteredSpines_CorrwithDend, SucRelClusteredSpines_CorrwithDendSEM, lblue)
-        r_errorbar(1:14, MeanRewRelClusteredSpines_CorrwithDend, RewRelClusteredSpines_CorrwithDendSEM, purple)
-        
+        legend([a b c d],{'Cue rel clusters', 'Mov-rel clusters', 'Suc-rel clusters', 'Rew-rel clusters'});
+                
         xlim([0 15])
         ylabel('Correlation with Dendrite')
         xlabel('Session')
         title('Functional Clusters')
        
     subplot(3,2,6)
-        plot(MeanCueRelCausalClusteredSpines_CorrwithDend, 'Color', lgreen, 'Linewidth', 2); hold on;
-        plot(MeanMovRelCausalClusteredSpines_CorrwithDend, 'Color', black, 'LineWidth', 2);
-        plot(MeanSucRelCausalClusteredSpines_CorrwithDend, 'Color', lblue, 'Linewidth', 2)
-        plot(MeanRewRelCausalClusteredSpines_CorrwithDend, 'Color', purple, 'Linewidth', 2)
+        a = flex_plot(1:14, CueRelCausalClusteredSpines_CorrwithDend, stattype, lgreen, 2); hold on;
+        b = flex_plot(1:14, MovRelCausalClusteredSpines_CorrwithDend, stattype, black, 2);
+        c = flex_plot(1:14, SucRelCausalClusteredSpines_CorrwithDend, stattype, lblue, 2);
+        d = flex_plot(1:14, RewRelCausalClusteredSpines_CorrwithDend, stattype, purple, 2);
         
-        legend({'Cue rel clusters', 'Mov-rel clusters', 'Suc-rel clusters', 'Rew-rel clusters'})
-        
-        r_errorbar(1:14, MeanCueRelCausalClusteredSpines_CorrwithDend, CueRelCausalClusteredSpines_CorrwithDendSEM, lgreen)
-        r_errorbar(1:14, MeanMovRelCausalClusteredSpines_CorrwithDend, MovRelCausalClusteredSpines_CorrwithDendSEM, black)
-        r_errorbar(1:14, MeanSucRelCausalClusteredSpines_CorrwithDend, SucRelCausalClusteredSpines_CorrwithDendSEM, lblue)
-        r_errorbar(1:14, MeanRewRelCausalClusteredSpines_CorrwithDend, RewRelCausalClusteredSpines_CorrwithDendSEM, purple)
-        
+        legend([a b c d], {'Cue rel clusters', 'Mov-rel clusters', 'Suc-rel clusters', 'Rew-rel clusters'});
+                
         xlim([0 15])
         title('Causal Functional Clusters')
         xlabel('Session')
@@ -5122,12 +4629,12 @@ else
     %%%
     
 %     figure('Position', scrsz); hold on;
-%     plot(MeanFractionofClusterThatsMovementRelated,'Color',black, 'LineWidth', 2)
-%     plot(MeanFractionofCausalClusterThatsMovementRelated, 'Color', bgreen, 'Linewidth',2)
+%     flex_plot(MeanFractionofClusterThatsMovementRelated,'Color',black, 'LineWidth', 2)
+%     flex_plot(MeanFractionofCausalClusterThatsMovementRelated, 'Color', bgreen, 'Linewidth',2)
 %     
 %     legend({'Synapse only clusters', 'Causal Clusters'}, 'Location', 'SouthEast')
-%     r_errorbar(1:14, MeanFractionofClusterThatsMovementRelated, FractionofClusterThatsMovementRelatedSEM, 'k')
-%     r_errorbar(1:14, MeanFractionofCausalClusterThatsMovementRelated, FractionofCausalClusterThatsMovementRelatedSEM, bgreen)
+%     r_errorbar(1:14, FractionofClusterThatsMovementRelated, FractionofClusterThatsMovementRelatedSEM, 'k')
+%     r_errorbar(1:14, FractionofCausalClusterThatsMovementRelated, FractionofCausalClusterThatsMovementRelatedSEM, bgreen)
 %     
 %     xlabel('Session')
 %     ylabel('Fraction of Cluster That is Movement Related', 'Fontsize', 14)
@@ -5140,152 +4647,126 @@ else
                 
     figure('Position', scrsz); hold on;
     subplot(2,4,1)
-    plot(1:14, MeanSpatialDegree, 'Color', black, 'LineWidth', 2); hold on;
-    plot(1:14, MeanTemporalDegree, 'Color',red, 'Linewidth', 2);
-    plot(1:14, MeanSpatioTemporalDegree, 'Color',green, 'Linewidth', 2); 
+    a = flex_plot(1:14, SpatialDegree, stattype, black, 2); hold on;
+    b = flex_plot(1:14, TemporalDegree, stattype,red, 2);
+    c = flex_plot(1:14, SpatioTemporalDegree, stattype,green, 2); 
 
-    legend({'Spatial Degree', 'Temporal Degree', 'Spatiotemporal Degree'});
+    legend([a b c], {'Spatial Degree', 'Temporal Degree', 'Spatiotemporal Degree'});
 
-    r_errorbar(1:14, MeanSpatioTemporalDegree, SpatioTemporalDegreeSEM, green)
-    r_errorbar(1:14, MeanSpatialDegree, SpatialDegreeSEM, black)
-    r_errorbar(1:14, MeanTemporalDegree, TemporalDegreeSEM, red)
     ylabel('Mean Degree', 'Fontsize', 14)
     xlabel('Session', 'Fontsize', 14)
     xlim([0 15])
     set(gca, 'XTick', 0:15); set(gca, 'XTickLabel', 0:15)
     
     subplot(2,4,2)
-    plot(1:14, MeanSpatialMovementCorrelation, 'Color',black, 'Linewidth', 2); hold on;
-    plot(1:14, MeanTemporalMovementCorrelation, 'Color',red, 'Linewidth', 2);
-    plot(1:14, MeanSpatioTemporalMovementCorrelation, 'Color',green, 'Linewidth', 2)
-        r_errorbar(1:14, MeanSpatialMovementCorrelation, SpatioTemporalDegreeSEM, black)
-        r_errorbar(1:14, MeanTemporalMovementCorrelation, TemporalMovementCorrelationSEM, red)
-        r_errorbar(1:14, MeanSpatioTemporalMovementCorrelation, SpatioTemporalMovementCorrelationSEM, green)
+    flex_plot(1:14, SpatialMovementCorrelation, stattype,black, 2); hold on;
+    flex_plot(1:14, TemporalMovementCorrelation, stattype,red, 2);
+    flex_plot(1:14, SpatioTemporalMovementCorrelation, stattype,green, 2);
     ylabel([{'Mean Correlation of Spatiotemporal'}, {'Degree with Movement'}],'Fontsize', 14)
     xlabel('Session', 'Fontsize', 14);
-    xlim([0 15])
+    xlim([0 15]);
     set(gca, 'XTick', 0:15); set(gca, 'XTickLabel', 0:15)
     
     subplot(2,4,3)
     xlim([0 15])
-    plot(1:14,MeanDendSpatialFiedlerValue, 'Color',black, 'Linewidth', 2); hold on;
-    plot(1:14,MeanDendTemporalFiedlerValue, 'Color',red, 'Linewidth', 2);
-    plot(1:14,MeanDendSpatioTemporalFiedlerValue, 'Color',green, 'Linewidth', 2);
-    legend({'Spatial Fiedler', 'Temporal Fiedler', 'Spatiotemporal Fiedler'});
-    r_errorbar(1:14, MeanDendSpatialFiedlerValue, DendSpatialFiedlerValueSEM, black);
-    r_errorbar(1:14, MeanDendTemporalFiedlerValue, DendTemporalFiedlerValueSEM, red);
-    r_errorbar(1:14, MeanDendSpatioTemporalFiedlerValue, DendSpatioTemporalFiedlerValueSEM, green);
+    a = flex_plot(1:14, cellfun(@(x) x(:,1), DendClusteringDegree, 'uni', false), stattype,black, 2); hold on;
+    b = flex_plot(1:14, cellfun(@(x) x(:,2), DendClusteringDegree, 'uni', false), stattype,red, 2);
+    c = flex_plot(1:14, cellfun(@(x) x(:,3), DendClusteringDegree, 'uni', false), stattype,green, 2);
+    legend([a b c], {'Spatial Fiedler', 'Temporal Fiedler', 'Spatiotemporal Fiedler'});
     
-    ylabel('Mean Algebraic Connectivity of Dendrites (Clustering)')
-    xlabel('Session')
-    xlim([0 15])
-    set(gca, 'XTick', 0:15); set(gca, 'XTickLabel', 0:15)
+    ylabel('Mean Algebraic Connectivity of Dendrites (Clustering)');
+    xlabel('Session');
+    xlim([0 15]);
+    set(gca, 'XTick', 0:15); set(gca, 'XTickLabel', 0:15);
     
     subplot(2,4,4)
-    plot(MeanSpatioTemporalOverlap, 'Color',black, 'Linewidth', 2)
-    r_errorbar(1:14, MeanSpatioTemporalOverlap, SpatioTemporalOverlapSEM, 'k')
-    ylabel('Mean Correlation of Spatial and Temporal Eigenvectors')
-    xlabel('Session')
-    xlim([0 15])
+    flex_plot(1:14, SpatioTemporalOverlap, stattype,black, 2);
+    ylabel('Mean Correlation of Spatial and Temporal Eigenvectors');
+    xlabel('Session');
+    xlim([0 15]);
     set(gca, 'XTick', 0:15); set(gca, 'XTickLabel', 0:15)
     
     subplot(2,4,5)
-    plot(MeanSpatialDegreeofCueSpines, 'Color', lgreen, 'Linewidth', 2); hold on;
-    plot(MeanSpatialDegreeofMovementSpines, 'Color', black, 'Linewidth', 2)
-    plot(MeanSpatialDegreeofMovementDuringCueSpines, 'Color', green , 'Linewidth', 2)
-    plot(MeanSpatialDegreeofPreSuccessSpines, 'Color', bgreen, 'Linewidth', 2)
-    plot(MeanSpatialDegreeofSuccessSpines, 'Color', lblue, 'Linewidth', 2)
-    plot(MeanSpatialDegreeofRewardSpines, 'Color', purple, 'Linewidth', 2)
+    a = flex_plot(1:14, SpatialDegreeofCueSpines, stattype, lgreen, 2); hold on;
+    b = flex_plot(1:14, SpatialDegreeofMovementSpines, stattype, black, 2);
+    c = flex_plot(1:14, SpatialDegreeofMovementDuringCueSpines, stattype, green , 2);
+    d = flex_plot(1:14, SpatialDegreeofPreSuccessSpines, stattype, bgreen, 2);
+    f = flex_plot(1:14, SpatialDegreeofSuccessSpines, stattype, lblue, 2);
+    g = flex_plot(1:14, SpatialDegreeofRewardSpines, stattype, purple, 2);
     
     xlim([0 15])
     xlabel('Session', 'Fontsize', 14)
     ylabel('Mean Degree')
-    legend({'Cue spines', 'Movement Spines', 'Success Spines', 'Reward Spines'})
+    legend([a b c d f g],{'Cue spines', 'Movement Spines', 'MDC Spines', 'PreMov Spines', 'Success Spines', 'Reward Spines'})
     title([{'Mean Spatial Degree of'},{'feature-related spines'}], 'Fontsize', 14)
-    
-    r_errorbar(1:14, MeanSpatialDegreeofCueSpines, SpatialDegreeofCueSpinesSEM, lgreen)
-    r_errorbar(1:14, MeanSpatialDegreeofMovementSpines, SpatialDegreeofMovementSpinesSEM, black)
-    r_errorbar(1:14, MeanSpatialDegreeofMovementDuringCueSpines, SpatialDegreeofMovementDuringCueSpinesSEM, green)
-    r_errorbar(1:14, MeanSpatialDegreeofPreSuccessSpines, SpatialDegreeofPreSuccessSpinesSEM, bgreen)
-    r_errorbar(1:14, MeanSpatialDegreeofSuccessSpines, SpatialDegreeofSuccessSpinesSEM, lblue)
-    r_errorbar(1:14, MeanSpatialDegreeofRewardSpines, SpatialDegreeofRewardSpinesSEM, purple)
-    
+        
     subplot(2,4,6)
-    plot(MeanTemporalDegreeofCueSpines, 'Color', lgreen, 'Linewidth', 2); hold on;
-    plot(MeanTemporalDegreeofMovementSpines, 'Color', black, 'Linewidth', 2)
-    plot(MeanTemporalDegreeofMovementDuringCueSpines, 'Color', green, 'Linewidth', 2)
-    plot(MeanTemporalDegreeofPreSuccessSpines, 'Color', bgreen, 'Linewidth', 2)
-    plot(MeanTemporalDegreeofSuccessSpines, 'Color', lblue, 'Linewidth', 2)
-    plot(MeanTemporalDegreeofRewardSpines, 'Color', purple, 'Linewidth', 2)    
+    a = flex_plot(1:14, TemporalDegreeofCueSpines, stattype, lgreen, 2); hold on;
+    b = flex_plot(1:14, TemporalDegreeofMovementSpines, stattype, black, 2);
+    c = flex_plot(1:14, TemporalDegreeofMovementDuringCueSpines, stattype, green, 2);
+    d = flex_plot(1:14, TemporalDegreeofPreSuccessSpines, stattype, bgreen, 2);
+    f = flex_plot(1:14, TemporalDegreeofSuccessSpines, stattype, lblue, 2);
+    g = flex_plot(1:14, TemporalDegreeofRewardSpines, stattype, purple, 2);    
     xlim([0 15])
     xlabel('Session', 'Fontsize', 14)
     ylabel('Mean Degree')
-    legend({'Cue spines', 'Movement Spines', 'Success Spines', 'Reward Spines'})
+    legend([a b c d f g],{'Cue spines', 'Movement Spines', 'MDC Spines', 'PreMov Spines', 'Success Spines', 'Reward Spines'});
     title([{'Mean Temporal Degree of'},{'feature-related spines'}], 'Fontsize', 14)
-    
-    r_errorbar(1:14, MeanTemporalDegreeofCueSpines, TemporalDegreeofCueSpinesSEM, lgreen)
-    r_errorbar(1:14, MeanTemporalDegreeofMovementSpines, TemporalDegreeofMovementSpinesSEM, black)
-    r_errorbar(1:14, MeanTemporalDegreeofMovementDuringCueSpines, TemporalDegreeofMovementDuringCueSpinesSEM, green)
-    r_errorbar(1:14, MeanTemporalDegreeofPreSuccessSpines, TemporalDegreeofPreSuccessSpinesSEM, bgreen)
-    r_errorbar(1:14, MeanTemporalDegreeofSuccessSpines, TemporalDegreeofSuccessSpinesSEM, lblue)
-    r_errorbar(1:14, MeanTemporalDegreeofRewardSpines, TemporalDegreeofRewardSpinesSEM, purple)
-    
+        
     subplot(2,4,7)
-    plot(MeanSpatioTemporalDegreeofCueSpines, 'Color', lgreen, 'Linewidth', 2); hold on;
-    plot(MeanSpatioTemporalDegreeofMovementSpines, 'Color', black, 'Linewidth', 2)
-    plot(MeanSpatioTemporalDegreeofMovementDuringCueSpines, 'Color', green, 'Linewidth', 2)
-    plot(MeanSpatioTemporalDegreeofPreSuccessSpines, 'Color', bgreen, 'Linewidth', 2)
-    plot(MeanSpatioTemporalDegreeofSuccessSpines, 'Color', lblue, 'Linewidth', 2)
-    plot(MeanSpatioTemporalDegreeofRewardSpines, 'Color', purple, 'Linewidth', 2)
+    a = flex_plot(1:14, SpatioTemporalDegreeofCueSpines, stattype, lgreen, 2); hold on;
+    b = flex_plot(1:14, SpatioTemporalDegreeofMovementSpines, stattype, black, 2);
+    c = flex_plot(1:14, SpatioTemporalDegreeofMovementDuringCueSpines, stattype, green, 2);
+    d = flex_plot(1:14, SpatioTemporalDegreeofPreSuccessSpines, stattype, bgreen, 2);
+    f = flex_plot(1:14, SpatioTemporalDegreeofSuccessSpines, stattype, lblue, 2);
+    g = flex_plot(1:14, SpatioTemporalDegreeofRewardSpines, stattype, purple, 2);
     
     xlim([0 15])
     xlabel('Session', 'Fontsize', 14)
     ylabel('Mean Degree')
-    legend({'Cue spines', 'Movement Spines', 'Success Spines', 'Reward Spines'})
+    legend([a b c d f g],{'Cue spines', 'Movement Spines', 'MDC Spines', 'PreMov Spines', 'Success Spines', 'Reward Spines'});
     title([{'Mean SpatioTemporal Degree of'},{'feature-related spines'}], 'Fontsize', 14)
-    
-    r_errorbar(1:14, MeanSpatioTemporalDegreeofCueSpines, SpatioTemporalDegreeofCueSpinesSEM, lgreen)
-    r_errorbar(1:14, MeanSpatioTemporalDegreeofMovementSpines, SpatioTemporalDegreeofMovementSpinesSEM, black)
-    r_errorbar(1:14, MeanSpatioTemporalDegreeofMovementDuringCueSpines, SpatioTemporalDegreeofMovementDuringCueSpinesSEM, green)
-    r_errorbar(1:14, MeanSpatioTemporalDegreeofPreSuccessSpines, SpatioTemporalDegreeofPreSuccessSpinesSEM, bgreen)
-    r_errorbar(1:14, MeanSpatioTemporalDegreeofSuccessSpines, SpatioTemporalDegreeofSuccessSpinesSEM, lblue)
-    r_errorbar(1:14, MeanSpatioTemporalDegreeofRewardSpines, SpatioTemporalDegreeofRewardSpinesSEM, purple)
-    
+        
     %%%
-    %%% Figure 8: Correlation vs. Distance Distributions
+    %% Figure 8: Correlation vs. Distance Distributions
     %%%
     
+    earlysessions = 1:3;
+    latesessions  = 10:14; 
+
     figure('Position', scrsz)
     currentplot = 1;
     subplot(2,4,1)
-        xdata = [AllDistancesBetweenMovementSpines{1},AllDistancesBetweenMovementSpines{2}]';
-        ydata = [CorrelationBetweenMovementSpinesMovePeriods{1}, CorrelationBetweenMovementSpinesMovePeriods{2}]';
+        xdata = cell2mat(AllDistancesBetweenMovementSpines(earlysessions))';
+        ydata = cell2mat(CorrelationBetweenMovementSpinesMovePeriods(earlysessions))';
         ydata(isnan(ydata)) = 0;
         %%% K-means clustering 
-        X = [(xdata-nanmean(xdata))/nanstd(xdata), (ydata-nanmean(ydata))/nanstd(ydata)];   %%% Standardized data!!!!
-        [idx, C] = kmeans(X,2);
+%         X = [(xdata-nanmean(xdata))/nanstd(xdata), (ydata-nanmean(ydata))/nanstd(ydata)];   %%% Standardized data!!!!
+%         [idx, C] = kmeans(X,2);
 %         x1 = min(X(:,1)):0.01:max(X(:,1));
 %         x2 = min(X(:,2)):0.01:max(X(:,2));
 %         [x1G,x2G] = meshgrid(x1,x2);
-%         XGrid = [x1G(:),x2G(:)]; % Defines a fine grid on the plot
+%         XGrid = [x1G(:),x2G(:)]; % Defines a fine grid on the flex_plot
 %         col1 = orange; col2 = lblue;
 %         idx2Region = kmeans(XGrid,2,'MaxIter',1,'Start',C);
 %         gscatter(XGrid(:,1),XGrid(:,2),idx2Region,...
 %         [col1; col2],'..');hold on;
 %         % Assigns each node in the grid to the closest centroid
 %         %%%
-        plot(xdata(idx==1), ydata(idx==1), '.', 'Color', lgreen); hold on;
-        plot(xdata(idx==2), ydata(idx==2), '.k')
+%         plot(xdata(idx==1), ydata(idx==1), '.', 'Color', lgreen); hold on;
+%         plot(xdata(idx==2), ydata(idx==2), '.k')
+        plot(xdata(ydata>=0.5), ydata(ydata>=0.5), '.', 'Color', lgreen); hold on;
+        plot(xdata(ydata<0.5), ydata(ydata<0.5), '.', 'Color', black);
 %         decay = fit(xdata, ydata, 'exp1'); 
-%             fline = plot(decay); 
+%             fline = flex_plot(decay); 
 %             set(fline, 'Color', 'k')
 %             legend off
-%     %         plot(-1/decay.b,0.368*decay.a, 'ok', 'MarkerFaceColor', 'k') %%% 0.368 corresponds to the decay constant, tau
+%     %         flex_plot(-1/decay.b,0.368*decay.a, 'ok', 'MarkerFaceColor', 'k') %%% 0.368 corresponds to the decay constant, tau
         xlim([0 100])
         ylim([-0.05 1])
         xlabel('Distance (\mum)', 'FontSize', 14)
         ylabel('Correlation', 'FontSize', 14)
-        title('Movement Spines, Sessions 1-2',  'FontSize', 14)
+        title(['Movement Spines, Sessions ', num2str(earlysessions(1)), '-', num2str(earlysessions(end))],  'FontSize', 14)
         corratbin = cell(1,8);
         highcorratbin = cell(1,8);
         binstep = 5;
@@ -5303,10 +4784,11 @@ else
         bar(corratbin{currentplot}, 'FaceColor', 'k', 'EdgeColor', gray)
         xlim([-1 11])
         ylim([0 1])
+        
     currentplot = 2;
     subplot(2,4,currentplot)
-        xdata = [AllDistancesBetweenFarMovementSpines{1}, AllDistancesBetweenFarMovementSpines{2}]';
-        ydata = [CorrelationBetweenFarMovementSpines{1}, CorrelationBetweenFarMovementSpines{2}]';
+        xdata = cell2mat(AllDistancesBetweenFarMovementSpines(earlysessions))';
+        ydata = cell2mat(CorrelationBetweenFarMovementSpines(earlysessions))';
         ydata(isnan(ydata)) = 0;
         try
             plot(xdata(ydata>=0.5), ydata(ydata>=0.5), '.', 'Color', lgreen); hold on;
@@ -5314,15 +4796,15 @@ else
         end
         plot(xdata(ydata<0.5), ydata(ydata<0.5), '.', 'Color', gray)
 %         decay = fit(xdata, ydata, 'exp1'); 
-%             fline = plot(decay); 
+%             fline = flex_plot(decay); 
 %             set(fline, 'Color', 'k')
 %             legend off
-%     %         plot(-1/decay.b,0.368*decay.a, 'ok', 'MarkerFaceColor', 'k') %%% 0.368 corresponds to the decay constant, tau
+%     %         flex_plot(-1/decay.b,0.368*decay.a, 'ok', 'MarkerFaceColor', 'k') %%% 0.368 corresponds to the decay constant, tau
         xlim([0 100])
         ylim([-0.05 1])
         xlabel('Distance (\mum)', 'FontSize', 14)
         ylabel('Correlation', 'FontSize', 14)
-        title('Movement Spines, Sessions 1-2',  'FontSize', 14)
+        title(['Movement Spines, Sessions ', num2str(earlysessions(1)), '-', num2str(earlysessions(end))],  'FontSize', 14)
         bincount = 1;
         ydata2 = ydata(ydata>0.5);
         xdata2 = xdata(ydata>0.5);
@@ -5337,25 +4819,28 @@ else
         bar(corratbin{currentplot}, 'FaceColor', 'k', 'EdgeColor', gray)
         xlim([-1 11])
         ylim([0 1])
+        
     currentplot = 3;
     subplot(2,4,currentplot)
-        xdata = [AllDistancesBetweenMovementSpines{10},AllDistancesBetweenMovementSpines{11}]';
-        ydata = [CorrelationBetweenMovementSpinesMovePeriods{10},CorrelationBetweenMovementSpinesMovePeriods{11}]';
+        xdata = cell2mat(AllDistancesBetweenMovementSpines(latesessions))';
+        ydata = cell2mat(CorrelationBetweenMovementSpinesMovePeriods(latesessions))';
         ydata(isnan(ydata)) = 0;
-        X = [(xdata-nanmean(xdata))/nanstd(xdata), (ydata-nanmean(ydata))/nanstd(ydata)];   %%% Standardized data!!!!
-        [idx, C] = kmeans(X,2);
+%         X = [(xdata-nanmean(xdata))/nanstd(xdata), (ydata-nanmean(ydata))/nanstd(ydata)];   %%% Standardized data!!!!
+%         [idx, C] = kmeans(X,2);
 %         x1 = min(X(:,1)):0.01:max(X(:,1));
 %         x2 = min(X(:,2)):0.01:max(X(:,2));
 %         [x1G,x2G] = meshgrid(x1,x2);
-%         XGrid = [x1G(:),x2G(:)]; % Defines a fine grid on the plot
+%         XGrid = [x1G(:),x2G(:)]; % Defines a fine grid on the flex_plot
 %         col1 = orange; col2 = lblue;
 %         idx2Region = kmeans(XGrid,2,'MaxIter',1,'Start',C);
 %         gscatter(XGrid(:,1),XGrid(:,2),idx2Region,...
 %         [col1; col2],'..');hold on;
 %         % Assigns each node in the grid to the closest centroid
 %         %%%
-        plot(xdata(idx==1), ydata(idx==1), '.', 'Color', lgreen); hold on;
-        plot(xdata(idx==2), ydata(idx==2), '.k')
+%         plot(xdata(idx==1), ydata(idx==1), '.', 'Color', lgreen); hold on;
+%         plot(xdata(idx==2), ydata(idx==2), '.k')
+        plot(xdata(ydata>=0.5), ydata(ydata>=0.5), '.', 'Color', lgreen); hold on;
+        plot(xdata(ydata<0.5), ydata(ydata<0.5), '.', 'Color', black);
 %             decay = fit(xdata, ydata, 'exp1'); 
 %             fline = plot(decay); 
 %             set(fline, 'Color', 'k')
@@ -5365,7 +4850,7 @@ else
         ylim([-0.05 1])
         xlabel('Distance (\mum)', 'FontSize', 14)
         ylabel('Correlation', 'FontSize', 14)
-        title('Movement Spines, Sessions 10-11', 'FontSize', 14)
+        title(['Movement Spines, Sessions ', num2str(latesessions(1)), '-', num2str(latesessions(end))], 'FontSize', 14)
         bincount = 1;
         ydata2 = ydata(ydata>0.5);
         xdata2 = xdata(ydata>0.5);
@@ -5380,10 +4865,11 @@ else
         bar(corratbin{currentplot}, 'FaceColor', 'k', 'EdgeColor', gray)
         xlim([-1 11])
         ylim([0 1])
+        
     currentplot = 4;
     subplot(2,4,currentplot)
-        xdata = [AllDistancesBetweenFarMovementSpines{10},AllDistancesBetweenFarMovementSpines{11}]';
-        ydata = [CorrelationBetweenFarMovementSpines{10},CorrelationBetweenFarMovementSpines{11}]';
+        xdata = cell2mat(AllDistancesBetweenFarMovementSpines(latesessions))';
+        ydata = cell2mat(CorrelationBetweenFarMovementSpines(latesessions))';
         ydata(isnan(ydata)) = 0;
         try
             plot(xdata(ydata>=0.5), ydata(ydata>=0.5), '.', 'Color', lgreen); hold on;
@@ -5399,7 +4885,7 @@ else
         ylim([-0.05 1])
         xlabel('Distance (\mum)', 'FontSize', 14)
         ylabel('Correlation', 'FontSize', 14)
-        title('Movement Spines, Sessions 10-11', 'FontSize', 14)
+        title(['Movement Spines, Sessions ', num2str(latesessions(1)), '-', num2str(latesessions(end))], 'FontSize', 14)
         bincount = 1;
         ydata2 = ydata(ydata>0.5);
         xdata2 = xdata(ydata>0.5);
@@ -5417,11 +4903,11 @@ else
         
     currentplot = 5;
     subplot(2,4,currentplot)
-        xdata = [AllDistancesBetweenAllSpines{1}, AllDistancesBetweenAllSpines{2}]';
-        ydata = [CorrelationBetweenAllSpinesMovePeriods{1}, CorrelationBetweenAllSpinesMovePeriods{2}]';
+        xdata = cell2mat(AllDistancesBetweenAllSpines(earlysessions))';
+        ydata = cell2mat(CorrelationBetweenAllSpinesMovePeriods(earlysessions))';
         ydata(isnan(ydata)) = 0;
-        X = [(xdata-nanmean(xdata))/nanstd(xdata), (ydata-nanmean(ydata))/nanstd(ydata)];   %%% Standardized data!!!!
-        [idx, C] = kmeans(X,2);
+%         X = [(xdata-nanmean(xdata))/nanstd(xdata), (ydata-nanmean(ydata))/nanstd(ydata)];   %%% Standardized data!!!!
+%         [idx, C] = kmeans(X,2);
 %         x1 = min(X(:,1)):0.01:max(X(:,1));
 %         x2 = min(X(:,2)):0.01:max(X(:,2));
 %         [x1G,x2G] = meshgrid(x1,x2);
@@ -5432,18 +4918,20 @@ else
 %         [col1; col2],'..');hold on;
 %         % Assigns each node in the grid to the closest centroid
 %         %%%
-        plot(xdata(idx==1), ydata(idx==1), '.', 'Color', dred); hold on;
-        plot(xdata(idx==2), ydata(idx==2), '.k')
-            decay = fit(xdata, ydata, 'exp1'); 
-            fline = plot(decay); 
-            set(fline, 'Color', 'k')
-            legend off
+%         plot(xdata(idx==1), ydata(idx==1), '.', 'Color', dred); hold on;
+%         plot(xdata(idx==2), ydata(idx==2), '.k')
+        plot(xdata(ydata>=0.5), ydata(ydata>=0.5), '.', 'Color', dred); hold on;
+        plot(xdata(ydata<0.5), ydata(ydata<0.5), '.', 'Color', black);
+%             decay = fit(xdata, ydata, 'exp1'); 
+%             fline = plot(decay); 
+%             set(fline, 'Color', 'k')
+%             legend off
     %         plot(-1/decay.b,0.368*decay.a, 'ok', 'MarkerFaceColor', 'k') %%% 0.368 corresponds to the decay constant, tau
         xlim([0 100])
         ylim([-0.05 1])
         xlabel('Distance (\mum)', 'FontSize', 14)
         ylabel('Correlation', 'FontSize', 14)
-        title('All Spines, Sessions 1-2', 'FontSize', 14)
+        title(['All Spines, Sessions ', num2str(earlysessions(1)), '-', num2str(earlysessions(end))], 'FontSize', 14)
         
         bincount = 1;
         ydata2 = ydata(ydata>0.5);
@@ -5462,8 +4950,8 @@ else
         
     currentplot = 6;
     subplot(2,4,currentplot)
-        xdata = [AllDistancesBetweenFarSpines{1}; AllDistancesBetweenFarSpines{2}]';
-        ydata = [CorrelationBetweenFarSpines{1}; CorrelationBetweenFarSpines{2}]';
+        xdata = cell2mat(AllDistancesBetweenFarSpines(earlysessions)');
+        ydata = cell2mat(CorrelationBetweenFarSpines(earlysessions)');
         ydata(isnan(ydata)) = 0;
         try
             plot(xdata(ydata>=0.5), ydata(ydata>=0.5), '.', 'Color', dred); hold on;
@@ -5479,7 +4967,7 @@ else
         ylim([-0.05 1])
         xlabel('Distance (\mum)', 'FontSize', 14)
         ylabel('Correlation', 'FontSize', 14)
-        title('All Spines, Sessions 1-2', 'FontSize', 14)
+        title(['All Far Spines, Sessions ', num2str(earlysessions(1)), '-', num2str(earlysessions(end))], 'FontSize', 14)
         bincount = 1;
         ydata2 = ydata(ydata>0.5);
         xdata2 = xdata(ydata>0.5);
@@ -5494,13 +4982,14 @@ else
         bar(corratbin{currentplot}, 'FaceColor', 'k', 'EdgeColor', gray)
         xlim([-1 11])
         ylim([0 1])
+        
     currentplot = 7;
     subplot(2,4,currentplot)
-        xdata = [AllDistancesBetweenAllSpines{10}, AllDistancesBetweenAllSpines{11}]';
-        ydata = [CorrelationBetweenAllSpinesMovePeriods{10}, CorrelationBetweenAllSpinesMovePeriods{11}]';
+        xdata = cell2mat(AllDistancesBetweenAllSpines(latesessions))';
+        ydata = cell2mat(CorrelationBetweenAllSpinesMovePeriods(latesessions))';
         ydata(isnan(ydata)) = 0;
-        X = [(xdata-nanmean(xdata))/nanstd(xdata), (ydata-nanmean(ydata))/nanstd(ydata)];   %%% Standardized data!!!!
-        [idx, C] = kmeans(X,2);
+%         X = [(xdata-nanmean(xdata))/nanstd(xdata), (ydata-nanmean(ydata))/nanstd(ydata)];   %%% Standardized data!!!!
+%         [idx, C] = kmeans(X,2);
 %         x1 = min(X(:,1)):0.01:max(X(:,1));
 %         x2 = min(X(:,2)):0.01:max(X(:,2));
 %         [x1G,x2G] = meshgrid(x1,x2);
@@ -5511,18 +5000,20 @@ else
 %         [col1; col2],'..');hold on;
 %         % Assigns each node in the grid to the closest centroid
 %         %%%
-        plot(xdata(idx==1), ydata(idx==1), '.', 'Color', dred); hold on;
-        plot(xdata(idx==2), ydata(idx==2), '.k')
-            decay = fit(xdata, ydata, 'exp1'); 
-            fline = plot(decay); 
-            set(fline, 'Color', 'k')
-            legend off
-            plot(-1/decay.b,0.368*decay.a, 'ok', 'MarkerFaceColor', 'k') %%% 0.368 corresponds to the decay constant, tau
+%         plot(xdata(idx==1), ydata(idx==1), '.', 'Color', dred); hold on;
+%         plot(xdata(idx==2), ydata(idx==2), '.k')
+        plot(xdata(ydata>=0.5), ydata(ydata>=0.5), '.', 'Color', dred); hold on;
+        plot(xdata(ydata<0.5), ydata(ydata<0.5), '.', 'Color', black);
+%             decay = fit(xdata, ydata, 'exp1'); 
+%             fline = plot(decay); 
+%             set(fline, 'Color', 'k')
+%             legend off
+%             plot(-1/decay.b,0.368*decay.a, 'ok', 'MarkerFaceColor', 'k') %%% 0.368 corresponds to the decay constant, tau
         xlim([0 100])
         ylim([-0.05 1])
         xlabel('Distance (\mum)', 'FontSize', 14)
         ylabel('Correlation', 'FontSize', 14)
-        title('All Spines, Sessions 10-11', 'Fontsize', 14)
+        title(['All Spines, Sessions ', num2str(latesessions(1)), '-', num2str(latesessions(end))], 'Fontsize', 14)
         bincount = 1;
         ydata2 = ydata(ydata>0.5);
         xdata2 = xdata(ydata>0.5);
@@ -5539,8 +5030,8 @@ else
         ylim([0 1])
     currentplot = 8;
     subplot(2,4,currentplot)
-        xdata = [AllDistancesBetweenFarSpines{10}; AllDistancesBetweenFarSpines{11}]';
-        ydata = [CorrelationBetweenFarSpines{10}; CorrelationBetweenFarSpines{11}]';
+        xdata = cell2mat(AllDistancesBetweenFarSpines(latesessions)');
+        ydata = cell2mat(CorrelationBetweenFarSpines(latesessions)');
         ydata(isnan(ydata)) = 0;
         try
             plot(xdata(ydata>=0.5), ydata(ydata>=0.5), '.', 'Color', dred); hold on;
@@ -5556,14 +5047,17 @@ else
         ylim([-0.05 1])
         xlabel('Distance (\mum)', 'FontSize', 14)
         ylabel('Correlation', 'FontSize', 14)
-        title('All Spines, Sessions 10-11', 'Fontsize', 14)
+        title(['All Spines, Sessions ', num2str(latesessions(1)), '-', num2str(latesessions(end))], 'Fontsize', 14)
         bincount = 1;
         ydata2 = ydata(ydata>0.5);
         xdata2 = xdata(ydata>0.5);
         for i = 1:binstep:50
-            corratbin{currentplot}(1,bincount) = nanmean(ydata(find(xdata>=(i-1) & xdata<(i+binstep))));
-            highcorratbin{currentplot}(1,bincount) = nanmean(ydata2(find(xdata2>=(i-1) & xdata2<(i+binstep))));
-            bincount = bincount+1;
+            try
+                corratbin{currentplot}(1,bincount) = nanmean(ydata(find(xdata>=(i-1) & xdata<(i+binstep))));
+                highcorratbin{currentplot}(1,bincount) = nanmean(ydata2(find(xdata2>=(i-1) & xdata2<(i+binstep))));
+                bincount = bincount+1;
+            catch
+            end
         end
         pos = get(gca,'Position');
         axes('Position', [pos(1)+0.7*pos(3), pos(2)+0.7*pos(4), 0.35*pos(3), 0.25*pos(4)]);
@@ -5574,26 +5068,26 @@ else
         
 
         
-    %%% Figure 9
+    %% Figure 9
 
     figure('Position', scrsz, 'Name', 'Clustering Validation'); hold on;
     %%% Shuffled data plots: uncomment the following and set stop point
-
-    corrtouse{1} = [CorrelationBetweenAllSpinesMovePeriods{1}, CorrelationBetweenAllSpinesMovePeriods{2}];
-    disttouse{1} = [AllDistancesBetweenAllSpines{1}, AllDistancesBetweenAllSpines{2}];
-    %         farcorrtouse = CorrelationBetweenFarSpines{sessiontouse};
-
-    corrtouse{2} = [CorrelationBetweenAllSpinesMovePeriods{10}, CorrelationBetweenAllSpinesMovePeriods{11}];
-    disttouse{2} = [AllDistancesBetweenAllSpines{10}, AllDistancesBetweenAllSpines{11}];
-
-    corrtouse{3} = [CorrelationBetweenMovementSpinesMovePeriods{1}, CorrelationBetweenMovementSpinesMovePeriods{2}];
-    disttouse{3} = [AllDistancesBetweenMovementSpines{1}, AllDistancesBetweenMovementSpines{2}];
-    %         farcorrtouse = CorrelationBetweenFarSpines{sessiontouse};
-
-    corrtouse{4} = [CorrelationBetweenMovementSpinesMovePeriods{10}, CorrelationBetweenMovementSpinesMovePeriods{11}];
-    disttouse{4} = [AllDistancesBetweenMovementSpines{10}, AllDistancesBetweenMovementSpines{11}];
     
-    usenorm = 0;
+    corrtouse{1} = cell2mat(CorrelationBetweenAllSpinesMovePeriods(earlysessions));
+    disttouse{1} = cell2mat(AllDistancesBetweenAllSpines(earlysessions));
+    %         farcorrtouse = CorrelationBetweenFarSpines{sessiontouse};
+
+    corrtouse{2} = cell2mat(CorrelationBetweenAllSpinesMovePeriods(latesessions));
+    disttouse{2} = cell2mat(AllDistancesBetweenAllSpines(latesessions));
+
+    corrtouse{3} = cell2mat(CorrelationBetweenMovementSpinesMovePeriods(earlysessions));
+    disttouse{3} = cell2mat(AllDistancesBetweenMovementSpines(earlysessions));
+    %         farcorrtouse = CorrelationBetweenFarSpines{sessiontouse};
+
+    corrtouse{4} = cell2mat(CorrelationBetweenMovementSpinesMovePeriods(latesessions));
+    disttouse{4} = cell2mat(AllDistancesBetweenMovementSpines(latesessions));
+    
+    usenorm = 1;
 
     for i = 1:4
         if i<3
@@ -5604,9 +5098,9 @@ else
             color = lgreen;
         end
         if i == 1 || i == 3
-            sessiontag = '1-2';
+            sessiontag = [num2str(earlysessions(1)), '-', num2str(earlysessions(end))];
         elseif i == 2 || i ==4 
-            sessiontag = '10-11';
+            sessiontag = [num2str(latesessions(1)), '-', num2str(latesessions(end))];
         end
         [sortedDistances, sortedDistIndices] = sort(disttouse{i});
     %         [sortedFarDistances, sortedFarDistInd] = sort(AllDistancesBetweenFarSpines{sessiontouse});
@@ -5626,7 +5120,7 @@ else
         Correlations_fraction = corrtouse{i}(sortedDistIndices)./nansum(corrtouse{i}(sortedDistIndices));
         Correlations_fraction(isnan(Correlations_fraction))= 0;
         plot(sortedDistances,cumsum(Correlations_fraction),'color',color, 'LineWidth', 3)
-        plot(sortedDistances,cumsum(Correlations_fraction)-cumsum(nanmean(sortedshuffled,2))', 'color', green, 'Linewidth', 2)
+        plot(sortedDistances(2:end),(smooth(diff(cumsum(Correlations_fraction)),1000)-smooth(diff(cumsum(nanmean(sortedshuffled,2)))',1000))/max(smooth(diff(cumsum(Correlations_fraction)),1000)-smooth(diff(cumsum(nanmean(sortedshuffled,2)))',1000)), 'color', green, 'Linewidth', 2)
         ylabel('Cumulative Correlation', 'Fontsize', 14)
         xlabel('Distance (\mum)')
         title(['Session(s) ', sessiontag], 'Fontsize', 14)
@@ -5635,76 +5129,59 @@ else
     end
 
     subplot(2,4,3); hold on;
-        neardist = [NearestMovementRelatedSpine{1},NearestMovementRelatedSpine{2}];
-        n = hist(neardist,round(max(neardist)/5));
-        if usenorm
-            n = n/sum(n);
-        else
+        neardist = cell2mat(MovSpinetoNearestMovementRelatedSpine(earlysessions));
+        nextdist = cell2mat(MovSpinetoNextClosestMovementRelatedSpine(earlysessions));
+        thirddist = cell2mat(MovSpinetoThirdClosestMovementRelatedSpine(earlysessions));
+        fourthdist = cell2mat(MovSpinetoFourthClosestMovementRelatedSpine(earlysessions));
+        try
+            nd = hist(neardist, round(max(neardist)/5));
+            nx = hist(nextdist, round(max(nextdist)/5));
+            nt = hist(thirddist, round(max(thirddist)/5));
+            nf = hist(fourthdist, round(max(fourthdist)/5));
+        catch
+            nd = [];
+            nx = [];
+            nt = [];
+            nf = [];
         end
-        bar(n, 'FaceColor', lpurple); hold on;
-        nextdist = [NextClosestMovementRelatedSpine{1}, NextClosestMovementRelatedSpine{2}];
-        nx = hist(nextdist, round(max(nextdist)/5));
-        if usenorm
-            nx = nx/sum(nx);
-        else
-        end
-        bar(nx, 'FaceColor', orange);
-        thirddist = [ThirdClosestMovementRelatedSpine{1}, ThirdClosestMovementRelatedSpine{2}];
-        nt = hist(thirddist, round(max(thirddist)/5));
-        if usenorm
-            nt = nt/sum(nt);
-        else
-        end
-        bar(nt, 'FaceColor', lgreen);
-        fourthdist = [FourthClosestMovementRelatedSpine{1}, FourthClosestMovementRelatedSpine{2}];
-        nf = hist(fourthdist, round(max(fourthdist)/5));
-        if usenorm
-            nf = nf/sum(nf);
-            ylim([0 1])
-        else
-        end
-        bar(nf, 'FaceColor', blue)
-        legend({'Nearest MR spine', 'Next Closest', 'Third Closest', 'Fourth'}, 'Location', 'Northwest')
-        title('Session 1-2', 'Fontsize',14)
-        set(gca, 'XTick', 0:30, 'XTickLabel', mat2cell(num2str([0:5:150]')), 'Fontsize', 6)
-        xlabel('Distance bins', 'Fontsize', 14)
-        ylabel('Fraction', 'Fontsize', 14)
-        
-        text(1.5, n(1), ['mean = ', num2str(nanmean(neardist))], 'Color', lpurple);
-        text(2.5, nx(1), ['mean = ', num2str(nanmean(nextdist))], 'Color', orange);
-        text(3.5, nt(1), ['mean = ', num2str(nanmean(thirddist))], 'Color', lgreen);
-        text(4.5, nf(1), ['mean = ', num2str(nanmean(fourthdist))], 'Color', blue);
-        
-        pos = get(gca,'Position');
-        axes('Position', [pos(1)+0.7*pos(3), pos(2)+0.7*pos(4), 0.25*pos(3), 0.25*pos(4)], 'Fontsize', 6);
-        nearcorr = [CorrelationwithNearestMovementRelatedSpine{1}, CorrelationwithNearestMovementRelatedSpine{2}]; hold on;
-        plot(nanmean(nearcorr)*ones(1,max(hist(nearcorr))), 1:max(hist(nearcorr)), ':k')
-        hist(nearcorr); set(findobj(gca, 'Facecolor', 'flat'), 'FaceColor', dred)
-        ylabel('Count')
-        xlabel('Correlation with nearest MRS')
-        
-        axes('Position', [pos(1)+0.7*pos(3), pos(2)+0.3*pos(4), 0.25*pos(3), 0.25*pos(4)]);
-        neardist = [NearestHighlyCorrelatedMovementRelatedSpine{1}, NearestHighlyCorrelatedMovementRelatedSpine{2}];
-        nextdist = [NextClosestHighlyCorrelatedMovementRelatedSpine{1}, NextClosestHighlyCorrelatedMovementRelatedSpine{2}];
-        thirddist = [ThirdClosestHighlyCorrelatedMovementRelatedSpine{1}, ThirdClosestHighlyCorrelatedMovementRelatedSpine{2}];
-        nd = hist(neardist, round(max(neardist)/5));
-        nx = hist(nextdist, round(max(nextdist)/5));
-        nt = hist(thirddist, round(max(thirddist)/5));
         if usenorm
             nd = nd/sum(nd);
             nx = nx/sum(nx);
             nt = nt/sum(nt);
+            nf = nf/sum(nf);
         else
         end
-        bar(nd, 'FaceColor', purple); hold on;
-        bar(nx, 'FaceColor', orange)
-        bar(nt, 'FaceColor', lgreen)
-        if usenorm
-            ylim([0 1])
-        else
+        allmat = zeros(4,max([length(nd), length(nx), length(nt), length(nf)]));
+        allmat(1,1:length(nd)) = nd;
+        allmat(2,1:length(nx)) = nx;
+        allmat(3,1:length(nt)) = nt;
+        allmat(4,1:length(nf)) = nf;
+        bar(allmat')
+        barmap = [lpurple; orange; lgreen; blue];
+        colormap(barmap)
+        legend({'Nearest', 'Second', 'Third', 'Fourth'}, 'Location', 'SouthEast')
+        title(['Sessions ' num2str(earlysessions(1)), '-', num2str(earlysessions(end))], 'Fontsize',14)
+        set(gca, 'XTick', 0:30, 'XTickLabel', mat2cell(num2str([0:5:150]')), 'Fontsize', 6)
+        xlim([0 20])
+        xlabel('Distance bins', 'Fontsize', 14)
+        ylabel('Fraction', 'Fontsize', 14)
+        
+        try
+            text(1.5, nd(1), ['median = ', num2str(nanmedian(neardist))], 'Color', lpurple);
+            text(2.5, nx(1), ['median = ', num2str(nanmedian(nextdist))], 'Color', orange);
+            text(3.5, nt(1), ['median = ', num2str(nanmedian(thirddist))], 'Color', lgreen);
+            text(4.5, nf(1), ['median = ', num2str(nanmedian(fourthdist))], 'Color', blue);
+        catch
         end
-        set(gca, 'XTick', [0:30], 'XTickLabel', mat2cell(num2str([0:5:150]')), 'Fontsize', 6)
-
+        
+        pos = get(gca,'Position');
+        axes('Position', [pos(1)+0.7*pos(3), pos(2)+0.7*pos(4), 0.25*pos(3), 0.25*pos(4)], 'Fontsize', 6);
+        nearcorr = cell2mat(CorrelationwithNearestMovementRelatedSpine(earlysessions)); hold on;
+        plot(nanmean(nearcorr)*ones(1,max(hist(nearcorr))), 1:max(hist(nearcorr)), ':k')
+        hist(nearcorr); set(findobj(gca, 'Facecolor', 'flat'), 'FaceColor', dred)
+        ylabel('Count')
+        xlabel('Correlation with nearest MRS')
+       
         
     subplot(2,4,4); hold on;
         h = hist(disttouse{1}, round(max(disttouse{1}))/5);
@@ -5726,7 +5203,7 @@ else
         end
         bar(m-h(1:length(m)), 'FaceColor', blue);
         legend({'All spine pairs', 'MR spines', 'Diff'})
-        title('Session 1-2', 'Fontsize', 14)
+        title(['Sessions ' num2str(earlysessions(1)), '-', num2str(earlysessions(end))], 'Fontsize', 14)
         set(gca, 'XTick', [0:30], 'XTickLabel', mat2cell(num2str([0:5:150]')), 'Fontsize', 6)
         xlabel('Distance bins')
         ylabel('Fraction of Distances Measured', 'Fontsize', 14)
@@ -5738,76 +5215,60 @@ else
 
         
     subplot(2,4,7); hold on;
-        neardist = [NearestMovementRelatedSpine{10},NearestMovementRelatedSpine{11}];
-        n = hist(neardist,round(max(neardist)/5));
-        if usenorm
-            n = n/sum(n);
-        else
+        neardist = cell2mat(MovSpinetoNearestMovementRelatedSpine(latesessions));
+        nextdist = cell2mat(MovSpinetoNextClosestMovementRelatedSpine(latesessions));
+        thirddist = cell2mat(MovSpinetoThirdClosestMovementRelatedSpine(latesessions));
+        fourthdist = cell2mat(MovSpinetoFourthClosestMovementRelatedSpine(latesessions));
+        try
+            nd = hist(neardist, round(max(neardist)/5));
+            nx = hist(nextdist, round(max(nextdist)/5));
+            nt = hist(thirddist, round(max(thirddist)/5));
+            nf = hist(fourthdist, round(max(fourthdist)/5));
+        catch
+            nd = [];
+            nx = [];
+            nt = [];
+            nf = [];
         end
-        bar(n, 'FaceColor', lpurple); hold on;
-        nextdist = [NextClosestMovementRelatedSpine{10}, NextClosestMovementRelatedSpine{11}];
-        nx = hist(nextdist, round(max(nextdist)/5));
-        if usenorm
-            nx = nx/sum(nx);
-        else
-        end
-        bar(nx, 'FaceColor', orange); 
-        thirddist = [ThirdClosestMovementRelatedSpine{10}, ThirdClosestMovementRelatedSpine{11}];
-        nt = hist(thirddist, round(max(thirddist)/5));
-        if usenorm
-            nt = nt/sum(nt);
-        else
-        end
-        bar(nt, 'FaceColor', lgreen);
-        fourthdist = [FourthClosestMovementRelatedSpine{10}, FourthClosestMovementRelatedSpine{11}];
-        nf = hist(fourthdist, round(max(fourthdist)/5));
-        if usenorm
-            nf = nf/sum(nf);
-            ylim([0 1])
-        else
-        end
-        bar(nf, 'FaceColor', blue)
-        legend({'Nearest MR spine', 'Next Closest', 'Third Closest', 'Fourth'}, 'Location', 'Northwest')
-        title('Session 10-11', 'Fontsize', 14)
-        set(gca, 'XTick', [0:30], 'XTickLabel', mat2cell(num2str([0:5:150]')), 'Fontsize', 6);
-        xlabel('Distance bins', 'Fontsize', 14)
-        ylabel('Fraction', 'Fontsize', 14)
-        
-        text(1.5, max(n), ['mean = ', num2str(nanmean(neardist))], 'Color', lpurple);
-        text(2.5, max(nx), ['mean = ', num2str(nanmean(nextdist))], 'Color', orange);
-        text(3.5, max(nt), ['mean = ', num2str(nanmean(thirddist))], 'Color', lgreen);
-        text(4.5, max(nf), ['mean = ', num2str(nanmean(fourthdist))], 'Color', blue);
-        
-        pos = get(gca,'Position');
-        axes('Position', [pos(1)+0.7*pos(3), pos(2)+0.7*pos(4), 0.25*pos(3), 0.25*pos(4)], 'Fontsize', 6);
-        nearcorr = [CorrelationwithNearestMovementRelatedSpine{10}, CorrelationwithNearestMovementRelatedSpine{11}];
-        hist(nearcorr); set(findobj(gca, 'Facecolor', 'flat'), 'FaceColor', dred); hold on;
-        plot(nanmean(nearcorr)*ones(1,max(hist(nearcorr))), 1:max(hist(nearcorr)), ':k')
-        ylabel('Count')
-        xlabel('Correlation with nearest MRS')
-        
-        axes('Position', [pos(1)+0.7*pos(3), pos(2)+0.3*pos(4), 0.25*pos(3), 0.25*pos(4)]);
-        neardist = [NearestHighlyCorrelatedMovementRelatedSpine{10}, NearestHighlyCorrelatedMovementRelatedSpine{11}];
-        nextdist = [NextClosestHighlyCorrelatedMovementRelatedSpine{10}, NextClosestHighlyCorrelatedMovementRelatedSpine{11}];
-        thirddist = [ThirdClosestHighlyCorrelatedMovementRelatedSpine{10}, ThirdClosestHighlyCorrelatedMovementRelatedSpine{11}];
-        nd = hist(neardist, round(max(neardist)/5));
-        nx = hist(nextdist, round(max(nextdist)/5));
-        nt = hist(thirddist, round(max(thirddist)/5));
         if usenorm
             nd = nd/sum(nd);
             nx = nx/sum(nx);
             nt = nt/sum(nt);
+            nf = nf/sum(nf);
         else
         end
-        bar(nd, 'FaceColor', purple); hold on;
-        bar(nd, 'FaceColor', orange)
-        bar(nt, 'FaceColor', lgreen)
-        if usenorm
-            ylim([0 1])
-        else
+        allmat = zeros(4,max([length(nd), length(nx), length(nt), length(nf)]));
+        allmat(1,1:length(nd)) = nd;
+        allmat(2,1:length(nx)) = nx;
+        allmat(3,1:length(nt)) = nt;
+        allmat(4,1:length(nf)) = nf;
+        bar(allmat')
+        barmap = [lpurple; orange; lgreen; blue];
+        colormap(barmap)
+        legend({'Nearest', 'Second', 'Third', 'Fourth'}, 'Location', 'SouthEast')
+        title(['Sessions ', num2str(latesessions(1)), '-', num2str(latesessions(end))], 'Fontsize',14)
+        set(gca, 'XTick', 0:30, 'XTickLabel', mat2cell(num2str([0:5:150]')), 'Fontsize', 6)
+        xlim([0 20])
+        xlabel('Distance bins', 'Fontsize', 14)
+        ylabel('Fraction', 'Fontsize', 14)
+        
+        try
+            text(1.5, nd(1), ['median = ', num2str(nanmedian(neardist))], 'Color', lpurple);
+            text(2.5, nx(1), ['median = ', num2str(nanmedian(nextdist))], 'Color', orange);
+            text(3.5, nt(1), ['median = ', num2str(nanmedian(thirddist))], 'Color', lgreen);
+            text(4.5, nf(1), ['median = ', num2str(nanmedian(fourthdist))], 'Color', blue);
+        catch
         end
         
-        set(gca, 'XTick', [0:30], 'XTickLabel', mat2cell(num2str([0:5:150]')), 'Fontsize', 6)
+        pos = get(gca,'Position');
+        axes('Position', [pos(1)+0.7*pos(3), pos(2)+0.7*pos(4), 0.25*pos(3), 0.25*pos(4)], 'Fontsize', 6);
+        nearcorr = cell2mat(CorrelationwithNearestMovementRelatedSpine(latesessions)); hold on;
+        plot(nanmean(nearcorr)*ones(1,max(hist(nearcorr))), 1:max(hist(nearcorr)), ':k')
+        hist(nearcorr); set(findobj(gca, 'Facecolor', 'flat'), 'FaceColor', dred)
+        ylabel('Count')
+        xlabel('Correlation with nearest MRS')
+        
+        
         
         
     subplot(2,4,8); hold on;
@@ -5827,7 +5288,7 @@ else
         end
         bar(m-h(1:length(m)), 'FaceColor', blue)
         legend({'All spine pairs', 'MR spines', 'Diff'})
-        title('Session 10-11', 'Fontsize', 14)
+        title(['Sessions ', num2str(latesessions(1)), '-', num2str(latesessions(end))], 'Fontsize', 14)
         set(gca, 'XTick', [0:30], 'XTickLabel', mat2cell(num2str([0:5:150]')), 'Fontsize', 6)
         xlabel('Distance bins')
         ylabel('Fraction of Distances Measured', 'Fontsize', 14)
@@ -5836,6 +5297,416 @@ else
 %         h(length(h)+1:maxlength) = 0;
 %         m(length(m)+1:maxlength) = 0;
 %         n(length(n)+1:maxlength) = 0;
+    
+    %%%
+    %% Figure 10
+    %%%
+    
+    figure('Position', scrsz, 'Name', 'Clustering Characterization'); hold on;
+%             axes('Position', [pos(1)+0.7*pos(3), pos(2)+0.3*pos(4), 0.25*pos(3), 0.25*pos(4)]);
+    
+    subplot(2,4,1)
+        neardist = cell2mat(MovSpinetoNearestMovementRelatedSpine(earlysessions));
+        nextdist = cell2mat(MovSpinetoNextClosestMovementRelatedSpine(earlysessions));
+        thirddist = cell2mat(MovSpinetoThirdClosestMovementRelatedSpine(earlysessions));
+        fourthdist = cell2mat(MovSpinetoFourthClosestMovementRelatedSpine(earlysessions));
+        try
+            nd = hist(neardist, round(max(neardist)/5));
+            nx = hist(nextdist, round(max(nextdist)/5));
+            nt = hist(thirddist, round(max(thirddist)/5));
+            nf = hist(fourthdist, round(max(fourthdist)/5));
+        catch
+            nd = [];
+            nx = [];
+            nt = [];
+            nf = [];
+        end
+        if usenorm
+            nd = nd/sum(nd);
+            nx = nx/sum(nx);
+            nt = nt/sum(nt);
+            nf = nf/sum(nf);
+        else
+        end
+        allmat = zeros(4,max([length(nd), length(nx), length(nt), length(nf)]));
+        allmat(1,1:length(nd)) = nd;
+        allmat(2,1:length(nx)) = nx;
+        allmat(3,1:length(nt)) = nt;
+        allmat(4,1:length(nf)) = nf;
+        bar(allmat')
+        barmap = [lpurple; orange; lgreen; blue];
+        colormap(barmap)
+        legend({'Nearest', 'Second', 'Third', 'Fourth'})
+        title(['Distribution of all Movement Spines Sessions ', num2str(earlysessions(1)), '-', num2str(earlysessions(end))], 'Fontsize',12)
+        set(gca, 'XTick', 0:30, 'XTickLabel', mat2cell(num2str([0:5:150]')))
+        xlabel('Distance (\mum)', 'Fontsize', 14)
+        ylabel('Fraction', 'Fontsize', 14)
+        if usenorm
+            ylim([0 1])
+        else
+        end
+        xlim([0 10])
+                
+    subplot(2,4,5)
+        neardist = cell2mat(MovSpinetoNearestMovementRelatedSpine(latesessions));
+        nextdist = cell2mat(MovSpinetoNextClosestMovementRelatedSpine(latesessions));
+        thirddist = cell2mat(MovSpinetoThirdClosestMovementRelatedSpine(latesessions));
+        fourthdist = cell2mat(MovSpinetoFourthClosestMovementRelatedSpine(latesessions));
+        try
+            nd = hist(neardist, round(max(neardist)/5));
+            nx = hist(nextdist, round(max(nextdist)/5));
+            nt = hist(thirddist, round(max(thirddist)/5));
+            nf = hist(fourthdist, round(max(fourthdist)/5));
+        catch
+            nd = [];
+            nx = [];
+            nt = [];
+            nf = [];
+        end
+        if usenorm
+            nd = nd/sum(nd);
+            nx = nx/sum(nx);
+            nt = nt/sum(nt);
+            nf = nf/sum(nf);
+        else
+        end
+        allmat = zeros(4,max([length(nd), length(nx), length(nt), length(nf)]));
+        allmat(1,1:length(nd)) = nd;
+        allmat(2,1:length(nx)) = nx;
+        allmat(3,1:length(nt)) = nt;
+        allmat(4,1:length(nf)) = nf;
+        bar(allmat')
+        barmap = [lpurple; orange; lgreen; blue];
+        colormap(barmap)
+        legend({'Nearest', 'Second', 'Third', 'Fourth'})
+        title(['Distribution of all Movement Spines Sessions ', num2str(latesessions(1)), '-', num2str(latesessions(end))], 'Fontsize',12)
+        set(gca, 'XTick', 0:30, 'XTickLabel', mat2cell(num2str([0:5:150]')))
+        xlabel('Distance (\mum)', 'Fontsize', 14)
+        ylabel('Fraction', 'Fontsize', 14)
+        if usenorm
+            ylim([0 1])
+        else
+        end
+        xlim([0 10])
+                
+    subplot(2,4,2)
+        neardist = cell2mat(MoveSpinetoNearestFunctionallyClusteredMoveSpine(earlysessions));
+        nextdist = cell2mat(MoveSpinetoNextFunctionallyClusteredMoveSpine(earlysessions));
+        thirddist = cell2mat(MoveSpinetoThirdFunctionallyClusteredMoveSpine(earlysessions));
+        fourthdist = cell2mat(MoveSpinetoFourthFunctionallyClusteredMoveSpine(earlysessions));
+        try
+            nd = hist(neardist, round(max(neardist)/5));
+            nx = hist(nextdist, round(max(nextdist)/5));
+            nt = hist(thirddist, round(max(thirddist)/5));
+            nf = hist(fourthdist, round(max(fourthdist)/5));
+        catch
+            nd = [];
+            nx = [];
+            nt = [];
+            nf = [];
+        end
+        if usenorm
+            nd = nd/sum(nd);
+            nx = nx/sum(nx);
+            nt = nt/sum(nt);
+            nf = nf/sum(nf);
+        else
+        end
+        allmat = zeros(4,max([length(nd), length(nx), length(nt), length(nf)]));
+        allmat(1,1:length(nd)) = nd;
+        allmat(2,1:length(nx)) = nx;
+        allmat(3,1:length(nt)) = nt;
+        allmat(4,1:length(nf)) = nf;
+        bar(allmat')
+        barmap = [lpurple; orange; lgreen; blue];
+        colormap(barmap)
+        title({'Distance from Any Move Spine to', ['Nearest Functionally Clustered Mov-Rel Spine (sessions ', num2str(earlysessions(1)), '-', num2str(earlysessions(end)),')']}, 'Fontsize', 10)
+        xlabel('Distance (\mum)', 'Fontsize', 14)
+        ylabel('Fraction', 'Fontsize', 14)
+        if usenorm
+            ylim([0 1])
+        else
+        end
+        
+        set(gca, 'XTick', [0:30], 'XTickLabel', mat2cell(num2str([0:5:150]')))
+        xlim([0 10])
+        
+        pos = get(gca,'Position');
+        axes('Position', [pos(1)+0.7*pos(3), pos(2)+0.7*pos(4), 0.25*pos(3), 0.25*pos(4)], 'Fontsize', 6);
+        nearcorr = cell2mat(CorrofNearestMetaCluster(earlysessions)); hold on;
+        nextcorr = cell2mat(CorrofNextMetaCluster(earlysessions)); 
+        thirdcorr = cell2mat(CorrofThirdMetaCluster(earlysessions));
+        fourthcorr = cell2mat(CorrofFourthMetaCluster(earlysessions));
+        [nc,ncent] = hist(nearcorr);
+        [nxc,xcent] = hist(nextcorr);
+        [ntc,tcent] = hist(thirdcorr);
+        [nfc,fcent] = hist(fourthcorr);
+        if usenorm
+            nc = nc/sum(nc);
+            nxc = nxc/sum(nxc);
+            ntc = ntc/sum(ntc);
+            nfc = nfc/sum(nfc);
+        else
+        end
+        bar(ncent, nc, 'FaceColor', lpurple)
+        bar(xcent, nxc, 'FaceColor',orange)
+        bar(tcent, ntc, 'FaceColor',lgreen)
+        bar(fcent, nfc, 'FaceColor', blue)
+        ylabel('Count')
+
+
+        
+    subplot(2,4,6)
+        neardist = cell2mat(MoveSpinetoNearestFunctionallyClusteredMoveSpine(latesessions));
+        nextdist = cell2mat(MoveSpinetoNextFunctionallyClusteredMoveSpine(latesessions));
+        thirddist = cell2mat(MoveSpinetoThirdFunctionallyClusteredMoveSpine(latesessions));
+        fourthdist = cell2mat(MoveSpinetoFourthFunctionallyClusteredMoveSpine(latesessions));
+        try
+            nd = hist(neardist, round(max(neardist)/5));
+            nx = hist(nextdist, round(max(nextdist)/5));
+            nt = hist(thirddist, round(max(thirddist)/5));
+            nf = hist(fourthdist, round(max(fourthdist)/5));
+        catch
+            nd = [];
+            nx = [];
+            nt = [];
+            nf = [];
+        end
+        if usenorm
+            nd = nd/sum(nd);
+            nx = nx/sum(nx);
+            nt = nt/sum(nt);
+            nf = nf/sum(nf);
+        else
+        end
+        allmat = zeros(4,max([length(nd), length(nx), length(nt), length(nf)]));
+        allmat(1,1:length(nd)) = nd;
+        allmat(2,1:length(nx)) = nx;
+        allmat(3,1:length(nt)) = nt;
+        allmat(4,1:length(nf)) = nf;
+        bar(allmat')
+        barmap = [lpurple; orange; lgreen; blue];
+        colormap(barmap)
+        title({'Distance from Any Move Spine to', ['Nearest Functionally Clustered Mov-Rel Spine (sessions ', num2str(latesessions(1)), '-', num2str(latesessions(end)),')']}, 'Fontsize', 10)
+        xlabel('Distance (\mum)', 'Fontsize', 14)
+        ylabel('Fraction', 'Fontsize', 14)
+        if usenorm
+            ylim([0 1])
+        else
+        end
+        
+        set(gca, 'XTick', [0:30], 'XTickLabel', mat2cell(num2str([0:5:150]')))
+        xlim([0 10])
+        
+        pos = get(gca,'Position');
+        axes('Position', [pos(1)+0.7*pos(3), pos(2)+0.7*pos(4), 0.25*pos(3), 0.25*pos(4)], 'Fontsize', 6);
+        nearcorr = cell2mat(CorrofNearestMetaCluster(latesessions)); hold on;
+        nextcorr = cell2mat(CorrofNextMetaCluster(latesessions)); 
+        thirdcorr = cell2mat(CorrofThirdMetaCluster(latesessions));
+        fourthcorr = cell2mat(CorrofFourthMetaCluster(latesessions));
+        [nc,ncent] = hist(nearcorr);
+        [nxc,xcent] = hist(nextcorr);
+        [ntc,tcent] = hist(thirdcorr);
+        [nfc,fcent] = hist(fourthcorr);
+        if usenorm
+            nc = nc/sum(nc);
+            nxc = nxc/sum(nxc);
+            ntc = ntc/sum(ntc);
+            nfc = nfc/sum(nfc);
+        else
+        end
+        bar(ncent, nc, 'FaceColor', lpurple)
+        bar(xcent, nxc, 'FaceColor',orange)
+        bar(tcent, ntc, 'FaceColor',lgreen)
+        bar(fcent, nfc, 'FaceColor', blue)
+        ylabel('Count')
+        
+        axes('Position', [pos(1)+0.7*pos(3), pos(2)+0.4*pos(4), 0.25*pos(3), 0.25*pos(4)], 'Fontsize', 6);
+        nearearly = cell2mat(AllCorrelationswithNearbyMetaClusters(earlysessions)');
+        nearlate = cell2mat(AllCorrelationswithNearbyMetaClusters(latesessions)');
+        near{1} = nearearly; near{2} = nearlate;
+        flex_plot(1:2, near, 'nonparametric', lpurple, 2);
+        distantearly = cell2mat(AllCorrelationswithDistantMetaClusters(earlysessions)');
+        distantlate = cell2mat(AllCorrelationswithDistantMetaClusters(latesessions)');
+        distant{1} = distantearly; distant{2} = distantlate;
+        flex_plot(1:2, distant, 'nonparametric', lgreen, 2);
+        randomearly = cell2mat(RandomMovementPairCorr(earlysessions))';
+        randomlate = cell2mat(RandomMovementPairCorr(latesessions))';
+        random{1} = randomearly; random{2} = randomlate;
+        flex_plot(1:2, random, 'nonparametric', black, 2);
+        set(gca, 'XTick', [1 2]);
+        xlim([0 3])
+        set(gca, 'XTickLabel', {'Early', 'Late'})
+        ylabel('Correlation')
+        
+    subplot(2,4,3)
+        neardist = cell2mat(NearestFunctionallyClusteredMovementRelatedSpine(earlysessions));
+        nextdist = cell2mat(NextClosestFunctionallyClusteredMovementRelatedSpine(earlysessions));
+        thirddist = cell2mat(ThirdClosestFunctionallyClusteredMovementRelatedSpine(earlysessions));
+        fourthdist = cell2mat(FourthClosestFunctionallyClusteredMovementRelatedSpine(earlysessions));
+        try
+            nd = hist(neardist, round(max(neardist)/5));
+            nx = hist(nextdist, round(max(nextdist)/5));
+            nt = hist(thirddist, round(max(thirddist)/5));
+            nf = hist(fourthdist, round(max(fourthdist)/5));
+        catch
+            nd = [];
+            nx = [];
+            nt = [];
+            nf = [];
+        end
+        if usenorm
+            nd = nd/sum(nd);
+            nx = nx/sum(nx);
+            nt = nt/sum(nt);
+            nf = nf/sum(nf);
+        else
+        end
+        allmat = zeros(4,max([length(nd), length(nx), length(nt), length(nf)]));
+        allmat(1,1:length(nd)) = nd;
+        allmat(2,1:length(nx)) = nx;
+        allmat(3,1:length(nt)) = nt;
+        allmat(4,1:length(nf)) = nf;
+        bar(allmat')
+        barmap = [lpurple; orange; lgreen; blue];
+        colormap(barmap)
+        legend({'Nearest', 'Second', 'Third', 'Fourth'})
+        title({'Distance from Functionally Clustered Spine to', ['Nearest Functionally Clustered Mov-Rel Spine (sessions ', num2str(earlysessions(1)), '-', num2str(earlysessions(end)),')']}, 'Fontsize', 10)
+        xlabel('Distance (\mum)', 'Fontsize', 14)
+        ylabel('Fraction', 'Fontsize', 14)
+        if usenorm
+            ylim([0 1])
+        else
+        end
+        set(gca, 'XTick', [0:30], 'XTickLabel', mat2cell(num2str([0:5:150]')))
+        xlim([0 10])
+        
+    subplot(2,4,7)
+%                 axes('Position', [pos(1)+0.7*pos(3), pos(2)+0.3*pos(4), 0.25*pos(3), 0.25*pos(4)]);
+        neardist = cell2mat(NearestFunctionallyClusteredMovementRelatedSpine(latesessions));
+        nextdist = cell2mat(NextClosestFunctionallyClusteredMovementRelatedSpine(latesessions));
+        thirddist = cell2mat(ThirdClosestFunctionallyClusteredMovementRelatedSpine(latesessions));
+        fourthdist = cell2mat(FourthClosestFunctionallyClusteredMovementRelatedSpine(latesessions));
+        try
+            nd = hist(neardist, round(max(neardist)/5));
+            nx = hist(nextdist, round(max(nextdist)/5));
+            nt = hist(thirddist, round(max(thirddist)/5));
+            nf = hist(fourthdist, round(max(fourthdist)/5));
+        catch
+            nd = [];
+            nx = [];
+            nt = [];
+            nf = [];
+        end
+        if usenorm
+            nd = nd/sum(nd);
+            nx = nx/sum(nx);
+            nt = nt/sum(nt);
+            nf = nf/sum(nf);
+        else
+        end
+        allmat(1,1:length(nd)) = nd;
+        allmat(2,1:length(nx)) = nx;
+        allmat(3,1:length(nt)) = nt;
+        allmat(4,1:length(nf)) = nf;
+        bar(allmat')
+        barmap = [lpurple; orange; lgreen; blue];
+        colormap(barmap)
+        legend({'Nearest', 'Second', 'Third', 'Fourth'})
+        title({'Distance from Functionally Clustered Spine to', ['Nearest Functionally Clustered Mov-Rel Spine (sessions ', num2str(latesessions(1)), '-', num2str(latesessions(end)),')']}, 'Fontsize', 10)
+        if usenorm
+            ylim([0 1])
+        else
+        end
+        
+        set(gca, 'XTick', [0:30], 'XTickLabel', mat2cell(num2str([0:5:150]')))
+        xlim([0 10])
+
+    subplot(2,4,4)
+        neardist = cell2mat(NearestHighlyCorrelatedMovementRelatedSpine(earlysessions));
+        nextdist = cell2mat(NextClosestHighlyCorrelatedMovementRelatedSpine(earlysessions));
+        thirddist = cell2mat(ThirdClosestHighlyCorrelatedMovementRelatedSpine(earlysessions));
+        fourthdist = cell2mat(FourthClosestHighlyCorrelatedMovementRelatedSpine(earlysessions));
+        try
+            nd = hist(neardist, round(max(neardist)/5));
+            nx = hist(nextdist, round(max(nextdist)/5));
+            nt = hist(thirddist, round(max(thirddist)/5));
+            nf = hist(fourthdist, round(max(fourthdist)/5));
+        catch
+            nd = [];
+            nx = [];
+            nt = [];
+            nf = [];
+        end
+        if usenorm
+            nd = nd/sum(nd);
+            nx = nx/sum(nx);
+            nt = nt/sum(nt);
+            nf = nf/sum(nf);
+        else
+        end
+        allmat = zeros(4,max([length(nd), length(nx), length(nt), length(nf)]));
+        allmat(1,1:length(nd)) = nd;
+        allmat(2,1:length(nx)) = nx;
+        allmat(3,1:length(nt)) = nt;
+        allmat(4,1:length(nf)) = nf;
+        bar(allmat')
+        barmap = [lpurple; orange; lgreen; blue];
+        colormap(barmap)
+        legend({'Nearest', 'Second', 'Third', 'Fourth'})
+        title({'Distance to Nearest Highly', ['Correlated Mov-Rel Spine (sessions ', num2str(earlysessions(1)), '-', num2str(earlysessions(end)), ')']}, 'Fontsize', 12)
+        xlabel('Distance (\mum)', 'Fontsize', 14)
+        ylabel('Fraction', 'Fontsize', 14)
+        if usenorm
+            ylim([0 1])
+        else
+        end
+        
+        set(gca, 'XTick', [0:30], 'XTickLabel', mat2cell(num2str([0:5:150]')))
+        xlim([0 10])
+        
+    subplot(2,4,8)
+        neardist = cell2mat(NearestHighlyCorrelatedMovementRelatedSpine(latesessions));
+        nextdist = cell2mat(NextClosestHighlyCorrelatedMovementRelatedSpine(latesessions));
+        thirddist = cell2mat(ThirdClosestHighlyCorrelatedMovementRelatedSpine(latesessions));
+        fourthdist = cell2mat(FourthClosestHighlyCorrelatedMovementRelatedSpine(latesessions));
+        try
+            nd = hist(neardist, round(max(neardist)/5));
+            nx = hist(nextdist, round(max(nextdist)/5));
+            nt = hist(thirddist, round(max(thirddist)/5));
+            nf = hist(fourthdist, round(max(fourthdist)/5));
+        catch
+            nd = [];
+            nx = [];
+            nt = [];
+            nf = [];
+        end
+        if usenorm
+            nd = nd/sum(nd);
+            nx = nx/sum(nx);
+            nt = nt/sum(nt);
+            nf = nf/sum(nf);
+        else
+        end
+        allmat = zeros(4,max([length(nd), length(nx), length(nt), length(nf)]));
+        allmat(1,1:length(nd)) = nd;
+        allmat(2,1:length(nx)) = nx;
+        allmat(3,1:length(nt)) = nt;
+        allmat(4,1:length(nf)) = nf;
+        bar(allmat')
+        barmap = [lpurple; orange; lgreen; blue];
+        colormap(barmap)
+        legend({'Nearest', 'Second', 'Third', 'Fourth'})
+        title({'Distance to Nearest Highly', ['Correlated Mov-Rel Spine (sessions ', num2str(latesessions(1)), '-', num2str(latesessions(end)), ')']}, 'Fontsize', 12)
+        xlabel('Distance (\mum)', 'Fontsize', 14)
+        ylabel('Fraction', 'Fontsize', 14)
+        if usenorm
+            ylim([0 1])
+        else
+        end
+        
+        set(gca, 'XTick', [0:30], 'XTickLabel', mat2cell(num2str([0:5:150]')))
+        xlim([0 10])
 end
 
 

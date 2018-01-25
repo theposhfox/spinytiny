@@ -48,14 +48,14 @@ else
         files = dir(cd);
         check = 0;
         for i = 1:length(files)
-            if ~isempty(regexp(files(i).name,'_001_001_summed_50_Analyzed_ByNathan')) || ~isempty(regexp(files(i).name,'_001_001_summed_50Analyzed_ByNathan'))
+            if ~isempty(regexp(files(i).name,'_summed_50_Analyzed_ByNathan')) || ~isempty(regexp(files(i).name,'_summed_50Analyzed_ByNathan'))
                 load(files(i).name)
                 check = 1;
             end
         end
         if ~check   %%% If no files were found using the above criteria
             for i = 1:length(files)
-                if ~isempty(regexp(files(i).name, '001_001_summed_50_Analyzed'))
+                if ~isempty(regexp(files(i).name, '_summed_50_Analyzed'))
                     load(files(i).name)
                 else
                 end
@@ -174,8 +174,8 @@ else
     spinethreshmultiplier = 2*ones(1,length(File.dF_over_F));       %%% multiplier to binarize events
     spinevalueslimitforbaseline = 3;                                %%% for capping values to estimate baseline
     spinevalueslimitfornoise = 2;
-    driftbaselinesmoothwindow = 450;
-    spinebaselinesmoothwindow = 60;
+    driftbaselinesmoothwindow = 1800;
+    spinebaselinesmoothwindow = 450;
     spinesmoothwindow = 15;
     polythreshmultiplier = 2*ones(1,length(File.Poly_Fluorescence_Measurement));
     Dendthreshmultiplier = 2*ones(1,File.NumberofDendrites);
@@ -213,7 +213,7 @@ if File.NumberofSpines ==  0
     File.NumberofSpines = length(File.deltaF);
 end
 % 
-SpineNo = randi(File.NumberofSpines,1);
+SpineNo = randi(File.NumberofSpines,1); %%% Will choose a random spine from the available ones for this file
 % SpineNo = 49;
 
 
@@ -1135,7 +1135,7 @@ r_all(isnan(r_all)) = 0;
 OverallCorrelation = r_all;
 OverallPvalue = p_all;
 
-[r, p] = corrcoef(synapticEvents');
+[r, p] = corrcoef(square_Ds');
 r(isnan(r)) = 0;
 SpineToSpineCorrelation = r;
 SpineToSpinePValue = p;
