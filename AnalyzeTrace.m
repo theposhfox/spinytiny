@@ -44,36 +44,42 @@ function [Threshold, DriftBaseline, ProcessedData] = AnalyzeTrace(Data, Options)
     %%% Estimate baseline by performing x successful rounds of capping off large and small values,
     %%% then re-calculating the median 
     
-    roundstodo = 50;
-    roundnum = 1;    
-    
-    while roundnum<=roundstodo 
-        smoothed_forbaseline(smoothed_forbaseline>rawmed+valueslimitforbaseline*rawspread) = rawmed+valueslimitforbaseline*rawspread;      %%% Cap off large and small values to pinch the data towards the true baseline
-        smoothed_forbaseline(smoothed_forbaseline<rawmed-valueslimitforbaseline*rawspread) = rawmed-valueslimitforbaseline*rawspread;      %%%
-            rawspread = nanstd(smoothed_forbaseline);
-            rawmed = nanmedian(smoothed_forbaseline);
-        roundnum = roundnum+1;
-    end
+%     roundstodo = 50;
+%     roundnum = 1;    
+%     
+%     while roundnum<=roundstodo 
+%         smoothed_forbaseline(smoothed_forbaseline>rawmed+valueslimitforbaseline*rawspread) = rawmed+valueslimitforbaseline*rawspread;      %%% Cap off large and small values to pinch the data towards the true baseline
+%         smoothed_forbaseline(smoothed_forbaseline<rawmed-valueslimitforbaseline*rawspread) = rawmed-valueslimitforbaseline*rawspread;      %%%
+%             rawspread = nanstd(smoothed_forbaseline);
+%             rawmed = nanmedian(smoothed_forbaseline);
+%         roundnum = roundnum+1;
+%     end
+% 
+%     DriftBaseline = reshape(smooth(smoothed_forbaseline,driftbaselinesmoothwindow), 1, length(smoothed));
+%     
+%     driftsub = (smoothed-DriftBaseline)+nanmedian(DriftBaseline);
+%     
+%     roundnum = 1;    
+%     
+%     smoothed_forbaseline = driftsub;
+%     rawmed = nanmedian(driftsub);
+%     rawspread = nanstd(driftsub);
+% 
+%     while roundnum<=roundstodo 
+%         smoothed_forbaseline(smoothed_forbaseline>rawmed+valueslimitforbaseline*rawspread) = rawmed+valueslimitforbaseline*rawspread;      %%% Cap off large and small values to pinch the data towards the true baseline
+%         smoothed_forbaseline(smoothed_forbaseline<rawmed-valueslimitforbaseline*rawspread) = rawmed-valueslimitforbaseline*rawspread;      %%%
+%             rawspread = nanstd(smoothed_forbaseline);
+%             rawmed = nanmedian(smoothed_forbaseline);
+%         roundnum = roundnum+1;
+%     end
 
-    DriftBaseline = reshape(smooth(smoothed_forbaseline,driftbaselinesmoothwindow), 1, length(smoothed));
-    
-    driftsub = (smoothed-DriftBaseline)+nanmedian(DriftBaseline);
-    
-    roundnum = 1;    
-    
-    smoothed_forbaseline = driftsub;
-    rawmed = nanmedian(driftsub);
-    rawspread = nanstd(driftsub);
+%     truebaseline = smooth(smoothed_forbaseline, baselinesmoothwindow)';
 
-    while roundnum<=roundstodo 
-        smoothed_forbaseline(smoothed_forbaseline>rawmed+valueslimitforbaseline*rawspread) = rawmed+valueslimitforbaseline*rawspread;      %%% Cap off large and small values to pinch the data towards the true baseline
-        smoothed_forbaseline(smoothed_forbaseline<rawmed-valueslimitforbaseline*rawspread) = rawmed-valueslimitforbaseline*rawspread;      %%%
-            rawspread = nanstd(smoothed_forbaseline);
-            rawmed = nanmedian(smoothed_forbaseline);
-        roundnum = roundnum+1;
-    end
 
-    truebaseline = smooth(smoothed_forbaseline, baselinesmoothwindow)';
+    %%% Kernel Density Estimation (Aki's method) %%%
+    truebaseline = baseline_kde(smoothed',50,100,20);
+    DriftBaseline = truebaseline;
+    
 
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -81,11 +87,12 @@ function [Threshold, DriftBaseline, ProcessedData] = AnalyzeTrace(Data, Options)
     %%% Baseline Subtraction
     
     if nanmedian(truebaseline)<0
-        driftsub = driftsub+abs(min(truebaseline));
+%         driftsub = driftsub+abs(min(truebaseline));
         truebaseline = truebaseline+abs(min(truebaseline));
     end
     
-    blsub = driftsub-truebaseline;                                                             %%% Baseline-subtracted value
+%     blsub = driftsub-truebaseline;                                                             %%% Baseline-subtracted value
+    blsub = smoothed-truebaseline';
 
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     %%% Baseline division (if using raw traces)
@@ -110,6 +117,7 @@ function [Threshold, DriftBaseline, ProcessedData] = AnalyzeTrace(Data, Options)
         
             
         roundnum = 1;
+        roundstodo = 50;
         while roundnum<=roundstodo 
             fornoise(fornoise>rawmed+valueslimitfornoise*rawspread) = rawmed+valueslimitfornoise*rawspread;      %%% Cap off large and small values to pinch the data towards the true baseline
             fornoise(fornoise<rawmed-valueslimitfornoise*rawspread) = rawmed-valueslimitfornoise*rawspread;      %%%

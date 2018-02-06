@@ -90,31 +90,31 @@ for A = 1:length(addresses)
             end
             
             %%% Add distance contingency
-            DistanceMax = 10;
+%             DistanceMax = 10;
+% %             
+%             a = Data.DistanceHeatMap;
+%             b = a';
+%             a(isnan(a)) = b(isnan(a));
+%             Distances = a;
 %             
-            a = Data.DistanceHeatMap;
-            b = a';
-            a(isnan(a)) = b(isnan(a));
-            Distances = a;
-            
-            toofar = [];
-            for i = 1:length(clust)
-                for j = 1:length(clust{i})
-                    partnerdist = [];
-                    for k = 1:length(clust{i})
-                        partnerdist(k) = Distances(clust{i}(j), clust{i}(k));
-                    end
-                    if min(partnerdist) > DistanceMax
-                        toofar = [toofar; clust{i}(j)];
-                    end
-                end
-                clust{i} = setdiff(clust{i},toofar);
-                if length(clust{i})<2
-                    clust{i} = [];
-                end
-            end
-            
-            clust = clust(~cellfun(@isempty, clust));
+%             toofar = [];
+%             for i = 1:length(clust)
+%                 for j = 1:length(clust{i})
+%                     partnerdist = [];
+%                     for k = 1:length(clust{i})
+%                         partnerdist(k) = Distances(clust{i}(j), clust{i}(k));
+%                     end
+%                     if min(partnerdist) > DistanceMax
+%                         toofar = [toofar; clust{i}(j)];
+%                     end
+%                 end
+%                 clust{i} = setdiff(clust{i},toofar);
+%                 if length(clust{i})<2
+%                     clust{i} = [];
+%                 end
+%             end
+%             
+%             clust = clust(~cellfun(@isempty, clust));
             
 
             Clustered(Clustnum+1:Clustnum+sum(~cellfun(@(x) isempty(x), clust))) = clust(~cellfun(@(x) isempty(x), clust));

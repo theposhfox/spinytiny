@@ -1,4 +1,4 @@
-function DendriteSubtraction(File, Date)
+function [outputFile] = DendriteSubtraction(File, Date, Router)
 %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -81,39 +81,43 @@ cd(['C:\Users\Komiyama\Desktop\ActivitySummary_UsingRawData'])
 %%%%%%%%%%%%%%%%%%%
 
 
-% 
-% for i = 1:DendNum
-%     counter = 1;
-%     dendDataforfit = File.Processed_Dendrite_dFoF(i,:);
-% %     dendDataforfit = File.Compiled_Dendrite_Fluorescence_Measurement;
-%     dendDataforfit(dendDataforfit<=Dthresh(i)) = nan;
-%     dendDataforfit = File.Compiled_Dendrite_Fluorescence_Measurement;
-% 
-%     
-%     for j = File.SpineDendriteGrouping{i}(1):File.SpineDendriteGrouping{i}(end)
-%         spineDataforfit = File.Processed_dFoF(j,:);
-%         spineDataforfit(spineDataforfit<=0) = nan;   %%%%%%%%%%%%%%%%%%%%%%%%% Changed 12/9 !!!!!!!!!!!!!!!!!!!!!!!!!!!
-% 
-%             %%% Downsample spine baseline (based on matching downsampled
-%             %%% dend data)
-% %             S_baseline = spineDataforfit(floored(i,:)==0);
-% %             S_signal = spineDataforfit(floored(i,:)~=0);
-% %             S_baseline = S_baseline(1:dwnsmpfact:end);
-% %             spineDataforfit = [S_baseline, S_signal];
-%               spineDataforfit(spineDataforfit<=File.SpineThreshold(j)) = nan;
-%             
-%         try
-%             alpha{i}(1:2,counter) = robustfit(dendDataforfit,spineDataforfit);
-%         catch
-%             dendDataforfit = File.Processed_Dendrite_dFoF(i,:);
-%             dendDataforfit(dendDataforfit<=0) = nan;
-%             spineDataforfit = File.Processed_dFoF(j,:);
-%             spineDataforfit(spineDataforfit<=0) = nan;
-%             alpha{i}(1:2,counter) = robustfit(dendDataforfit,spineDataforfit);
-%         end
-%         counter = counter + 1;
-%     end
-% end
+if strcmpi(Router, 'Initial')
+    Dthresh = File.DendriteThreshold;
+    for i = 1:DendNum
+        counter = 1;
+        dendDataforfit = File.Processed_Dendrite_dFoF(i,:);
+    %     dendDataforfit = File.Compiled_Dendrite_Fluorescence_Measurement;
+        dendDataforfit(dendDataforfit<=Dthresh(i)) = nan;
+        dendDataforfit = File.Compiled_Dendrite_Fluorescence_Measurement;
+
+
+        for j = File.SpineDendriteGrouping{i}(1):File.SpineDendriteGrouping{i}(end)
+            spineDataforfit = File.Processed_dFoF(j,:);
+            spineDataforfit(spineDataforfit<=0) = nan;   %%%%%%%%%%%%%%%%%%%%%%%%% Changed 12/9 !!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+                %%% Downsample spine baseline (based on matching downsampled
+                %%% dend data)
+    %             S_baseline = spineDataforfit(floored(i,:)==0);
+    %             S_signal = spineDataforfit(floored(i,:)~=0);
+    %             S_baseline = S_baseline(1:dwnsmpfact:end);
+    %             spineDataforfit = [S_baseline, S_signal];
+                  spineDataforfit(spineDataforfit<=File.SpineThreshold(j)) = nan;
+
+            try
+                alpha{i}(1:2,counter) = robustfit(dendDataforfit,spineDataforfit);
+            catch
+                dendDataforfit = File.Processed_Dendrite_dFoF(i,:);
+                dendDataforfit(dendDataforfit<=0) = nan;
+                spineDataforfit = File.Processed_dFoF(j,:);
+                spineDataforfit(spineDataforfit<=0) = nan;
+                alpha{i}(1:2,counter) = robustfit(dendDataforfit,spineDataforfit);
+            end
+            counter = counter + 1;
+        end
+    end
+else
+    alpha = File.Alphas;
+end
 
 %%%%%%%%%%%%%%%%%%%%%%%%
 %%% Perform subtraction
@@ -122,7 +126,6 @@ cd(['C:\Users\Komiyama\Desktop\ActivitySummary_UsingRawData'])
 UseMinAlpha = 1;
 File.UsedMinAlpha = UseMinAlpha;
 
-alpha = File.Alphas;
 MinAlpha = 0.5;
 File.MinAlpha = MinAlpha;
 
@@ -206,16 +209,21 @@ for i = 1:numberofSpines
     frequency_Dsubtracted(i,1) = (nnz(diff(trueeventcount_Dsubtracted(i,:)>0.5)>0)/((length(File.Time)/30.49)/60))';
 end
 
+File.Floored_DendriteSubtracted = floored_Dsubtracted;
 File.ActivityMap_DendriteSubtracted = trueeventcount_Dsubtracted;
 % File.MeanEventAmp = amp;
 
 File.Frequency_DendriteSubtracted = frequency_Dsubtracted;
 File.SynapseOnlyBinarized_DendriteSubtracted = square_Ds;
 
+outputFile = File;
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% Plot random spine from results;
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+if strcmp(Router, 'Redo')
 
         SpineNo = randi(length(File.deltaF));
         DendriteChoice =  find(~cell2mat(cellfun(@(x) isempty(find(x == SpineNo,1)), File.SpineDendriteGrouping, 'Uni', false))); %% Get the dendrite on which the chosen spine is located
@@ -244,17 +252,20 @@ File.SynapseOnlyBinarized_DendriteSubtracted = square_Ds;
 
         legend({'Processed Spine Trace', 'Processed Dend Trace', 'Binarized Spine', 'Binarized Dend', 'Dend-subtracted spine trace', 'Binarized dend-sub'})
 
-experimenter = regexp(File.Filename, '[A-Z]{2,3}', 'match');
-experimenter = experimenter{1};
-folder = regexp(File.Filename, [experimenter, '0{1,3}\d+'], 'match');
-folder = folder{1};
-% Date = regexp(File.Filename, '\d{6}', 'match');
-% Date = Date{1};
-    
-savefile = [folder, '_' Date, '_Summary'];
-eval([savefile, '= File;']);
+        experimenter = regexp(File.Filename, '[A-Z]{2,3}', 'match');
+        experimenter = experimenter{1};
+        folder = regexp(File.Filename, [experimenter, '0{1,3}\d+'], 'match');
+        folder = folder{1};
+        % Date = regexp(File.Filename, '\d{6}', 'match');
+        % Date = Date{1};
 
-save(savefile, savefile)
+        savefile = [folder, '_' Date, '_Summary'];
+        eval([savefile, '= File;']);
+
+        save(savefile, savefile)
+
+else
+end
 
 end
 

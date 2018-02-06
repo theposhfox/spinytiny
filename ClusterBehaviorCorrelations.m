@@ -1376,6 +1376,7 @@ if isempty(strfind(inputname(1), 'SpineCorrelationTimecourse'))
                     end
                 end
                 s = 1;
+                ticker = 1;
                 while s<sum(MovementSpines)/4
                     randchoice1 = spinelist(randi(length(spinelist)));
                     randchoice2 = spinelist(randi(length(spinelist)));
@@ -1387,6 +1388,10 @@ if isempty(strfind(inputname(1), 'SpineCorrelationTimecourse'))
                         RandomMovementPairCorr{session}(1,s) = roundedcorrmat(randchoice1, randchoice2);
                         s = s+1;
                     else
+                    end
+                    ticker = ticker+1;      %%% If none of the correlation values meet the criteria, then you can get stuck in an infinite loop... only perform enough loops to cover at most all the possible combination of spines...
+                    if ticker>= size(nchoosek(spinelist,2),1);
+                        s = sum(MovementSpines)/4;
                     end
                 end
             end
@@ -4359,12 +4364,13 @@ else
         xlim([0 15])
     subplot(2,3,6)
         a = flex_plot(1:14, CueClustDendFreq, stattype, lgreen, 2); hold on;
-        b = flex_plot(1:14, MovClustDendFreq, stattype, black, 2);
+        b = flex_plot(1:14, MovClustDendFreq, stattype, black, 3);
         c = flex_plot(1:14, MovDuringCueClustDendFreq, stattype, green, 2);
         d = flex_plot(1:14, PreSucClustDendFreq, stattype, bgreen, 2);
         f = flex_plot(1:14, SucClustDendFreq, stattype, lblue, 2);
         g = flex_plot(1:14, RewClustDendFreq, stattype, purple, 2);
         h = flex_plot(1:14, NonMovClustDendFreq, stattype, dred, 2);
+        uistack(b, 'top');
         title([{'Frequency of dendrites with functionally'}, {'relevant clustered spines'}])
         ylabel('Event Frequency', 'Fontsize', 14);
         xlabel('Session', 'Fontsize', 14)
@@ -4382,13 +4388,14 @@ else
     sub2 = 3;
     subplot(sub1,sub2,1)
         a = flex_plot(1:14, NumCueRelSpines,stattype, lgreen, 2); hold on;
-        b = flex_plot(1:14, NumMovRelSpines,stattype, black, 2);
+        b = flex_plot(1:14, NumMovRelSpines,stattype, black, 3);
         c = flex_plot(1:14, NumCueORMovRelSpines, stattype, red, 2);
         d = flex_plot(1:14, NumPreSucRelSpines, stattype, bgreen, 2);
         f = flex_plot(1:14, NumSucRelSpines,stattype, lblue, 2);
         g = flex_plot(1:14, NumMovDuringCueRelSpines, stattype, green, 2);
         h = flex_plot(1:14, NumRewRelSpines,stattype, purple, 2);
         legend([a b c d f g h], {'All Cue Spines', 'All Mvmt Spines', 'Cue OR Mov Spines', 'Pre Success Spines', 'All Success Spines', 'Mov. during Cue Spines', 'All Reward Spines'});
+        uistack(b, 'top');
         xlim([0 15]);
         xlabel('Session', 'FontSize', 14);
         ylabel('Fraction of total spines', 'FontSize', 14);
@@ -4428,7 +4435,7 @@ else
     subplot(sub1,sub2,5)
         a = flex_plot(1:14, NumClustCueSpines, stattype, lgreen, 2); hold on;
 %             flex_plot(1:14, NumCausClustCueSpines, '--', stattype, lgreen, 2);
-        b = flex_plot(1:14, NumClustMovSpines, stattype, black, 2);
+        b = flex_plot(1:14, NumClustMovSpines, stattype, black, 3);
 %             flex_plot(1:14, NumCausClustMovSpines, '--', stattype, black, 2);
         c = flex_plot(1:14, NumClustMixSpines, stattype, red, 2);
         d = flex_plot(1:14, NumClustPreSucSpines, stattype, bgreen, 2);
@@ -4441,6 +4448,7 @@ else
 %             flex_plot(1:14, NumCausClustRewSpines, '--', stattype, purple, 2);
         xlim([0 15]);
         legend([a b c d f g h],{'Clust. Cue Spines','Clust. Mov. Spines', 'Clust. Mixed Spines', 'Clust Pre suc.', 'Clust. Suc. Spines', 'Clust Mov during Cue', 'Clust Rew. Spines'});
+        uistack(b, 'top');
         xlabel('Session', 'FontSize', 14);
         ylabel('Fraction of total spines', 'FontSize', 14);
         title('Clustered function-related spines');
@@ -4508,9 +4516,10 @@ else
         title('MAX Spatial Extent of Clusters', 'Fontsize', 14)
     subplot(2,3,3)
         a = flex_plot(1:14, DistanceBetweenCueSpines, stattype, lgreen, 2); hold on;
-        b = flex_plot(1:14, DistanceBetweenMovementSpines, stattype, black, 2);
+        b = flex_plot(1:14, DistanceBetweenMovementSpines, stattype, black, 3);
         c = flex_plot(1:14, DistanceBetweenSuccessSpines, stattype, lblue, 2);
         d = flex_plot(1:14, DistanceBetweenRewardSpines, stattype, purple, 2);
+        uistack(b, 'top');
         xlabel('Session', 'FontSize', 14)
         ylabel('Distance (um)', 'FontSize', 14)
         ylim([0 30])
@@ -4519,13 +4528,14 @@ else
 
     subplot(2,3,4)
         a = flex_plot(1:14, CueClusterLength, stattype, lgreen, 2); hold on;
-        b = flex_plot(1:14, MovClusterLength, stattype, black, 2);
+        b = flex_plot(1:14, MovClusterLength, stattype, black, 3);
         c = flex_plot(1:14, MixClusterLength, stattype, red, 2);
         d = flex_plot(1:14, PreSucClusterLength, stattype, bgreen, 2);
         f = flex_plot(1:14, SucClusterLength, stattype, lblue, 2);
         g = flex_plot(1:14, MovDuringCueClusterLength, stattype, green, 2);
         h = flex_plot(1:14, RewClusterLength, stattype, purple, 2);
         legend([a b c d f g h],{'Cue Clusters', 'Mov clusters', 'Mix Clusters', 'PreSuc', 'Suc Clusters', 'MovDuringCue', 'Rew Clusters'});
+        uistack(b, 'top');
         xlabel('Session', 'FontSize', 14)
         ylabel('Mean spatial extent of clusters', 'FontSize', 14)
         ylim([0 30])
@@ -5453,6 +5463,7 @@ else
         bar(tcent, ntc, 'FaceColor',lgreen)
         bar(fcent, nfc, 'FaceColor', blue)
         ylabel('Count')
+        ylim([0 1])
 
 
         
@@ -5520,6 +5531,7 @@ else
         bar(tcent, ntc, 'FaceColor',lgreen)
         bar(fcent, nfc, 'FaceColor', blue)
         ylabel('Count')
+        ylim([0 1])
         
         axes('Position', [pos(1)+0.7*pos(3), pos(2)+0.4*pos(4), 0.25*pos(3), 0.25*pos(4)], 'Fontsize', 6);
         nearearly = cell2mat(AllCorrelationswithNearbyMetaClusters(earlysessions)');
@@ -5538,6 +5550,7 @@ else
         xlim([0 3])
         set(gca, 'XTickLabel', {'Early', 'Late'})
         ylabel('Correlation')
+        ylim([0 1])
         
     subplot(2,4,3)
         neardist = cell2mat(NearestFunctionallyClusteredMovementRelatedSpine(earlysessions));

@@ -1215,7 +1215,11 @@ drawer = get(gui_CaImageViewer.figure.handles.figure1, 'UserData');
 a.SpineROIs = gui_CaImageViewer.ROI;
 a.SpineROItext = gui_CaImageViewer.ROItext;
 a.PolyROI = gui_CaImageViewer.PolyROI;
-a.PolyLines = gui_CaImageViewer.PolyLine;
+try
+    a.PolyLines = gui_CaImageViewer.PolyLine;
+catch
+    a.PolyLines = [];
+end
 a.PolyLinePosition = gui_CaImageViewer.PolyLinePos;
 a.PolyROIPos = gui_CaImageViewer.PolyLinePos;
 a.PolyLineVertices = gui_CaImageViewer.PolyLineVertices;
@@ -1717,13 +1721,20 @@ title('Pairwise Correlation', 'FontSize', 14);
 
 cd(gui_CaImageViewer.save_directory)
 alignfile = [gui_CaImageViewer.filename(1:end-6), 't'];
-load(alignfile);
+try
+    load(alignfile);
+catch
+    disp('No ''t'' file found')
+end
 
 subplot(1,2,2);
-plot(t);
+try
+    plot(t);
+    tc_length = length(t);
+catch
+    tc_length = 0;
+end
 xlabel('Frame (Actual)', 'FontSize', 14)
-
-tc_length = length(t);
 
 uicontrol(gcf, 'Style', 'pushbutton', 'String', {'Set end frame'}, 'Fontsize', 8, 'Units', 'Normalized', 'Position', [0.915 0.45 0.08 0.2], 'Callback', {@SetEndFrame,tc_length})
 uicontrol(gcf, 'Style', 'pushbutton', 'String', {'Clip image '}, 'Fontsize', 8, 'Units', 'Normalized', 'Position', [0.005 0.45 0.08 0.2], 'Callback', {@ClipImageSeriesLength, length(gui_CaImageViewer.GCaMP_Image)})

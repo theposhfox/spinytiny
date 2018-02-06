@@ -8,7 +8,7 @@ switch(animal)
     case 'NH004'
         usesessions = 1:14;
     case 'NH005'
-        usesessions = [1:9, 11:14];
+        usesessions = 1:14;
     case 'NH006'
         usesessions = 1:14;
     case 'NH007'
@@ -33,17 +33,7 @@ switch(animal)
         usesessions = 1:14;
     case 'NH024'
         usesessions = 1:14;
-    case 'NH025'
-        usesessions = 1:14;
-    case 'NH026'
-        usesessions = 1:14;
-    case 'NH029'
-        usesessions = 1:14;
-    case 'NH030'
-        usesessions = 1:14;
-    case 'NH031'
-        usesessions = 1:14;
-    case 'NH032'
+    case 
         usesessions = 1:14;
     case 'NH034'
         usesessions = 1:14;
@@ -62,7 +52,5 @@ switch(animal)
     case 'NH041'
         usesessions = 1:14;
     case 'NH042'
-        usesessions = 1:14;
-    case 'NH044'
         usesessions = 1:14;
 end
