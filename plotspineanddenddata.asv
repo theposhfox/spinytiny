@@ -26,9 +26,6 @@ if isempty(varargin)
         h1 = subplot(2,3,1:3);
         plot(File.Fluorescence_Measurement{SpineNo}, 'k')
         
-        filename = regexp(File.Filename, '[A-Z]{2,3}0+\d+_\d{4,6}', 'match');
-        filename = filename{1};
-        session = File.Session;
         title(['Comparison of traces for spine no. ', num2str(SpineNo), ' from ', filename, ' (Session ', num2str(session), ')'], 'Interpreter', 'none')
         
         h2 = subplot(2,3,4:6);
@@ -43,18 +40,14 @@ if isempty(varargin)
 
         legend({'Processed Spine Trace', 'Processed Dend Trace', 'Binarized Spine', 'Binarized Dend', 'Dend-subtracted spine trace', 'Binarized dend-sub'})
 
-
+        filename = regexp(File.Filename, '[A-Z]{2,3}0+\d+_\d{4,6}', 'match');
+        filename = filename{1};
+        session = File.Session;
         
         if isfield(File, 'MinAlpha')
-            MinAlpha = File.MinAlpha;
+            MinAlpha = MinAlpha;
         else
             MinAlpha = 0;
-        end
-        
-        if isfield(File, 'Alphas')
-            alpha = File.Alphas;
-        else
-            alpha = zeros(2,File.NumberofSpines);
         end
         title(['Processed data using calc alpha of ', num2str(alpha{DendriteChoice}(2,SpineNo)), ' and a min alpha of ', num2str(MinAlpha)])
 

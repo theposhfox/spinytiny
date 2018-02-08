@@ -4209,8 +4209,8 @@ else
     subplot(2,5,1)
         flex_plot(1:14, AllClustersCorrwithCue, stattype, black, 2); 
         flex_plot(1:14, NonClusteredCorrwithCue, stattype, dred, 2);
-        flex_plot(1:14, CueRelatedClustersCorrwithCue, stattype, blue, 2)
-        flex_plot(1:14, CueRelatedNonClusteredCorrwithCue, stattype, gray, 2)
+        flex_plot(1:14, CueRelatedClustersCorrwithCue, stattype, blue, 2);
+        flex_plot(1:14, CueRelatedNonClusteredCorrwithCue, stattype, gray, 2);
         title('Synaptic Events with Cue', 'Fontsize', 14)
         xlim([0 15])
         xlabel('Session', 'Fontsize', 14)
@@ -4261,11 +4261,11 @@ else
         flex_plot(1:14, AllCausalClustersCorrwithCue, stattype, black, 2); hold on;
         flex_plot(1:14, CausalNonClusteredCorrwithCue, stattype, dred, 2);
         flex_plot(1:14, CausalCueRelatedClustersCorrwithCue, stattype, blue, 2);
-        flex_plot(1:14, CausalCueRelatedNonClusteredCorrwithCue, stattype, gray, 2)
+        flex_plot(1:14, CausalCueRelatedNonClusteredCorrwithCue, stattype, gray, 2);
         xlim([0 15])
-        title('Causal Events with Cue', 'Fontsize', 14)
+        title('Causal Events with Cue', 'Fontsize', 14);
         xlabel('Session', 'Fontsize', 14)
-        set(gca, 'XTick', 0:15); set(gca, 'XTickLabel', 0:15)
+        set(gca, 'XTick', 0:15); set(gca, 'XTickLabel', 0:15);
         ylabel('Correlation', 'Fontsize', 14)
     subplot(2,5,7)
         flex_plot(1:14, AllCausalClustersCorrwithMDC, stattype, black, 2); hold on;

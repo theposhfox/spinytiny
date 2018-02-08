@@ -22,7 +22,7 @@ function [analyzed, poly] = AdjustFrequency(File, currentsession, showFig)
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%    
 
-isbeingcalled = length(dbstack)>1;  %%% if the number of programs in 'dbstack' is greater than 1, then this file is being called by another function.
+isbeingcalled = length(dbstack)>1;  %%% if the number of programs in 'dbstack' is greater than 1, then this file is being called by another function
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%% Find the file being called %%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -215,7 +215,7 @@ if File.NumberofSpines ==  0 || File.NumberofSpines ~= length(File.deltaF)
 end
 % 
 % SpineNo = randi(File.NumberofSpines,1); %%% Will choose a random spine from the available ones for this file
-SpineNo = 29;
+SpineNo = 9;
 
 
 DendNum = File.NumberofDendrites;

@@ -34,7 +34,7 @@ if isempty(varargin)
                 cd(foldertouse)
                 currentsession = files{i}{2};
                 eval(['current_session = ', mouse, '_', date, '_Summary.Session;']);
-                eval(['DendriteSubtraction(', mouse, '_', date, '_Summary, num2str(date), ''Redo'')']);
+                eval(['DendriteSubtraction(', mouse, '_', date, '_Summary, num2str(date), ''Redo'');']);
                 clear(files(i).name(1:end-4))
             end
         end
@@ -55,7 +55,7 @@ else
                     cd(foldertouse)
                     load(files(i).name);
                     eval(['current_session = ', mouse, '_', date, '_Summary.Session;'])
-                    eval(['DendriteSubtraction(', mouse, '_', date, '_Summary, num2str(date), ''Redo'')']);
+                    eval(['DendriteSubtraction(', mouse, '_', date, '_Summary, num2str(date), ''Redo'');']);
                     clear(files(i).name(1:end-4))
                 end
             end

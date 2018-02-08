@@ -77,7 +77,7 @@ function [Threshold, DriftBaseline, ProcessedData] = AnalyzeTrace(Data, Options)
 
 
     %%% Kernel Density Estimation (Aki's method) %%%
-    truebaseline = baseline_kde(smoothed',50,100,20);
+    truebaseline = baseline_kde(smoothed',50,20,20);
     DriftBaseline = truebaseline;
     
 

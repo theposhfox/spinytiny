@@ -116,8 +116,46 @@ if strcmpi(Router, 'Initial')
         end
     end
 else
-    alpha = File.Alphas;
+    if isfield(File, 'Alphas')
+        alpha = File.Alphas;
+    else
+        Dthresh = File.DendriteThreshold;
+        for i = 1:DendNum
+            counter = 1;
+            dendDataforfit = File.Processed_Dendrite_dFoF(i,:);
+        %     dendDataforfit = File.Compiled_Dendrite_Fluorescence_Measurement;
+            dendDataforfit(dendDataforfit<=Dthresh(i)) = nan;
+            dendDataforfit = File.Compiled_Dendrite_Fluorescence_Measurement;
+
+
+            for j = File.SpineDendriteGrouping{i}(1):File.SpineDendriteGrouping{i}(end)
+                spineDataforfit = File.Processed_dFoF(j,:);
+                spineDataforfit(spineDataforfit<=0) = nan;   %%%%%%%%%%%%%%%%%%%%%%%%% Changed 12/9 !!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+                    %%% Downsample spine baseline (based on matching downsampled
+                    %%% dend data)
+        %             S_baseline = spineDataforfit(floored(i,:)==0);
+        %             S_signal = spineDataforfit(floored(i,:)~=0);
+        %             S_baseline = S_baseline(1:dwnsmpfact:end);
+        %             spineDataforfit = [S_baseline, S_signal];
+                      spineDataforfit(spineDataforfit<=File.SpineThreshold(j)) = nan;
+
+                try
+                    alpha{i}(1:2,counter) = robustfit(dendDataforfit,spineDataforfit);
+                catch
+                    dendDataforfit = File.Processed_Dendrite_dFoF(i,:);
+                    dendDataforfit(dendDataforfit<=0) = nan;
+                    spineDataforfit = File.Processed_dFoF(j,:);
+                    spineDataforfit(spineDataforfit<=0) = nan;
+                    alpha{i}(1:2,counter) = robustfit(dendDataforfit,spineDataforfit);
+                end
+                counter = counter + 1;
+            end
+        end
+    end
 end
+
+File.Alphas = alpha; 
 
 %%%%%%%%%%%%%%%%%%%%%%%%
 %%% Perform subtraction
@@ -248,6 +286,7 @@ if strcmp(Router, 'Redo')
         plot(File.Dendrite_Binarized(DendriteChoice, :)/2-2, 'm', 'Linewidth', 2)
         plot(File.Processed_dFoF_DendriteSubtracted(SpineNo,:), 'Color', [0.6 0.6 0.6], 'Linewidth', 2)
         plot(File.SynapseOnlyBinarized_DendriteSubtracted(SpineNo, :)/2, 'g', 'Linewidth', 2)
+        title(['Processed data using calc alpha of ', num2str(alpha{DendriteChoice}(2,SpineNo)), ' and a min alpha of ', num2str(MinAlpha)])
         linkaxes([h1,h2], 'x')
 
         legend({'Processed Spine Trace', 'Processed Dend Trace', 'Binarized Spine', 'Binarized Dend', 'Dend-subtracted spine trace', 'Binarized dend-sub'})
