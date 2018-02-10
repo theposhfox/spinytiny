@@ -956,7 +956,14 @@ for i = 1:File.NumberofDendrites
     if length(File.SpineDendriteGrouping{i})>1
         for j = File.SpineDendriteGrouping{i}(1):File.SpineDendriteGrouping{i}(end-1)
             for k = (j+1):File.SpineDendriteGrouping{i}(end)
-                SpineToSpineDistance(j,k) = abs(sum(Mic_Dist{spine_address{j}.Dendrite}(spine_address{j}.Index:spine_address{k}.Index))-Mic_Dist{spine_address{j}.Dendrite}(spine_address{j}.Index));  %%% Find the sum of linear distances from the current point to the nearby spine
+            if j>k
+                lower = spine_address{k}.Index;
+                higher = spine_address{j}.Index;
+            else
+                lower = spine_address{j}.Index;
+                higher = spine_address{k}.Index;
+            end
+                SpineToSpineDistance(j,k) = abs(sum(Mic_Dist{spine_address{j}.Dendrite}(lower:higher))-Mic_Dist{spine_address{j}.Dendrite}(lower));  %%% Find the sum of linear distances from the current point to the nearby spine
             end
         end 
     else
