@@ -160,23 +160,11 @@ function [Threshold, DriftBaseline, ProcessedData] = AnalyzeTrace(Data, Options)
     else
         switch BeingAnalyzed
             case 'Spine';
-                if spread < 0.5
-                    thresh = 0.5;
-                else
-                    thresh = spread;
-                end
+                thresh = 0.5;
             case 'Poly';
-                if spread < 0.5
-                    thresh = 0.5;
-                else
-                    thresh = spread;
-                end
+                thresh = 0.5;
             case 'Dendrite'
-                if spread < 0.5
-                    thresh = 0.5;
-                else
-                    thresh = spread;
-                end
+                thresh = 0.5;
         end
 
         signal = nanmean(pks);

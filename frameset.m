@@ -10,6 +10,10 @@ if strcmpi(eventdata.Key, 'return')
     maxproj = get(gui_CaImageViewer.figure.handles.MaxProjection_CheckBox, 'Value');
 % 
     ImageNum = str2num(get(gui_CaImageViewer.figure.handles.Frame_EditableText, 'String'));
+    if ImageNum > length(gui_CaImageViewer.GCaMP_Image)
+        ImageNum = length(gui_CaImageViewer.GCaMP_Image);
+        set(gui_CaImageViewer.figure.handles.Frame_EditableText, 'String', num2str(ImageNum));
+    end
     merged = get(gui_CaImageViewer.figure.handles.Merge_ToggleButton, 'Value');
 % 
     set(gui_CaImageViewer.figure.handles.ImageSlider_Slider, 'Value', ImageNum);

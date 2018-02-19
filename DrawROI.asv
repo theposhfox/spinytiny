@@ -162,9 +162,7 @@ elseif strcmpi(Router, 'Spine')
     end
     zoomim = immax(r(1):r(3), c(1):c(2));
     filterwindow = str2num(get(gui_CaImageViewer.figure.handles.SmoothingFactor_EditableText, 'String'));
-    padvalue = 5;
-    zoomim = filter2(ones(filterwindow, filterwindow)/filterwindow^2, padarray(zoomim, [padvalue padvalue], nanmedian(nanmedian(zoomim))));
-    zoomim = zoomim(padvalue+1:end-padvalue, padvalue+1:end-padvalue);
+    zoomim = filter2(ones(filterwindow, filterwindow)/filterwindow^2, zoomim);
     
     figure('Name', 'Auto zoom window', 'WindowButtonDownFcn', {@DrawROI, ROInum, 'FineSelect'}, 'NumberTitle', 'off');
     imagesc(zoomim); colormap(cmap)

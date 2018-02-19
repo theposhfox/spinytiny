@@ -71,8 +71,8 @@ for session = 1:ns
                     continue
                 end
                 %%%%
-                trial_length{session}(rewards(session,1),1) = tlength;
-                rxnTime{session}(rewards(session,1),1) = rxntime;
+                trial_length(1,session) = tlength;
+                rxnTime(1,session) = rxntime;
             else
             end
         end

@@ -39,6 +39,7 @@ if isempty(varargin)
         plot(File.Dendrite_Binarized(DendriteChoice, :)/2-2, 'm', 'Linewidth', 2)
         plot(File.Processed_dFoF_DendriteSubtracted(SpineNo,:), 'Color', [0.6 0.6 0.6], 'Linewidth', 2)
         plot(File.SynapseOnlyBinarized_DendriteSubtracted(SpineNo, :)/2, 'g', 'Linewidth', 2)
+        plot(1:length(File.Processed_dFoF_DendriteSubtracted(SpineNo,:)), File.SpineThreshold(SpineNo)*ones(1,length(File.Processed_dFoF_DendriteSubtracted(SpineNo,:))), '--r')
         linkaxes([h1,h2], 'x')
 
         legend({'Processed Spine Trace', 'Processed Dend Trace', 'Binarized Spine', 'Binarized Dend', 'Dend-subtracted spine trace', 'Binarized dend-sub'})
@@ -52,11 +53,11 @@ if isempty(varargin)
         end
         
         if isfield(File, 'Alphas')
-            alpha = File.Alphas;
+            alpha = cell2mat(File.Alphas);
         else
             alpha = zeros(2,File.NumberofSpines);
         end
-        title(['Processed data using calc alpha of ', num2str(alpha{DendriteChoice}(2,SpineNo)), ' and a min alpha of ', num2str(MinAlpha)])
+        title(['Processed data using calc alpha of ', num2str(alpha(2,SpineNo)), ' and a min alpha of ', num2str(MinAlpha)])
 
             
 else

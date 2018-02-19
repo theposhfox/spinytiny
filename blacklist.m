@@ -14,15 +14,15 @@ switch(animal)
     case 'NH007'
         usesessions = 1:14;
     case 'NH008'
-        usesessions = 1:14;
+        usesessions = [1:11, 14];
     case 'NH009'
         usesessions = 1:14;
     case 'NH010'
         usesessions = 1:14;
     case 'NH015'
-        usesessions = 1:14;
+        usesessions = [1:7, 9:14];
     case 'NH017'
-        usesessions = 1:14;
+        usesessions = [1:12];
     case 'NH020'
         usesessions = 1:14;
     case 'NH021'

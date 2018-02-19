@@ -4204,7 +4204,7 @@ else
     scrsz = get(0, 'ScreenSize');
     figure('Position', scrsz); 
     
-    stattype = 'nonparametric';
+    stattype = 'parametric';
     
     subplot(2,5,1)
         flex_plot(1:14, AllClustersCorrwithCue, stattype, black, 2); 
