@@ -188,13 +188,11 @@ if gui_CaImageViewer.NewSpineAnalysis
         Total_Intensity = cell(length(SpineList),1);
         Pixel_Number = cell(length(SpineList),1);
         Fluorescence_Measurement = cell(length(SpineList),1);
-        Surround_Measurement = cell(length(SpineList),1);
 else
     Fluorescence_Intensity = cell(length(gui_CaImageViewer.ROI)-1,1);
     Total_Intensity = cell(length(gui_CaImageViewer.ROI)-1,1);
     Pixel_Number = cell(length(gui_CaImageViewer.ROI)-1,1);
     Fluorescence_Measurement = cell(length(gui_CaImageViewer.ROI)-1,1);
-    Surround_Measurement = cell(length(gui_CaImageViewer.ROI)-1,1);
     SpineList = ones(length(existing_ROI),1);
 end
 
@@ -460,8 +458,7 @@ if ~isempty(existing_ROI)
                             Total_Surround_Intensity{i-1} = sum(Surround_Intensity);
                             tmp_surround_intensity = sloppy_mean(Surround_Intensity(:));
                             Surround_Pixel = Total_Surround_Intensity{i-1}/tmp_surround_intensity;
-                            Surround_Measurement{i-1}(1,actual_image_counter) = (tmp_surround_intensity-Background_Mean_Int)*Surround_Pixel;
-                            Fluorescence_Measurement{i-1}(1,actual_image_counter) = ((tmp_mean_intensity-Background_Mean_Int)*Pixel_Number{i-1})-Surround_Measurement{i-1}(1,actual_image_counter);
+                            Surround_Measurement{i-1}(1,actual_image_counter) = (tmp_surround_intensity-Background_Mean_
                         else
                             Fluorescence_Measurement{i-1}(1,actual_image_counter) = (tmp_mean_intensity-Background_Mean_Int)*Pixel_Number{i-1};
                         end

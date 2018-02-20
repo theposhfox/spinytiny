@@ -67,11 +67,11 @@ Scrsz = get(0, 'Screensize');
     d = dialog('Position', [(Scrsz(3)/2)-dialogboxwidth/2 Scrsz(4)/2-dialogboxheight/2 dialogboxwidth dialogboxheight ], 'Name', 'User');
     txt = uicontrol('Parent', d, 'Style', 'text', 'Position', [15 100 270 30], 'String', 'Select User:');
     
-    btn1 = uicontrol('Parent', d, 'Style', 'pushbutton', 'Position', [15 30 50 25], 'String', Users{1}, 'Callback', @UserName);
-    btn2 = uicontrol('Parent', d, 'Style', 'pushbutton', 'Position', [65.5 30 70 25], 'String', Users{2}, 'Callback', @UserName);
-    btn3 = uicontrol('Parent', d, 'Style', 'pushbutton', 'Position', [136 30 50 25], 'String', Users{3}, 'Callback', @UserName);
-    btn4 = uicontrol('Parent', d, 'Style', 'pushbutton', 'Position', [186.5 30 70 25], 'String', Users{4}, 'Callback', @UserName);
-    btn5 = uicontrol('Parent', d, 'Style', 'pushbutton', 'Position', [257 30 50 25], 'String', Users{5}, 'Callback', @UserName);
+    btn1 = uicontrol('Parent', d, 'Style', 'pushbutton', 'Position', [15 30 50 25], 'String', Users{1}, 'Callback', @DlgChoice);
+    btn2 = uicontrol('Parent', d, 'Style', 'pushbutton', 'Position', [65.5 30 70 25], 'String', Users{2}, 'Callback', @DlgChoice);
+    btn3 = uicontrol('Parent', d, 'Style', 'pushbutton', 'Position', [136 30 50 25], 'String', Users{3}, 'Callback', @DlgChoice);
+    btn4 = uicontrol('Parent', d, 'Style', 'pushbutton', 'Position', [186.5 30 70 25], 'String', Users{4}, 'Callback', @DlgChoice);
+    btn5 = uicontrol('Parent', d, 'Style', 'pushbutton', 'Position', [257 30 50 25], 'String', Users{5}, 'Callback', @DlgChoice);
     
     uiwait(d)
     choice = get(d, 'UserData');
@@ -138,6 +138,9 @@ gui_CaImageViewer.GCaMP_Image = [];
 gui_CaImageViewer.Red_Image = [];
 gui_CaImageViewer.ch1image = [];
 gui_CaImageViewer.imageserieslength = [];
+gui_CaImageViewer.UsingSurroundBackground = 1; 
+gui_CaImageViewer.SurroundBackgroundBuffer = 5;
+gui_CaImageViewer.BackgroundROI = [];
 
 gui_CaImageViewer.GreenGraph_loc = get(handles.GreenGraph, 'Position');
 gui_CaImageViewer.RedGraph_loc = get(handles.RedGraph, 'Position');
@@ -1029,9 +1032,11 @@ for a = 1:length(ROIs)
         end
         glovar.ROItext(a) = text(ROIs{a}(1)-6, ROIs{a}(2)-4, num2str(a-1), 'color', 'white', 'Tag', ['ROI', num2str(a-1), ' Text'],'ButtonDownFcn', 'DeleteROI', 'Fontsize', 6);
         if strcmpi(choice, 'Yes')
-            surroundoffset = 2;
-            gui_CaImageViewer.BackgroundROI(ROInum+1) = rectangle('Position', [ROIs{a}(1)-surroundoffset/2, ROIs{a}(2)-surroundoffset/2, ROIs{a}(3)+surroundoffset, ROIs{a}(4)+surroundoffset], 'EdgeColor', 'w', 'Curvature', [1 1], 'Tag', ['BackgroundROI', num2str(ROInum)], 'Linewidth', 0.75);
+            surroundoffset = glovar.SurroundBackgroundBuffer;;
+            glovar.BackgroundROI(ROInum+1) = rectangle('Position', [ROIs{a}(1)-surroundoffset/2, ROIs{a}(2)-surroundoffset/2, ROIs{a}(3)+surroundoffset, ROIs{a}(4)+surroundoffset], 'EdgeColor', 'w', 'Curvature', [1 1], 'Tag', ['BackgroundROI', num2str(ROInum)], 'Linewidth', 0.75);
+            glovar.UsingSurroundBackground = 1;
         else
+            glovar.UsingSurroundBackground = 0;
         end
         if twochannels == 1
             axes(axes2);

@@ -91,15 +91,16 @@ if strcmpi(Router, 'FineSelect') && ROInum ~=0      %%% When fine-tuning the ROI
         glovar.ROIredtext(ROInum+1) = text(Fl_ROI(1), Fl_ROI(2), num2str(ROInum), 'color', 'white', 'Tag', ['ROIred', num2str(ROInum), ' Text'],'ButtonDownFcn', 'Ca_deleteROI');
     else
     end
-elseif ~strcmpi(Router, 'FineSelect') && ROInum ==0 %%% When drawing the background ROI (ROI 0), you also want to be able to change the size, so also use "DragROI"
+elseif ~strcmpi(Router, 'FineSelect') && ROInum ==0 %%% When drawing the background ROI (ROI 0), you also want to be able to change the size, so also use "DragROI" as the buttondownfunction
     axes(axes1)
     delete(findobj('Tag', 'ROI confine'));
     delete(findobj('Tag', 'ROI0'));
+    delete(findobj('Tag', 'BackgroundROI0'))
     delete(findobj('Tag', 'ROI0 Text'));
     glovar.ROI(ROInum+1) = rectangle('Position', Fl_ROI, 'EdgeColor', linecolor, 'Curvature', [1 1], 'Tag', ['ROI', num2str(ROInum)], 'ButtonDownFcn', {@DragROI, ROInum, 'ZoomWindow'}, 'Linewidth', edgewidth);
     glovar.ROItext(ROInum+1) = text(Fl_ROI(1)-2, Fl_ROI(2)-2, num2str(ROInum), 'color', 'white', 'Tag', ['ROI', num2str(ROInum), ' Text'], 'ButtonDownFcn', @DeleteROI, 'FontSize', textsize);
-    surroundoffset = 2;
-    gui_CaImageViewer.BackgroundROI(ROInum+1) = rectangle('Position', [Fl_ROI(1)-surroundoffset/2, Fl_ROI(2)-surroundoffset/2, Fl_ROI(3)+surroundoffset, Fl_ROI(4)+surroundoffset], 'EdgeColor', 'w', 'Curvature', [1 1], 'Tag', ['BackgroundROI', num2str(ROInum)], 'Linewidth', 0.75, 'Visible', 'off');
+    surroundoffset = gui_CaImageViewer.SurroundBackgroundBuffer;
+    gui_CaImageViewer.BackgroundROI(ROInum+1) = rectangle('Position', [Fl_ROI(1)-surroundoffset/2, Fl_ROI(2)-surroundoffset/2, Fl_ROI(3)+surroundoffset, Fl_ROI(4)+surroundoffset], 'EdgeColor', 'w', 'Curvature', [1 1], 'Tag', ['BackgroundROI', num2str(ROInum)], 'Linewidth', 0.75, 'Visible', 'on');
     if twochannels == 1;
         axes(axes2)
         glovar.ROIred(ROInum+1) = rectangle('Position', Fl_ROI, 'EdgeColor', 'red', 'Curvature', [1 1], 'Tag', ['ROIred', num2str(ROInum)],'ButtonDownFcn', {@DragROI, ROInum});
