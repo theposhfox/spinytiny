@@ -32,6 +32,7 @@ if strcmpi(choice, 'Spines')
     ROIboxes = findobj(program.Children, 'Type', 'Rectangle', '-and', '-not', {'-regexp', 'Tag', 'Dendrite'});
     Textboxes = findobj(program.Children, 'Type', 'text');
     glovar.ROI = [];
+    glovar.BackgroundROI = [];
     
     for i = 1:length(ROIboxes)
         delete(ROIboxes(i));

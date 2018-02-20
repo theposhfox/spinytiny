@@ -142,7 +142,7 @@ gui_CaImageViewer.imageserieslength = [];
 gui_CaImageViewer.GreenGraph_loc = get(handles.GreenGraph, 'Position');
 gui_CaImageViewer.RedGraph_loc = get(handles.RedGraph, 'Position');
 
-function DlgChoice(hObject, eventdata, ~)
+function UserName(hObject, eventdata, ~)
 
 button = get(hObject);
 
@@ -908,9 +908,6 @@ end
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%% Find all files that hold ROI positions
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-Scrsz = get(0, 'Screensize');
-
 try
     count = 1;
     roifile = [];
@@ -941,10 +938,11 @@ try
                 useroption{i} = 'undefined';    %%% If the file doesn't contain the "DrawnBy" tag, then it will only return 1 answer, and therefore was made prior to qualifying the file according to username
             end
         end
+        Scrsz = get(0, 'Screensize');
         d = dialog('Position', [(Scrsz(3)/2)-125 Scrsz(4)/2-75 250 150], 'Name', 'Found multiple ROI files...');
         txt = uicontrol('Parent', d, 'Style', 'text', 'Position', [10 100 230 30], 'String', 'Load ROIs drawn by whom?');
         for j = 1:length(roifile)
-            uicontrol('Parent', d, 'Style', 'pushbutton', 'Position', [30+((j-1)*55) 30 50 25], 'String', useroption{j}, 'Callback', @DlgChoice)
+            uicontrol('Parent', d, 'Style', 'pushbutton', 'Position', [30+((j-1)*55) 30 50 25], 'String', useroption{j}, 'Callback', @UserName)
         end
         uiwait(d)
         choice = get(d, 'UserData');
@@ -1009,11 +1007,8 @@ glovar.Spine_Number = length(ROIs)-1;
 dlgwdth = 250;
 d = dialog('Position', [(Scrsz(3)/2)-125 Scrsz(4)/2-75 dlgwdth 150], 'Name', 'Surround ROI option');
 uicontrol('Parent', d, 'Style', 'text', 'Position', [10 100 230 30], 'String', 'Draw surround background ROIs?');
-uicontrol('Parent', d, 'Style', 'pushbutton', 'Position', [dlgwdth/2-55 30 50 25], 'String', 'Yes', 'Callback', @DlgChoice)
-uicontrol('Parent', d, 'Style', 'pushbutton', 'Position', [dlgwdth/2+5 30 50 25], 'String', 'No', 'Callback', @DlgChoice)
-uiwait(d)
-choice = get(d, 'UserData');
-delete(d);
+uicontrol('Parent', d, 'Style', 'pushbutton', 'Position', [dlgwdth/2-55 30 50 25], 'String', 'Yes', 'Callback', @UserName)
+uicontrol('Parent', d, 'Style', 'pushbutton', 'Position', [dlgwdth/2+5 30 50 25], 'String', 'No', 'Callback', @UserName)
 
 for a = 1:length(ROIs)
     if ~isempty(ROIs{a})
@@ -1028,11 +1023,6 @@ for a = 1:length(ROIs)
             glovar.ROI(a) = rectangle('Position', ROIs{a}, 'EdgeColor', [0.2 0.4 0.9], 'Curvature', [1 1],'Tag', ['ROI', num2str(ROInum)], 'ButtonDownFcn', {@DragROI, ROInum, 'HomeWindow'}, 'Linewidth', 1);
         end
         glovar.ROItext(a) = text(ROIs{a}(1)-6, ROIs{a}(2)-4, num2str(a-1), 'color', 'white', 'Tag', ['ROI', num2str(a-1), ' Text'],'ButtonDownFcn', 'DeleteROI', 'Fontsize', 6);
-        if strcmpi(choice, 'Yes')
-            surroundoffset = 2;
-            gui_CaImageViewer.BackgroundROI(ROInum+1) = rectangle('Position', [ROIs{a}(1)-surroundoffset/2, ROIs{a}(2)-surroundoffset/2, ROIs{a}(3)+surroundoffset, ROIs{a}(4)+surroundoffset], 'EdgeColor', 'w', 'Curvature', [1 1], 'Tag', ['BackgroundROI', num2str(ROInum)], 'Linewidth', 0.75);
-        else
-        end
         if twochannels == 1
             axes(axes2);
             glovar.ROIred(a) = rectangle('Position', ROIs{a}, 'EdgeColor', 'red', 'Curvature', [1 1],'Tag', ['ROIred', num2str(ROInum)],'ButtonDownFcn', {@DragROI, ROInum, 'HomeWindow'});
@@ -1160,7 +1150,11 @@ end
 
  %%% Overwrite the previous existing global workspace with the newly imprinted one
  
-gui_CaImageViewer = glovar;
+if ~isempty(regexp(running, 'CaImageViewer'))
+    gui_CaImageViewer = glovar;
+elseif ~isempty(regexp(running, 'FluorescenceSuite'));
+    gui_FluorescenceSuite = glovar;
+end
 
 function BaselineFrames_EditableText_Callback(hObject, eventdata, handles)
 % hObject    handle to BaselineFrames_EditableText (see GCBO)

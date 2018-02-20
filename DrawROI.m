@@ -78,7 +78,7 @@ Fl_ROI(3) = radius; Fl_ROI(4) = radius;
 %%%%%%%%%%% Draw ROI (method depends on invoking function) %%%%%%%%%%%%%%%%
 
 
-if strcmpi(Router, 'FineSelect') && ROInum ~=0      %%% When fine-tuning the ROI around a spine, you want the "DragROI" button down function
+if strcmpi(Router, 'FineSelect') && ROInum ~=0      %%% When fine-tuning the ROI around a spine, you want the "DragROI" button down function active
     axes(axes1)
     glovar.ROI(ROInum+1) = rectangle('Position', Fl_ROI, 'EdgeColor', linecolor, 'Curvature', [1 1], 'Tag', ['ROI', num2str(ROInum)], 'ButtonDownFcn', {@DragROI, ROInum, 'ZoomWindow'}, 'Linewidth', edgewidth);
     rectangle('Position', Fl_ROI, 'EdgeColor', 'w', 'Curvature', [0 0], 'Tag', 'ROI confine','Linewidth', 1, 'LineStyle', ':');
@@ -98,7 +98,8 @@ elseif ~strcmpi(Router, 'FineSelect') && ROInum ==0 %%% When drawing the backgro
     delete(findobj('Tag', 'ROI0 Text'));
     glovar.ROI(ROInum+1) = rectangle('Position', Fl_ROI, 'EdgeColor', linecolor, 'Curvature', [1 1], 'Tag', ['ROI', num2str(ROInum)], 'ButtonDownFcn', {@DragROI, ROInum, 'ZoomWindow'}, 'Linewidth', edgewidth);
     glovar.ROItext(ROInum+1) = text(Fl_ROI(1)-2, Fl_ROI(2)-2, num2str(ROInum), 'color', 'white', 'Tag', ['ROI', num2str(ROInum), ' Text'], 'ButtonDownFcn', @DeleteROI, 'FontSize', textsize);
-    
+    surroundoffset = 2;
+    gui_CaImageViewer.BackgroundROI(ROInum+1) = rectangle('Position', [Fl_ROI(1)-surroundoffset/2, Fl_ROI(2)-surroundoffset/2, Fl_ROI(3)+surroundoffset, Fl_ROI(4)+surroundoffset], 'EdgeColor', 'w', 'Curvature', [1 1], 'Tag', ['BackgroundROI', num2str(ROInum)], 'Linewidth', 0.75, 'Visible', 'off');
     if twochannels == 1;
         axes(axes2)
         glovar.ROIred(ROInum+1) = rectangle('Position', Fl_ROI, 'EdgeColor', 'red', 'Curvature', [1 1], 'Tag', ['ROIred', num2str(ROInum)],'ButtonDownFcn', {@DragROI, ROInum});
