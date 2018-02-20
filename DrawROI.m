@@ -53,7 +53,8 @@ end
 cmap = glovar.CurrentCMap; 
 
 if strcmpi(cmap, 'RGB')
-    linecolor = 'g';
+    linecolor = 'b';
+    cmap = [zeros(length([0:0.01:1]),1),[0:0.01:1]', zeros(length([0:0.01:1]),1)];
 elseif strcmpi(cmap, 'Jet')
     linecolor = 'w';
 elseif strcmpi(cmap, 'Hot')

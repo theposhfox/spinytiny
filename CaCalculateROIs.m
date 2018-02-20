@@ -152,25 +152,25 @@ end
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 %%% ROIs
-ROI_stamp = cell(length(existing_ROI));
-ROI_pos = cell(length(existing_ROI));
-x_r = cell(length(existing_ROI));
-y_r = cell(length(existing_ROI));
-x_c = cell(length(existing_ROI));
-y_c = cell(length(existing_ROI));
-x1 = cell(length(existing_ROI));
-y1 = cell(length(existing_ROI));
-ROIreg = cell(length(existing_ROI));
+ROI_stamp = cell(1,length(existing_ROI));
+ROI_pos = cell(1,length(existing_ROI));
+x_r = cell(1,length(existing_ROI));
+y_r = cell(1,length(existing_ROI));
+x_c = cell(1,length(existing_ROI));
+y_c = cell(1,length(existing_ROI));
+x1 = cell(1,length(existing_ROI));
+y1 = cell(1,length(existing_ROI));
+ROIreg = cell(1,length(existing_ROI));
 
 %%% PolyROIs
-PolyROI_pos = cell(length(gui_CaImageViewer.PolyROI));
-Polyx_r = cell(length(gui_CaImageViewer.PolyROI));
-Polyy_r = cell(length(gui_CaImageViewer.PolyROI));
-Polyx_c = cell(length(gui_CaImageViewer.PolyROI));
-Polyy_c = cell(length(gui_CaImageViewer.PolyROI));
-Polyx1 = cell(length(gui_CaImageViewer.PolyROI));
-Polyy1 = cell(length(gui_CaImageViewer.PolyROI));
-PolyROIreg = cell(length(gui_CaImageViewer.PolyROI));
+PolyROI_pos = cell(1,length(gui_CaImageViewer.PolyROI));
+Polyx_r = cell(1,length(gui_CaImageViewer.PolyROI));
+Polyy_r = cell(1,length(gui_CaImageViewer.PolyROI));
+Polyx_c = cell(1,length(gui_CaImageViewer.PolyROI));
+Polyy_c = cell(1,length(gui_CaImageViewer.PolyROI));
+Polyx1 = cell(1,length(gui_CaImageViewer.PolyROI));
+Polyy1 = cell(1,length(gui_CaImageViewer.PolyROI));
+PolyROIreg = cell(1,length(gui_CaImageViewer.PolyROI));
 
 % xsize = size(gui_CaImageViewer.GCaMP_Image{1},1);
 xsize = size(gui_CaImageViewer.ch1image,1);
