@@ -128,9 +128,7 @@ else
     rectangle('Position', RoiRect_final, 'EdgeColor', 'w', 'Curvature', [0 0], 'Tag', 'ROI confine', 'Linewidth', 1, 'LineStyle', ':');
     uistack(actualROI, 'top');
     if gui_CaImageViewer.UsingSurroundBackground
-        oldsurround = findobj(gcf, 'Type', 'rectangle', '-and', 'Tag', ['BackgroundROI', num2str(ROInum)]);
-        surroundoffset = gui_CaImageViewer.SurroundBackgroundBuffer;
-        set(oldsurround,'Position', [RoiRect_final(1)-surroundoffset/2, RoiRect_final(2)-surroundoffset/2, RoiRect_final(3)+surroundoffset, RoiRect_final(4)+surroundoffset]);
+        
     end
         
     if twochannels == 1

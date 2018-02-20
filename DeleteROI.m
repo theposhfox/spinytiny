@@ -14,7 +14,7 @@ if strcmp(clicktype, 'alt')
     oldspinetext = gui_CaImageViewer.ROItext;
     delete(findobj('Tag', 'ROI confine'));
     AllROIs = flipud(findobj('Type', 'rectangle', '-and', '-not', {'-regexp', 'Tag', 'Dendrite'}, '-and', '-not', {'-regexp', 'Tag', 'Background'}));         %%% ***** NOTE: this captures the ROIs in reverse order (i.e. top--> bottom is arranged as last-->first
-    AllBackgrounds = flipud(findobj('Type', 'rectangle', '-and', {'-regexp', 'Tag', 'Background'}));
+    AllBackgrounds = flipud(findobj('Type', 'rectangle', '-and', {'-regexp', 'Tag', 'Background'}));    %%% A "surround background" ROI is not drawn for ROI0, so the  numbering scheme is different!! (current ROI = ROInum, not ROInum_1)
     gui_CaImageViewer.ROI = [];                                                                   %%% Need to restructure the spine data array to account for the deletion
     gui_CaImageViewer.ROItext = [];
     gui_CaImageViewer.BackgroundROI = [];
@@ -35,7 +35,7 @@ if strcmp(clicktype, 'alt')
 
             
         delete(AllROIs(ROI_num+1));
-        delete(AllBackgrounds(ROI_num+1));
+        delete(AllBackgrounds(ROI_num));
         AllROIs = flipud(findobj('Type', 'rectangle', '-and', '-not', {'-regexp', 'Tag', 'Dendrite'}, '-and', '-not', {'-regexp', 'Tag', 'Background'}));
         AllBackgrounds = flipud(findobj('Type', 'rectangle', '-and', {'-regexp', 'Tag', 'Background'}));
         for t = ROI_num:length(AllROIs)

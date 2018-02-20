@@ -96,6 +96,7 @@ elseif strcmpi(choice, 'Both')
     glovar.PolyLine = [];
     glovar.DendritePolyPointNumber = 0;
     glovar.ROI = [];
+    glovar.BackgroundROI = [];
 end
 
 if ~isempty(regexp(running, 'CaImageViewer'))
