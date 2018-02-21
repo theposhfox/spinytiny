@@ -32,6 +32,7 @@ if strcmpi(choice, 'Spines')
     ROIboxes = findobj(program.Children, 'Type', 'Rectangle', '-and', '-not', {'-regexp', 'Tag', 'Dendrite'});
     Textboxes = findobj(program.Children, 'Type', 'text');
     glovar.ROI = [];
+    glovar.BackgroundROI = [];
     
     for i = 1:length(ROIboxes)
         delete(ROIboxes(i));
@@ -95,6 +96,7 @@ elseif strcmpi(choice, 'Both')
     glovar.PolyLine = [];
     glovar.DendritePolyPointNumber = 0;
     glovar.ROI = [];
+    glovar.BackgroundROI = [];
 end
 
 if ~isempty(regexp(running, 'CaImageViewer'))

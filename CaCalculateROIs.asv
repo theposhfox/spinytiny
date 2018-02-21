@@ -460,16 +460,12 @@ if ~isempty(existing_ROI)
                         tmp_mean_intensity = sloppy_mean(Fluorescence_Intensity{i-1}(:));
                         Pixel_Number{i-1} = Total_Intensity{i-1}/tmp_mean_intensity;
                         if gui_CaImageViewer.UsingSurroundBackground
-                            if ~isempty(BGreg{i})
-                                Surround_Intensity = current_image(BGreg{i});
-                                Total_Surround_Intensity{i-1} = sum(Surround_Intensity);
-                                tmp_surround_intensity = sloppy_mean(Surround_Intensity(:));
-                                Surround_Pixel = Total_Surround_Intensity{i-1}/tmp_surround_intensity;
-                                Surround_Measurement{i-1}(1,actual_image_counter) = (tmp_surround_intensity-Background_Mean_Int)*Surround_Pixel;
-                                Fluorescence_Measurement{i-1}(1,actual_image_counter) = ((tmp_mean_intensity-Background_Mean_Int)*Pixel_Number{i-1})-Surround_Measurement{i-1}(1,actual_image_counter);
-                            else
-                                Fluorescence_Measurement{i-1}(1,actual_image_counter) = (tmp_mean_intensity-Background_Mean_Int)*Pixel_Number{i-1};
-                            end
+                            Surround_Intensity = current_image(BGreg{i});
+                            Total_Surround_Intensity{i-1} = sum(Surround_Intensity);
+                            tmp_surround_intensity = sloppy_mean(Surround_Intensity(:));
+                            Surround_Pixel = Total_Surround_Intensity{i-1}/tmp_surround_intensity;
+                            Surround_Measurement{i-1}(1,actual_image_counter) = (tmp_surround_intensity-Background_Mean_Int)*Surround_Pixel;
+                            Fluorescence_Measurement{i-1}(1,actual_image_counter) = ((tmp_mean_intensity-Background_Mean_Int)*Pixel_Number{i-1})-Surround_Measurement{i-1}(1,actual_image_counter);
                         else
                             Fluorescence_Measurement{i-1}(1,actual_image_counter) = (tmp_mean_intensity-Background_Mean_Int)*Pixel_Number{i-1};
                         end
@@ -598,31 +594,34 @@ waitbar((steps-4)/steps, wb, 'Calculating baseline...');
 
 
 for i = 1:length(Fluorescence_Measurement)
-    roundstodo = 10;
-    thisround = 1;
+    roundstodo = 3;
+    round = 1;
     trace = Fluorescence_Measurement{i};
-    med = median(trace);
-    spread = std(trace);
-    while thisround<roundstodo
+    med = median(Fluorescence_Measurement{i});
+    spread = std(Fluorescence_Measurement{i});
+    while round<roundstodo
         trace(trace>med+3*spread) = med+3*spread;
         trace(trace<med-3*spread) = med-3*spread;
-        thisround = thisround+1;
-    end        
-    spine_baseline(1,i) = median(trace);
+        round = round+1;
+        baseline = medfilt1(trace); %%% Perform three successive rounds of median filtering and removing peaks to find the true baseline
+        
+    spine_baseline(1,i) = median(c);
 end
   
 for i = 1:DendNum
-    roundstodo = 10;
-    thisround = 1;
-    trace = Mean_Dend(i,:);
-    med = median(trace);
-    spread = std(trace);
-    while thisround<roundstodo
-        trace(trace>med+3*spread) = med+3*spread;
-        trace(trace<med-3*spread) = med-3*spread;
-        thisround = thisround+1;
-    end        
-    dend_baseline(1,i) = median(trace);
+    a = medfilt1(Mean_Dend(i,baselineFrames));
+    [peaks loc] = findpeaks(a);
+    a(loc) = NaN;
+    a = a(~isnan(a));
+    b = medfilt1(a);
+    [peaks loc] = findpeaks(b);
+    b(loc) = NaN;
+    b = b(~isnan(b));
+    c = medfilt1(b);
+    [peaks loc] = findpeaks(c);
+    c(loc) = NaN;
+    c = c(~isnan(c));
+    dend_baseline(1,i) = median(c);
 end
 
 

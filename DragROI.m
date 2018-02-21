@@ -22,7 +22,7 @@ running = program.FileName;
 
 clicktype = get(gcbf, 'SelectionType');
 
-if strcmpi(clicktype, 'alt') %%% This is the terminal call for the "Fine Select" portion of the draw ROI program
+if strcmpi(clicktype, 'alt') %%% This is the terminal call for the "Fine Select" portion of the draw ROI program, and is the part that ACTUALLY DRAWS THE FINAL ROI
     if strcmp(CurrentWindow, 'ZoomWindow')
         newROI = findobj(gcf, 'Type', 'Rectangle', 'Tag', ['ROI', num2str(ROInum)]);
         newROIpos = round(get(newROI, 'Position'));
@@ -38,6 +38,7 @@ if strcmpi(clicktype, 'alt') %%% This is the terminal call for the "Fine Select"
         end
         axes(gui_CaImageViewer.figure.handles.GreenGraph)
         delete(findobj('Type', 'rectangle', '-and', 'Tag', ['ROI', num2str(ROInum)]))
+        delete(findobj('Type', 'rectangle', '-and', 'Tag', ['BackgroundROI', num2str(ROInum)]))
         delete(findobj('Type', 'text', '-and', 'Tag', ['ROI', num2str(ROInum), ' Text']))
 
         cmap = glovar.CurrentCMap; 
@@ -59,11 +60,21 @@ if strcmpi(clicktype, 'alt') %%% This is the terminal call for the "Fine Select"
             gui_CaImageViewer.ROI(ROInum+1) = rectangle('Position', adjustedpos, 'EdgeColor', linecolor, 'ButtonDownFcn', {@DragROI, ROInum, 'HomeWindow'}, 'Curvature', [1 1],'Tag', ['ROI', num2str(ROInum)], 'UIContextMenu', c);
             gui_CaImageViewer.NewSpineAnalysisInfo.SpineList = [gui_CaImageViewer.NewSpineAnalysisInfo.SpineList; 1];
         else
-            gui_CaImageViewer.ROI(ROInum+1) = rectangle('Position', adjustedpos, 'EdgeColor', linecolor, 'Curvature', [1 1],'Tag', ['ROI', num2str(ROInum)]);
+            c = uicontextmenu;
+            uimenu(c, 'Label', 'Add Surround Background', 'Callback', @ModifyROI);
+
+            %%%
+            gui_CaImageViewer.ROI(ROInum+1) = rectangle('Position', adjustedpos, 'EdgeColor', linecolor, 'Curvature', [1 1],'Tag', ['ROI', num2str(ROInum)], 'UIContextMenu', c);
+            %%%
+            if gui_CaImageViewer.UsingSurroundBackground
+                surroundoffset = gui_CaImageViewer.SurroundBackgroundBuffer;
+                gui_CaImageViewer.BackgroundROI(ROInum+1) = rectangle('Position', [adjustedpos(1)-surroundoffset/2, adjustedpos(2)-surroundoffset/2, adjustedpos(3)+surroundoffset, adjustedpos(4)+surroundoffset], 'EdgeColor', 'w', 'Curvature', [1 1], 'Tag', ['BackgroundROI', num2str(ROInum)], 'Linewidth', 0.75);
+            else
+                gui_CaImageViewer.BackgroundROI(ROInum+1) = NaN;
+            end
         end
         gui_CaImageViewer.ROItext(ROInum+1) = text(adjustedpos(1)-4, adjustedpos(2)-3, num2str(ROInum), 'color', 'white', 'Tag', ['ROI', num2str(ROInum), ' Text'],'ButtonDownFcn', 'DeleteROI', 'Fontsize', 6);
     else
-        
     end
 else
     point1 = get(gca, 'CurrentPoint');  %%% Button down detected and position parameters stored (x, y, width, height)
@@ -120,6 +131,11 @@ else
     set(actualROI, 'Position', RoiRect_final);
     rectangle('Position', RoiRect_final, 'EdgeColor', 'w', 'Curvature', [0 0], 'Tag', 'ROI confine', 'Linewidth', 1, 'LineStyle', ':');
     uistack(actualROI, 'top');
+    if gui_CaImageViewer.UsingSurroundBackground
+        oldsurround = findobj(gcf, 'Type', 'rectangle', '-and', 'Tag', ['BackgroundROI', num2str(ROInum)]);
+        surroundoffset = gui_CaImageViewer.SurroundBackgroundBuffer;
+        set(oldsurround,'Position', [RoiRect_final(1)-surroundoffset/2, RoiRect_final(2)-surroundoffset/2, RoiRect_final(3)+surroundoffset, RoiRect_final(4)+surroundoffset]);
+    end
         
     if twochannels == 1
         if ~isempty(strfind(Roi_Rect_tag, 'red'))

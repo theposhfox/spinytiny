@@ -1,5 +1,22 @@
 function DrawROI(hObject, eventdata, ROInum, Router)
 
+%%% This function is designed to work through the "CaImageViewer" main
+%%% function. After initiating the drawing procedure (clicking in the image
+%%% window after selecting "Add Spine"), this function will first draw a
+%%% box in the general area of choice, then bring up a new window
+%%% ("Fine-Select") that allows careful drawing of the elliptical ROI at an
+%%% automatically zoomed-in scale (note: this does not occur for the
+%%% background ROI). The ROI can be dragged by clicking and dragging the
+%%% bottom of the ellipse, and can be resized by selecting the bottom-right
+%%% corner of the encasing (white-dashed) rectangle. 
+%%% The resulting window also gives you the option of drawing a "surround
+%%% background" ROI, or a concentric ring around the actual ROI that
+%%% subtracts overlaying contamination from other non-targeted signals. 
+%%% When ROI drawing is complete in the "Fine-Select" window, right-click
+%%% on the ellipitical ROI to signal termination, at which point the ROI
+%%% coordinates will be passed to the function "DragROI", where the final
+%%% drawing into the image axes is handled. 
+
 program = get(gcf);
 
 running = program.FileName;
@@ -77,39 +94,46 @@ Fl_ROI(3) = radius; Fl_ROI(4) = radius;
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%% Draw ROI (method depends on invoking function) %%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-
-if strcmpi(Router, 'FineSelect') && ROInum ~=0      %%% When fine-tuning the ROI around a spine, you want the "DragROI" button down function
+if strcmpi(Router, 'FineSelect') && ROInum ~=0      %%% When fine-tuning the ROI around a spine, you want the "DragROI" button down function active
     axes(axes1)
+    if glovar.UsingSurroundBackground
+        surroundoffset = glovar.SurroundBackgroundBuffer;
+        glovar.BackgroundROI(ROInum+1) = rectangle('Position', [Fl_ROI(1)-surroundoffset/2, Fl_ROI(2)-surroundoffset/2, Fl_ROI(3)+surroundoffset, Fl_ROI(4)+surroundoffset], 'EdgeColor', 'w', 'Curvature', [1 1], 'Tag', ['BackgroundROI', num2str(ROInum)], 'Linewidth', 0.75);
+    else
+        glovar.BackgroundROI(ROInum+1) = NaN;
+    end
     glovar.ROI(ROInum+1) = rectangle('Position', Fl_ROI, 'EdgeColor', linecolor, 'Curvature', [1 1], 'Tag', ['ROI', num2str(ROInum)], 'ButtonDownFcn', {@DragROI, ROInum, 'ZoomWindow'}, 'Linewidth', edgewidth);
     rectangle('Position', Fl_ROI, 'EdgeColor', 'w', 'Curvature', [0 0], 'Tag', 'ROI confine','Linewidth', 1, 'LineStyle', ':');
     uistack(glovar.ROI(ROInum+1), 'top');
     glovar.ROItext(ROInum+1) = text(Fl_ROI(1)-2, Fl_ROI(2)-2, num2str(ROInum), 'color', 'white', 'Tag', ['ROI', num2str(ROInum), ' Text'], 'ButtonDownFcn', @DeleteROI, 'FontSize', textsize);
-    
+
     if twochannels == 1;
         axes(axes2)
         glovar.ROIred(ROInum+1) = rectangle('Position', Fl_ROI, 'EdgeColor', 'red', 'Curvature', [1 1], 'Tag', ['ROIred', num2str(ROInum)],'ButtonDownFcn', {@DragROI, ROInum, 'ZoomWindow'});
         glovar.ROIredtext(ROInum+1) = text(Fl_ROI(1), Fl_ROI(2), num2str(ROInum), 'color', 'white', 'Tag', ['ROIred', num2str(ROInum), ' Text'],'ButtonDownFcn', 'Ca_deleteROI');
     else
     end
-elseif ~strcmpi(Router, 'FineSelect') && ROInum ==0 %%% When drawing the background ROI (ROI 0), you also want to be able to change the size, so also use "DragROI"
+elseif ~strcmpi(Router, 'FineSelect') && ROInum ==0 %%% When drawing the background ROI (ROI 0), you also want to be able to change the size, so also use "DragROI" as the buttondownfunction
     axes(axes1)
     delete(findobj('Tag', 'ROI confine'));
     delete(findobj('Tag', 'ROI0'));
+    delete(findobj('Tag', 'BackgroundROI0'))
     delete(findobj('Tag', 'ROI0 Text'));
     glovar.ROI(ROInum+1) = rectangle('Position', Fl_ROI, 'EdgeColor', linecolor, 'Curvature', [1 1], 'Tag', ['ROI', num2str(ROInum)], 'ButtonDownFcn', {@DragROI, ROInum, 'ZoomWindow'}, 'Linewidth', edgewidth);
     glovar.ROItext(ROInum+1) = text(Fl_ROI(1)-2, Fl_ROI(2)-2, num2str(ROInum), 'color', 'white', 'Tag', ['ROI', num2str(ROInum), ' Text'], 'ButtonDownFcn', @DeleteROI, 'FontSize', textsize);
-    
+    glovar.BackgroundROI(ROInum+1) = NaN;
     if twochannels == 1;
         axes(axes2)
         glovar.ROIred(ROInum+1) = rectangle('Position', Fl_ROI, 'EdgeColor', 'red', 'Curvature', [1 1], 'Tag', ['ROIred', num2str(ROInum)],'ButtonDownFcn', {@DragROI, ROInum});
         glovar.ROIredtext(ROInum+1) = text(Fl_ROI(1)-2, Fl_ROI(2)-2, num2str(ROInum), 'color', 'white', 'Tag', ['ROIred', num2str(ROInum), ' Text'],'ButtonDownFcn', 'Ca_deleteROI');
     else
     end
-else                    %%% When drawing the final ROI on the image, there should no longer be a need to move it (if there is, just delete and redraw!), and in fact it is problematic when ROIs are dense, so exclude the button down function 
+else                    %%% First round drawing, just temporary while the fine-select mode is initiated
     axes(axes1)
     glovar.ROI(ROInum+1) = rectangle('Position', Fl_ROI, 'EdgeColor', linecolor, 'Curvature', [0 0], 'Tag', ['ROI', num2str(ROInum)], 'Linewidth', edgewidth);
-    glovar.ROItext(ROInum+1) = text(Fl_ROI(1)-2, Fl_ROI(2)-2, num2str(ROInum), 'color', 'white', 'Tag', ['ROI', num2str(ROInum), ' Text'], 'ButtonDownFcn', 'DeleteROI', 'FontSize', textsize);
+    nuglovar.ROItext(ROInum+1) = text(Fl_ROI(1)-2, Fl_ROI(2)-2, num2str(ROInum), 'color', 'white', 'Tag', ['ROI', num2str(ROInum), ' Text'], 'ButtonDownFcn', 'DeleteROI', 'FontSize', textsize);
     
     if twochannels == 1;
         axes(axes2)
@@ -167,7 +191,12 @@ elseif strcmpi(Router, 'Spine')
     zoomim = filter2(ones(filterwindow, filterwindow)/filterwindow^2, padarray(zoomim, [padvalue padvalue], nanmedian(nanmedian(zoomim))));
     zoomim = zoomim(padvalue+1:end-padvalue, padvalue+1:end-padvalue);
     
-    figure('Name', 'Auto zoom window', 'WindowButtonDownFcn', {@DrawROI, ROInum, 'FineSelect'}, 'NumberTitle', 'off');
+    zi = figure('Name', 'Auto zoom window', 'WindowButtonDownFcn', {@DrawROI, ROInum, 'FineSelect'}, 'NumberTitle', 'off');
+    bgcol = get(zi, 'Color');
+    usingsurround = gui_CaImageViewer.UsingSurroundBackground;
+    uicontrol('Parent', zi, 'Style', 'Checkbox', 'Position', [15 15 200 30], 'String', 'Draw Surround Background?', 'BackgroundColor',bgcol,'Value', usingsurround, 'Callback', {@SurroundToggle, ROInum});
+    uicontrol('Parent', zi, 'Style', 'text', 'Position', [350 10 80 30], 'String', 'Added Diameter:', 'BackgroundColor', bgcol)
+    uicontrol('Parent', zi, 'Style', 'edit', 'Position', [475 15 50 30], 'String', num2str(gui_CaImageViewer.SurroundBackgroundBuffer), 'KeyPressFcn', {@SurroundStretch, ROInum})
     imagesc(zoomim); colormap(cmap)
     title(['Fine outline of ROI ', num2str(ROInum)])
     set(gca, 'XTick', [], 'YTick', [])
@@ -191,12 +220,44 @@ elseif ~isempty(regexp(running, 'FluorescenceSuite'));
     set(gui_FluorescenceSuite.figure.handles.output, 'WindowButtonDownFcn', []);
 end
 
-% waitforbuttonpress
-
-% if ~strcmpi(Router, 'FineSelect')
-%     for i = 1:ROInum+1
-%         set(gui_CaImageViewer.ROI(i), 'ButtonDownFcn', {@DragROI, i-1})
-%     end
-% end
 
 
+function SurroundToggle(hObject, eventdata, ROInum)
+
+global gui_CaImageViewer
+
+toggleval = get(hObject, 'Value');
+isdrawn = ~isempty(findobj(gcf, 'Type', 'rectangle', '-and', {'-regexp', 'Tag', 'ROI'}));
+
+if toggleval
+    gui_CaImageViewer.UsingSurroundBackground = 1;
+    if isdrawn
+        surroundoffset = gui_CaImageViewer.SurroundBackgroundBuffer;
+        Fl_ROI = get(findobj(gcf,'Type', 'Rectangle', '-and', {'-regexp', 'Tag', 'ROI'}, '-and', 'Curvature', [1 1]), 'Position');
+        gui_CaImageViewer.BackgroundROI(ROInum+1) = rectangle('Position', [Fl_ROI(1)-surroundoffset/2, Fl_ROI(2)-surroundoffset/2, Fl_ROI(3)+surroundoffset, Fl_ROI(4)+surroundoffset], 'EdgeColor', 'w', 'Curvature', [1 1], 'Tag', ['BackgroundROI', num2str(ROInum)], 'Linewidth', 0.75);
+    else
+    end
+else
+%     delete(zi, findobj('Type', 'rectangle', '-and', {'-regexp', 'Tag', 'Background'})
+    gui_CaImageViewer.UsingSurroundBackground = 0;
+    if isdrawn
+        gui_CaImageViewer.BackgroundROI(ROInum+1) = NaN;
+        delete(findobj(gcf, 'Type', 'Rectangle', '-and', {'-regexp', 'Tag', 'Background'}))
+    else
+    end
+end
+
+
+function SurroundStretch(hObject, eventdata, ROInum)
+
+if strcmpi(eventdata.Key, 'return')
+    global gui_CaImageViewer
+    isdrawn = ~isempty(findobj(gcf, 'Type', 'rectangle', '-and', {'-regexp', 'Tag', 'ROI'}));
+    gui_CaImageViewer.SurroundBackgroundBuffer = str2num(get(hObject, 'String'));
+    if isdrawn
+        Fl_ROI = get(findobj(gcf,'Type', 'Rectangle', '-and', 'Tag', ['ROI', num2str(ROInum)], '-and', 'Curvature', [1 1]), 'Position');    %%% Based your modification of the surrounding background ROI on the original ROI so that errors don't accumulate
+        oldBG = findobj(gcf, 'Type', 'rectangle', '-and', 'Tag', ['BackgroundROI', num2str(ROInum)]);
+        surroundoffset = gui_CaImageViewer.SurroundBackgroundBuffer;
+        set(oldBG, 'Position', [Fl_ROI(1)-surroundoffset/2, Fl_ROI(2)-surroundoffset/2, Fl_ROI(3)+surroundoffset, Fl_ROI(4)+surroundoffset]);
+    end
+end
