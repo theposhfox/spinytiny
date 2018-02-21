@@ -1048,9 +1048,15 @@ for a = 1:length(ROIs)
                 glovar.BackgroundROI(ROInum+1) = rectangle('Position', [ROIs{a}(1)-surroundoffset/2, ROIs{a}(2)-surroundoffset/2, ROIs{a}(3)+surroundoffset, ROIs{a}(4)+surroundoffset], 'EdgeColor', 'w', 'Curvature', [1 1], 'Tag', ['BackgroundROI', num2str(ROInum)], 'Linewidth', 0.75);
                 glovar.UsingSurroundBackground = 1;
             case 'Recover previous'
-                if ~isempty(savedFile.BackgroundROIPosition{a})
-                    glovar.BackgroundROI(ROInum+1) = rectangle('Position', savedFile.BackgroundROIPosition{a}, 'EdgeColor', 'w', 'Curvature', [1 1], 'Tag', ['BackgroundROI', num2str(ROInum)], 'Linewidth', 0.75);
+                if isfield(savedFile, 'BackgroundROIPosition')
+                    if ~isempty(savedFile.BackgroundROIPosition{a})
+                        glovar.BackgroundROI(ROInum+1) = rectangle('Position', savedFile.BackgroundROIPosition{a}, 'EdgeColor', 'w', 'Curvature', [1 1], 'Tag', ['BackgroundROI', num2str(ROInum)], 'Linewidth', 0.75);
+                    else
+                        glovar.BackgroundROI(ROInum+1) = NaN;
+                    end
                 else
+                    msgbox('Surround ROIs were not drawn for this file!');
+                    glovar.UsingSurroundBackground = 0;
                     glovar.BackgroundROI(ROInum+1) = NaN;
                 end
             case 'No'

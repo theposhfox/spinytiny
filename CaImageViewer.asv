@@ -1038,7 +1038,7 @@ for a = 1:length(ROIs)
             glovar.ROI(a) = rectangle('Position', ROIs{a}, 'EdgeColor', [0.2 0.4 0.9], 'Curvature', [1 1],'Tag', ['ROI', num2str(ROInum)], 'ButtonDownFcn', {@DragROI, ROInum, 'HomeWindow'}, 'Linewidth', 1, 'UIContextMenu', c1);
         end
         glovar.ROItext(a) = text(ROIs{a}(1)-6, ROIs{a}(2)-4, num2str(a-1), 'color', 'white', 'Tag', ['ROI', num2str(a-1), ' Text'],'ButtonDownFcn', 'DeleteROI', 'Fontsize', 6);
-        switch usesurroungBGchoice
+        switch usesurroundBGchoice
             case 'Add to all'
                 if a == 1   %%% The first ROI (the general background ROI) doesn't need an additional background
                     glovar.BackgroundROI(a) = NaN;
@@ -1048,6 +1048,15 @@ for a = 1:length(ROIs)
                 glovar.BackgroundROI(ROInum+1) = rectangle('Position', [ROIs{a}(1)-surroundoffset/2, ROIs{a}(2)-surroundoffset/2, ROIs{a}(3)+surroundoffset, ROIs{a}(4)+surroundoffset], 'EdgeColor', 'w', 'Curvature', [1 1], 'Tag', ['BackgroundROI', num2str(ROInum)], 'Linewidth', 0.75);
                 glovar.UsingSurroundBackground = 1;
             case 'Recover previous'
+                if isfield(savedFile, 'BackgroundROIPosition')
+                    if ~isempty(savedFile.BackgroundROIPosition{a})
+                        glovar.BackgroundROI(ROInum+1) = rectangle('Position', savedFile.BackgroundROIPosition{a}, 'EdgeColor', 'w', 'Curvature', [1 1], 'Tag', ['BackgroundROI', num2str(ROInum)], 'Linewidth', 0.75);
+                    else
+                        glovar.BackgroundROI(ROInum+1) = NaN;
+                    end
+                else
+                    
+                end
             case 'No'
                 glovar.UsingSurroundBackground = 0;
                 glovar.BackgroundROI(ROInum+1) = NaN;
