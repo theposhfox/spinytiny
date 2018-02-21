@@ -58,8 +58,7 @@ if strcmp(clicktype, 'alt')
         if ~isempty(oldsurrounds)
             gui_CaImageViewer.BackgroundROI = oldsurrounds(1:ROI_num);
             if ~isnan(oldsurrounds(ROI_num+1))
-                delete(AllBackgrounds(length(AllBackgrounds)))
-            else
+                
             end
         end
     end
