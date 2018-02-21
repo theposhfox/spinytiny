@@ -460,12 +460,16 @@ if ~isempty(existing_ROI)
                         tmp_mean_intensity = sloppy_mean(Fluorescence_Intensity{i-1}(:));
                         Pixel_Number{i-1} = Total_Intensity{i-1}/tmp_mean_intensity;
                         if gui_CaImageViewer.UsingSurroundBackground
-                            Surround_Intensity = current_image(BGreg{i});
-                            Total_Surround_Intensity{i-1} = sum(Surround_Intensity);
-                            tmp_surround_intensity = sloppy_mean(Surround_Intensity(:));
-                            Surround_Pixel = Total_Surround_Intensity{i-1}/tmp_surround_intensity;
-                            Surround_Measurement{i-1}(1,actual_image_counter) = (tmp_surround_intensity-Background_Mean_Int)*Surround_Pixel;
-                            Fluorescence_Measurement{i-1}(1,actual_image_counter) = ((tmp_mean_intensity-Background_Mean_Int)*Pixel_Number{i-1})-Surround_Measurement{i-1}(1,actual_image_counter);
+                            if ~isempty(BGreg{i})
+                                Surround_Intensity = current_image(BGreg{i});
+                                Total_Surround_Intensity{i-1} = sum(Surround_Intensity);
+                                tmp_surround_intensity = sloppy_mean(Surround_Intensity(:));
+                                Surround_Pixel = Total_Surround_Intensity{i-1}/tmp_surround_intensity;
+                                Surround_Measurement{i-1}(1,actual_image_counter) = (tmp_surround_intensity-Background_Mean_Int)*Surround_Pixel;
+                                Fluorescence_Measurement{i-1}(1,actual_image_counter) = ((tmp_mean_intensity-Background_Mean_Int)*Pixel_Number{i-1})-Surround_Measurement{i-1}(1,actual_image_counter);
+                            else
+                                Fluorescence_Measurement{i-1}(1,actual_image_counter) = (tmp_mean_intensity-Background_Mean_Int)*Pixel_Number{i-1};
+                            end
                         else
                             Fluorescence_Measurement{i-1}(1,actual_image_counter) = (tmp_mean_intensity-Background_Mean_Int)*Pixel_Number{i-1};
                         end
