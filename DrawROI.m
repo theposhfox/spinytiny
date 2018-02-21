@@ -1,5 +1,22 @@
 function DrawROI(hObject, eventdata, ROInum, Router)
 
+%%% This function is designed to work through the "CaImageViewer" main
+%%% function. After initiating the drawing procedure (clicking in the image
+%%% window after selecting "Add Spine"), this function will first draw a
+%%% box in the general area of choice, then bring up a new window
+%%% ("Fine-Select") that allows careful drawing of the elliptical ROI at an
+%%% automatically zoomed-in scale (note: this does not occur for the
+%%% background ROI). The ROI can be dragged by clicking and dragging the
+%%% bottom of the ellipse, and can be resized by selecting the bottom-right
+%%% corner of the encasing (white-dashed) rectangle. 
+%%% The resulting window also gives you the option of drawing a "surround
+%%% background" ROI, or a concentric ring around the actual ROI that
+%%% subtracts overlaying contamination from other non-targeted signals. 
+%%% When ROI drawing is complete in the "Fine-Select" window, right-click
+%%% on the ellipitical ROI to signal termination, at which point the ROI
+%%% coordinates will be passed to the function "DragROI", where the final
+%%% drawing into the image axes is handled. 
+
 program = get(gcf);
 
 running = program.FileName;
@@ -76,7 +93,7 @@ Fl_ROI(3) = radius; Fl_ROI(4) = radius;
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%% Draw ROI (method depends on invoking function) %%%%%%%%%%%%%%%%
-
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 if strcmpi(Router, 'FineSelect') && ROInum ~=0      %%% When fine-tuning the ROI around a spine, you want the "DragROI" button down function active
     axes(axes1)
@@ -112,7 +129,7 @@ elseif ~strcmpi(Router, 'FineSelect') && ROInum ==0 %%% When drawing the backgro
         glovar.ROIredtext(ROInum+1) = text(Fl_ROI(1)-2, Fl_ROI(2)-2, num2str(ROInum), 'color', 'white', 'Tag', ['ROIred', num2str(ROInum), ' Text'],'ButtonDownFcn', 'Ca_deleteROI');
     else
     end
-else                    %%% When drawing the final ROI on the image, there should no longer be a need to move it (if there is, just delete and redraw!), and in fact it is problematic when ROIs are dense, so exclude the button down function 
+else                    %%% First round drawing, just temporary while the fine-select mode is initiated
     axes(axes1)
     glovar.ROI(ROInum+1) = rectangle('Position', Fl_ROI, 'EdgeColor', linecolor, 'Curvature', [0 0], 'Tag', ['ROI', num2str(ROInum)], 'Linewidth', edgewidth);
     nuglovar.ROItext(ROInum+1) = text(Fl_ROI(1)-2, Fl_ROI(2)-2, num2str(ROInum), 'color', 'white', 'Tag', ['ROI', num2str(ROInum), ' Text'], 'ButtonDownFcn', 'DeleteROI', 'FontSize', textsize);

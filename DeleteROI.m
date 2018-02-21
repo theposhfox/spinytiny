@@ -28,32 +28,36 @@ if strcmp(clicktype, 'alt')
         gui_CaImageViewer.ROI(ROI_num+1:length(oldspines)-1) = oldspines((ROI_num+2):length(oldspines)); %%% captures all the spines after the one being deleted and shifts it to fill the place of the one being deleted
         gui_CaImageViewer.ROItext(ROI_num+1:length(oldspines)-1) = oldspinetext((ROI_num+2):length(oldspines));
         
-        %%% Repeat the same for associated background ROIs
-        
-        gui_CaImageViewer.BackgroundROI(1:ROI_num) = oldsurrounds(1:ROI_num);                  %%% captures all the spines from the first to the one before the one being deleted
-        gui_CaImageViewer.BackgroundROI(ROI_num+1:length(oldspines)-1) = oldsurrounds((ROI_num+2):length(oldsurrounds)); %%% captures all the spines after the one being deleted and shifts it to fill the place of the one being deleted
-
-            
         delete(AllROIs(ROI_num+1));
-        delete(AllBackgrounds(ROI_num));
         AllROIs = flipud(findobj('Type', 'rectangle', '-and', '-not', {'-regexp', 'Tag', 'Dendrite'}, '-and', '-not', {'-regexp', 'Tag', 'Background'}));
-        AllBackgrounds = flipud(findobj('Type', 'rectangle', '-and', {'-regexp', 'Tag', 'Background'}));
         for t = ROI_num:length(AllROIs)
             set(AllROIs(t), 'Tag', ['ROI', num2str(t-1)]);
             AllROItext = findobj('Tag', ['ROI', num2str(t), ' Text']);
             set(AllROItext, 'String', [num2str(t-1)]);
             set(AllROItext, 'Tag', ['ROI', num2str(t-1), ' Text'])
         end
-        for t = ROI_num:length(AllBackgrounds)
-            set(AllBackgrounds(t), 'Tag', ['ROI', num2str(t-1)]);
-        end
         gui_CaImageViewer.Spine_Number = gui_CaImageViewer.Spine_Number-1;
+
+        %%% Repeat the same for associated background ROIs
+        
+        if ~isempty(oldsurrounds)
+            gui_CaImageViewer.BackgroundROI(1:ROI_num) = oldsurrounds(1:ROI_num);                  %%% captures all the spines from the first to the one before the one being deleted
+            gui_CaImageViewer.BackgroundROI(ROI_num+1:length(oldspines)-1) = oldsurrounds((ROI_num+2):length(oldsurrounds)); %%% captures all the spines after the one being deleted and shifts it to fill the place of the one being deleted
+            delete(AllBackgrounds(ROI_num));
+            AllBackgrounds = flipud(findobj('Type', 'rectangle', '-and', {'-regexp', 'Tag', 'Background'}));
+            for t = ROI_num:length(AllBackgrounds)
+                set(AllBackgrounds(t), 'Tag', ['BackgroundROI', num2str(t-1)]);
+            end
+        end
+            
     elseif ROI_num == length(oldspines)-1
         gui_CaImageViewer.ROI = oldspines(1:ROI_num);
-        gui_CaImageViewer.BackgroundROI = oldsurrounds(1:ROI_num);
         gui_CaImageViewer.ROItext = oldspinetext(1:ROI_num);
-        delete(AllROIs(length(AllROIs)));
-        delete(AllBackgrounds(length(AllBackgrounds)));
         gui_CaImageViewer.Spine_Number = gui_CaImageViewer.Spine_Number-1;
+        delete(AllROIs(length(AllROIs)));
+        if ~isempty(oldsurrounds)
+            gui_CaImageViewer.BackgroundROI = oldsurrounds(1:ROI_num);
+            delete(AllBackgrounds(length(AllBackgrounds)));
+        end
     end
 end

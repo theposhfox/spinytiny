@@ -22,7 +22,7 @@ running = program.FileName;
 
 clicktype = get(gcbf, 'SelectionType');
 
-if strcmpi(clicktype, 'alt') %%% This is the terminal call for the "Fine Select" portion of the draw ROI program
+if strcmpi(clicktype, 'alt') %%% This is the terminal call for the "Fine Select" portion of the draw ROI program, and is the part that ACTUALLY DRAWS THE FINAL ROI
     if strcmp(CurrentWindow, 'ZoomWindow')
         newROI = findobj(gcf, 'Type', 'Rectangle', 'Tag', ['ROI', num2str(ROInum)]);
         newROIpos = round(get(newROI, 'Position'));
@@ -60,7 +60,12 @@ if strcmpi(clicktype, 'alt') %%% This is the terminal call for the "Fine Select"
             gui_CaImageViewer.ROI(ROInum+1) = rectangle('Position', adjustedpos, 'EdgeColor', linecolor, 'ButtonDownFcn', {@DragROI, ROInum, 'HomeWindow'}, 'Curvature', [1 1],'Tag', ['ROI', num2str(ROInum)], 'UIContextMenu', c);
             gui_CaImageViewer.NewSpineAnalysisInfo.SpineList = [gui_CaImageViewer.NewSpineAnalysisInfo.SpineList; 1];
         else
-            gui_CaImageViewer.ROI(ROInum+1) = rectangle('Position', adjustedpos, 'EdgeColor', linecolor, 'Curvature', [1 1],'Tag', ['ROI', num2str(ROInum)]);
+            c = uicontextmenu;
+            uimenu(c, 'Label', 'Add Surround Background', 'Callback', @ModifyROI);
+
+            %%%
+            gui_CaImageViewer.ROI(ROInum+1) = rectangle('Position', adjustedpos, 'EdgeColor', linecolor, 'Curvature', [1 1],'Tag', ['ROI', num2str(ROInum)], 'UIContextMenu', c);
+            %%%
             if gui_CaImageViewer.UsingSurroundBackground
                 surroundoffset = gui_CaImageViewer.SurroundBackgroundBuffer;
                 gui_CaImageViewer.BackgroundROI(ROInum+1) = rectangle('Position', [adjustedpos(1)-surroundoffset/2, adjustedpos(2)-surroundoffset/2, adjustedpos(3)+surroundoffset, adjustedpos(4)+surroundoffset], 'EdgeColor', 'w', 'Curvature', [1 1], 'Tag', ['BackgroundROI', num2str(ROInum)], 'Linewidth', 0.75);
@@ -70,7 +75,6 @@ if strcmpi(clicktype, 'alt') %%% This is the terminal call for the "Fine Select"
         end
         gui_CaImageViewer.ROItext(ROInum+1) = text(adjustedpos(1)-4, adjustedpos(2)-3, num2str(ROInum), 'color', 'white', 'Tag', ['ROI', num2str(ROInum), ' Text'],'ButtonDownFcn', 'DeleteROI', 'Fontsize', 6);
     else
-        
     end
 else
     point1 = get(gca, 'CurrentPoint');  %%% Button down detected and position parameters stored (x, y, width, height)

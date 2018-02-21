@@ -594,31 +594,34 @@ waitbar((steps-4)/steps, wb, 'Calculating baseline...');
 
 
 for i = 1:length(Fluorescence_Measurement)
-    roundstodo = 10;
-    thisround = 1;
+    roundstodo = 3;
+    round = 1;
     trace = Fluorescence_Measurement{i};
-    med = median(trace);
-    spread = std(trace);
-    while thisround<roundstodo
+    med = median(Fluorescence_Measurement{i});
+    spread = std(Fluorescence_Measurement{i});
+    while round<roundstodo
         trace(trace>med+3*spread) = med+3*spread;
         trace(trace<med-3*spread) = med-3*spread;
-        thisround = thisround+1;
-    end        
-    spine_baseline(1,i) = median(trace);
+        round = round+1;
+        baseline = medfilt1(trace); %%% Perform three successive rounds of median filtering and removing peaks to find the true baseline
+        
+    spine_baseline(1,i) = median(c);
 end
   
 for i = 1:DendNum
-    roundstodo = 10;
-    thisround = 1;
-    trace = Mean_Dend(i,:);
-    med = median(trace);
-    spread = std(trace);
-    while thisround<roundstodo
-        trace(trace>med+3*spread) = med+3*spread;
-        trace(trace<med-3*spread) = med-3*spread;
-        thisround = thisround+1;
-    end        
-    dend_baseline(1,i) = median(trace);
+    a = medfilt1(Mean_Dend(i,baselineFrames));
+    [peaks loc] = findpeaks(a);
+    a(loc) = NaN;
+    a = a(~isnan(a));
+    b = medfilt1(a);
+    [peaks loc] = findpeaks(b);
+    b(loc) = NaN;
+    b = b(~isnan(b));
+    c = medfilt1(b);
+    [peaks loc] = findpeaks(c);
+    c(loc) = NaN;
+    c = c(~isnan(c));
+    dend_baseline(1,i) = median(c);
 end
 
 
