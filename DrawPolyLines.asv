@@ -48,12 +48,7 @@ if DendriteNum <= glovar.Dendrite_Number
         ROIcounter = ROIcounter+1;
     end
 
-%     glovar.PolyROI = glovar.PolyROI(~cellfun(@isempty, glovar.PolyROI));
-%     glovar.PolyLinePos = glovar.PolyLinePos(~cellfun(@isempty, glovar.PolyLinePos));
-
     glovar.Dendrite_ROIs = glovar.Dendrite_ROIs-length(a);
-
-%     pause(0.1)
     
     for i = 1:length(ROIlines)
         if size(linetags,1) > 1
