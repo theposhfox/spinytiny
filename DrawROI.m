@@ -154,7 +154,7 @@ if strcmpi(Router, 'Background')
 elseif strcmpi(Router, 'Spine')
     set(glovar.figure.handles.SpineROI_ToggleButton, 'Value', 0)
     
-    r = round([Fl_ROI(2), Fl_ROI(2), Fl_ROI(2)+Fl_ROI(4), Fl_ROI(2)+Fl_ROI(4)]); %%% ROI y values, to be used as row index for sub-image
+    r = round([Fl_ROI(2), Fl_ROI(2), Fl_ROI(2)+Fl_ROI(4), Fl_ROI(2)+Fl_ROI(4)]); %%% ROI y values, to be used as row index for sub-image (indices are: 1) top-left corner, 2) top-right corner, 3) bottom-right, 4)bottom-left
     c = round([Fl_ROI(1), Fl_ROI(1)+Fl_ROI(3), Fl_ROI(1)+Fl_ROI(3), Fl_ROI(1)]);
     
     if ~glovar.NewSpineAnalysis
@@ -165,12 +165,12 @@ elseif strcmpi(Router, 'Spine')
         immax = gui_CaImageViewer.ch1image;
     end
     
-    if r(1)<0
+    if r(1)<=0
         r(1) = 1;
     elseif r(1)>length(immax)
         r(1) = length(immax);
     end
-    if r(3)<0
+    if r(3)<=0
         r(3) = 1;
     elseif r(3)>length(immax)
         r(3) = length(immax);

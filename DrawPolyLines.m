@@ -195,8 +195,8 @@ for i = 1:glovar.Dendrite_Number
             glovar.PolyROI{ROInum} = rectangle('Position', glovar.PolyLinePos{newindex(j)}, 'EdgeColor', linecolor, 'Tag', ['Dendrite ', num2str(DendriteNum), ' PolyROI ', num2str(j)], 'Curvature', [1 1], 'ButtonDownFcn', {@Drag_Poly, ROInum});
         end
     else
-        glovar.PolyLinePos(newindex(1):newindex(end)) = cellfun(@(x) x(:)', tempPos(oldindex(1):oldindex(end)), 'UniformOutput', false);
-        glovar.PolyROI(newindex(1):newindex(end)) = cellfun(@(x) x, tempROI(oldindex(1):oldindex(end)), 'UniformOutput', false);
+        glovar.PolyLinePos(newindex) = cellfun(@(x) x(:)', tempPos(oldindex(1):oldindex(end)), 'UniformOutput', false);
+        glovar.PolyROI(newindex) = cellfun(@(x) x, tempROI(oldindex(1):oldindex(end)), 'UniformOutput', false);
     end
     
 %     glovar.PolyLineVertices{i} = [x(i-ExistingDROIs), y(i-ExistingDROIs)];

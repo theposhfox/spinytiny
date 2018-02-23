@@ -1129,15 +1129,18 @@ try
         if ~isempty(coordinates{1})
         axes(axes1);
         currDend = 1;
+        polycount = 1;
             for i = 1:length(coordinates)
                 glovar.PolyLinePos{i} = [coordinates{i}(1), coordinates{i}(2), radius*2, radius*2];
-                glovar.PolyROI{i} = rectangle('Position', glovar.PolyLinePos{i}, 'EdgeColor', 'g', 'Tag', ['Dendrite ', num2str(currDend), ' PolyROI ', num2str(i)], 'Curvature', [1 1], 'ButtonDownFcn', 'Drag_Poly');
+                glovar.PolyROI{i} = rectangle('Position', glovar.PolyLinePos{i}, 'EdgeColor', 'g', 'Tag', ['Dendrite ', num2str(currDend), ' PolyROI ', num2str(polycount)], 'Curvature', [1 1], 'ButtonDownFcn', 'Drag_Poly');
                 x = [x,coordinates{i}(1)+radius];
                 y = [y,coordinates{i}(2)+radius];
                 if i < sum(PPsperDend(1:currDend))
                     currDend = currDend;
+                    polycount = polycount+1;
                 else
                     currDend = currDend+1;
+                    polycount = 1;
                 end
             end
             if DendNum == 1

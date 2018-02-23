@@ -14,7 +14,7 @@ if str2double(SelectedDend) > 1
     for i = 1:str2num(SelectedDend)-1
         otherdendROIs = otherdendROIs + length(get(findobj(gui_CaImageViewer.figure.handles.GreenGraph, 'Type','Line', '-and', {'-regexp', 'Tag', num2str(i)}), 'XData'));
     end
-    PolyROItoRemove = SelectedPolyROI-otherdendROIs;
+    PolyROItoRemove = SelectedPolyROI;
 else
     PolyROItoRemove = SelectedPolyROI;
 end
@@ -23,7 +23,7 @@ clicktype = get(gcbf, 'SelectionType');
 
 if strcmpi(clicktype, 'alt')
     delete(gco)
-    leftover_polyROI = flipud(findobj('Type', 'rectangle', '-and', {'-regexp', 'Tag', 'PolyROI'}));
+    leftover_polyROI = flipud(findobj('Type', 'rectangle', '-and', {'-regexp', 'Tag', ['Dendrite ', SelectedDend, ' PolyROI']}));
     for i = SelectedPolyROI:length(leftover_polyROI)
         set(leftover_polyROI(i), 'Tag', ['Dendrite ', SelectedDend, ' PolyROI ', num2str(i)])
     end

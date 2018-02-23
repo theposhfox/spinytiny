@@ -14,7 +14,8 @@ if strcmp(clicktype, 'alt')
     oldspinetext = gui_CaImageViewer.ROItext;
     delete(findobj('Tag', 'ROI confine'));
     AllROIs = flipud(findobj('Type', 'rectangle', '-and', '-not', {'-regexp', 'Tag', 'Dendrite'}, '-and', '-not', {'-regexp', 'Tag', 'Background'}));         %%% ***** NOTE: this captures the ROIs in reverse order (i.e. top--> bottom is arranged as last-->first
-    AllBackgrounds = flipud(findobj('Type', 'rectangle', '-and', {'-regexp', 'Tag', 'Background'}));    %%% A "surround background" ROI is not drawn for ROI0, so the  numbering scheme is different!! (current ROI = ROInum, not ROInum_1)
+    AllBackgrounds = nan(1,length(oldsurrounds));
+    AllBackgrounds(find(~isnan(oldsurrounds))) = flipud(findobj('Type', 'rectangle', '-and', {'-regexp', 'Tag', 'Background'}));    
     gui_CaImageViewer.ROI = [];                                                                   %%% Need to restructure the spine data array to account for the deletion
     gui_CaImageViewer.ROItext = [];
     gui_CaImageViewer.BackgroundROI = [];
@@ -43,7 +44,7 @@ if strcmp(clicktype, 'alt')
         if ~isempty(oldsurrounds)
             gui_CaImageViewer.BackgroundROI(1:ROI_num) = oldsurrounds(1:ROI_num);                  %%% captures all the spines from the first to the one before the one being deleted
             gui_CaImageViewer.BackgroundROI(ROI_num+1:length(oldspines)-1) = oldsurrounds((ROI_num+2):length(oldsurrounds)); %%% captures all the spines after the one being deleted and shifts it to fill the place of the one being deleted
-            delete(AllBackgrounds(ROI_num));
+            delete(AllBackgrounds(ROI_num+1));
             AllBackgrounds = flipud(findobj('Type', 'rectangle', '-and', {'-regexp', 'Tag', 'Background'}));
             for t = ROI_num:length(AllBackgrounds)
                 set(AllBackgrounds(t), 'Tag', ['BackgroundROI', num2str(t-1)]);
@@ -58,7 +59,8 @@ if strcmp(clicktype, 'alt')
         if ~isempty(oldsurrounds)
             gui_CaImageViewer.BackgroundROI = oldsurrounds(1:ROI_num);
             if ~isnan(oldsurrounds(ROI_num+1))
-                
+                delete(AllBackgrounds(length(AllBackgrounds)))
+            else
             end
         end
     end
