@@ -99,6 +99,7 @@ set(gui_CaImageViewer.figure.handles.RedLowerLUT_EditableText, 'KeyPressFcn', @f
 set(gui_CaImageViewer.figure.handles.SmoothingFactor_EditableText, 'KeyPressFcn', @frameset);
 set(gui_CaImageViewer.figure.handles.GreenGamma_EditableText, 'KeyPressFcn', @frameset);
 set(gui_CaImageViewer.figure.handles.RedGamma_EditableText, 'KeyPressFcn', @frameset);
+set(gui_CaImageViewer.figure.handles.figure1, 'KeyPressFcn', @ImageSlider_Slider_Callback)
 
 
 %%% Initialize Various Parameters
@@ -449,9 +450,17 @@ function ImageSlider_Slider_Callback(hObject, eventdata, handles)
 
 global gui_CaImageViewer
 
-ImageNum = str2num(get(gui_CaImageViewer.figure.handles.Frame_EditableText, 'String'));
+if isempty(eventdata)
+    ImageNum = str2num(get(gui_CaImageViewer.figure.handles.Frame_EditableText, 'String'));
 
-CaImageSlider(ImageNum);
+    CaImageSlider(ImageNum);
+else
+    if isempty(strfind(eventdata.Key, 'arrow'))
+       return
+    else
+    end
+end
+
 
 % --- Executes during object creation, after setting all properties.
 function ImageSlider_Slider_CreateFcn(hObject, eventdata, handles)
@@ -1055,7 +1064,9 @@ for a = 1:length(ROIs)
                         glovar.BackgroundROI(ROInum+1) = NaN;
                     end
                 else
-                    
+                    msgbox('Surround ROIs were not drawn for this file!');
+                    glovar.UsingSurroundBackground = 0;
+                    glovar.BackgroundROI(ROInum+1) = NaN;
                 end
             case 'No'
                 glovar.UsingSurroundBackground = 0;
@@ -1127,15 +1138,18 @@ try
         if ~isempty(coordinates{1})
         axes(axes1);
         currDend = 1;
+        polycount = 1;
             for i = 1:length(coordinates)
                 glovar.PolyLinePos{i} = [coordinates{i}(1), coordinates{i}(2), radius*2, radius*2];
-                glovar.PolyROI{i} = rectangle('Position', glovar.PolyLinePos{i}, 'EdgeColor', 'g', 'Tag', ['Dendrite ', num2str(currDend), ' PolyROI ', num2str(i)], 'Curvature', [1 1], 'ButtonDownFcn', 'Drag_Poly');
+                glovar.PolyROI{i} = rectangle('Position', glovar.PolyLinePos{i}, 'EdgeColor', 'g', 'Tag', ['Dendrite ', num2str(currDend), ' PolyROI ', num2str(polycount)], 'Curvature', [1 1], 'ButtonDownFcn', 'Drag_Poly');
                 x = [x,coordinates{i}(1)+radius];
                 y = [y,coordinates{i}(2)+radius];
                 if i < sum(PPsperDend(1:currDend))
                     currDend = currDend;
+                    polycount = polycount+1;
                 else
                     currDend = currDend+1;
+                    polycount = 1;
                 end
             end
             if DendNum == 1

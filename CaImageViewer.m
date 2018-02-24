@@ -99,6 +99,7 @@ set(gui_CaImageViewer.figure.handles.RedLowerLUT_EditableText, 'KeyPressFcn', @f
 set(gui_CaImageViewer.figure.handles.SmoothingFactor_EditableText, 'KeyPressFcn', @frameset);
 set(gui_CaImageViewer.figure.handles.GreenGamma_EditableText, 'KeyPressFcn', @frameset);
 set(gui_CaImageViewer.figure.handles.RedGamma_EditableText, 'KeyPressFcn', @frameset);
+set(gui_CaImageViewer.figure.handles.figure1, 'KeyPressFcn', @ImageSlider_Slider_Callback)
 
 
 %%% Initialize Various Parameters
@@ -449,9 +450,28 @@ function ImageSlider_Slider_Callback(hObject, eventdata, handles)
 
 global gui_CaImageViewer
 
-ImageNum = str2num(get(gui_CaImageViewer.figure.handles.Frame_EditableText, 'String'));
+% if isempty(eventdata)
+    
+    ImageNum = str2num(get(gui_CaImageViewer.figure.handles.Frame_EditableText, 'String'));
+    CaImageSlider(ImageNum);
 
-CaImageSlider(ImageNum);
+% else
+%     if isempty(strfind(eventdata.Key, 'arrow'))
+%        return
+%     else
+%         if strcmpi(eventdata.Key, 'rightarrow')
+%             ImageNum = str2num(get(gui_CaImageViewer.figure.handles.Frame_EditableText, 'String'))+1;
+%             CaImageSlider(ImageNum);
+%         elseif strcmpi(eventdata.Key, 'leftarrow')
+%             ImageNum = str2num(get(gui_CaImageViewer.figure.handles.Frame_EditableText, 'String'))-1;
+%                 if ImageNum < 1
+%                     ImageNum = 1;
+%                 end
+%             CaImageSlider(ImageNum);
+%         end
+%     end
+% end
+
 
 % --- Executes during object creation, after setting all properties.
 function ImageSlider_Slider_CreateFcn(hObject, eventdata, handles)
@@ -1029,6 +1049,7 @@ for a = 1:length(ROIs)
         axes(axes1);
         c1 = uicontextmenu;
         uimenu(c1, 'Label', 'Add Surround Background', 'Callback', @ModifyROI);
+        uimenu(c1, 'Label', 'Remove Surround Background', 'Callback', @ModifyROI);
         if glovar.NewSpineAnalysis
             c2 = uicontextmenu;
             uimenu(c2, 'Label', 'Set as eliminated', 'Callback', @CategorizeSpines);

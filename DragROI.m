@@ -62,7 +62,7 @@ if strcmpi(clicktype, 'alt') %%% This is the terminal call for the "Fine Select"
         else
             c = uicontextmenu;
             uimenu(c, 'Label', 'Add Surround Background', 'Callback', @ModifyROI);
-
+            uimenu(c, 'Label', 'Remove Surround Background', 'Callback', @ModifyROI);
             %%%
             gui_CaImageViewer.ROI(ROInum+1) = rectangle('Position', adjustedpos, 'EdgeColor', linecolor, 'Curvature', [1 1],'Tag', ['ROI', num2str(ROInum)], 'UIContextMenu', c);
             %%%
