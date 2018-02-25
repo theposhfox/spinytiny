@@ -111,23 +111,8 @@ if ~strcmpi(Router, 'FineSelect') && ROInum == 0 %%% For drawing the general bac
         glovar.ROIredtext(ROInum+1) = text(Fl_ROI(1)-2, Fl_ROI(2)-2, num2str(ROInum), 'color', 'white', 'Tag', ['ROIred', num2str(ROInum), ' Text'],'ButtonDownFcn', 'Ca_deleteROI');
     else
     end
-elseif strcmpi(Router, 'Spine') %%% First round drawing, just temporary while the fine-select mode is initiated
+elseif strcmpi(Router, 'FineSelect') && ROInum ~=0 %%% For fine-tuning the ROI around a spine in the "Zoom window" pop-up
     axes(axes1)
-    InsertOpt = get(glovar.figure.handles.InsertSpine_ToggleButton,'Value');
-    if InsertOpt
-        ROInum = glovar.InsertPoint;
-    end
-    glovar.ROI(ROInum+1) = rectangle('Position', Fl_ROI, 'EdgeColor', linecolor, 'Curvature', [0 0], 'Tag', ['ROI', num2str(ROInum), ' Starter'], 'Linewidth', edgewidth);
-    glovar.ROItext(ROInum+1) = text(Fl_ROI(1)-2, Fl_ROI(2)-2, num2str(ROInum), 'color', 'white', 'Tag', ['ROI', num2str(ROInum), ' Text Starter'], 'ButtonDownFcn', 'DeleteROI', 'FontSize', textsize);
-    
-    if twochannels == 1;
-        axes(axes2)
-        glovar.ROIred(ROInum+1) = rectangle('Position', Fl_ROI, 'EdgeColor', 'red', 'Curvature', [1 1], 'Tag', ['ROIred', num2str(ROInum)]);
-        glovar.ROIredtext(ROInum+1) = text(Fl_ROI(1)-2, Fl_ROI(2)-2, num2str(ROInum), 'color', 'white', 'Tag', ['ROIred', num2str(ROInum), ' Text'],'ButtonDownFcn', 'DeleteROI');
-    else
-    end
-elseif strcmpi(Router, 'FineSelect') && ROInum ~=0
-        axes(axes1)
     if glovar.UsingSurroundBackground
         surroundoffset = glovar.SurroundBackgroundBuffer;
         glovar.BackgroundROI(ROInum+1) = rectangle('Position', [Fl_ROI(1)-surroundoffset/2, Fl_ROI(2)-surroundoffset/2, Fl_ROI(3)+surroundoffset, Fl_ROI(4)+surroundoffset], 'EdgeColor', 'w', 'Curvature', [1 1], 'Tag', ['BackgroundROI', num2str(ROInum)], 'Linewidth', 0.75);
@@ -143,6 +128,21 @@ elseif strcmpi(Router, 'FineSelect') && ROInum ~=0
         axes(axes2)
         glovar.ROIred(ROInum+1) = rectangle('Position', Fl_ROI, 'EdgeColor', 'red', 'Curvature', [1 1], 'Tag', ['ROIred', num2str(ROInum)],'ButtonDownFcn', {@DragROI, ROInum, 'ZoomWindow'});
         glovar.ROIredtext(ROInum+1) = text(Fl_ROI(1), Fl_ROI(2), num2str(ROInum), 'color', 'white', 'Tag', ['ROIred', num2str(ROInum), ' Text'],'ButtonDownFcn', 'Ca_deleteROI');
+    else
+    end
+else                    %%% First round drawing, just temporary while the fine-select mode is initiated
+    axes(axes1)
+    InsertOpt = get(glovar.figure.handles.InsertSpine_ToggleButton,'Value');
+    if InsertOpt
+        ROInum = glovar.InsertPoint;
+    end
+    glovar.ROI(ROInum+1) = rectangle('Position', Fl_ROI, 'EdgeColor', linecolor, 'Curvature', [0 0], 'Tag', ['ROI', num2str(ROInum)], 'Linewidth', edgewidth);
+    glovar.ROItext(ROInum+1) = text(Fl_ROI(1)-2, Fl_ROI(2)-2, num2str(ROInum), 'color', 'white', 'Tag', ['ROI', num2str(ROInum), ' Text'], 'ButtonDownFcn', 'DeleteROI', 'FontSize', textsize);
+    
+    if twochannels == 1;
+        axes(axes2)
+        glovar.ROIred(ROInum+1) = rectangle('Position', Fl_ROI, 'EdgeColor', 'red', 'Curvature', [1 1], 'Tag', ['ROIred', num2str(ROInum)]);
+        glovar.ROIredtext(ROInum+1) = text(Fl_ROI(1)-2, Fl_ROI(2)-2, num2str(ROInum), 'color', 'white', 'Tag', ['ROIred', num2str(ROInum), ' Text'],'ButtonDownFcn', 'DeleteROI');
     else
     end
 end

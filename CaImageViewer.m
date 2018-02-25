@@ -22,7 +22,7 @@ function varargout = CaImageViewer(varargin)
 
 % Edit the above text to modify the response to help CaImageViewer
 
-% Last Modified by GUIDE v2.5 22-Dec-2017 18:25:07
+% Last Modified by GUIDE v2.5 23-Feb-2018 23:30:39
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -675,6 +675,7 @@ if SpineROI == 1
     set(handles.NearbySpine_ToggleButton, 'Value', 0);
     set(handles.DendritePolyLines_ToggleButton, 'Value', 0);
     set(gui_CaImageViewer.figure.handles.output, 'WindowButtonDownFcn', {@DrawROI, ROInum, Router})
+    set(gui_CaImageViewer.figure.handles.InsertSpine_ToggleButton, 'Enable', 'on')
 end
 
 if BackgroundROI == 0 && SpineROI == 0 && NearbySpineROI == 0 && Dendrite_PolyLines == 0
@@ -1833,3 +1834,48 @@ else
     PlaceImages(ch1image,ch2image, 'Slider');
 end
 
+
+
+% --- Executes on button press in InsertSpine_ToggleButton.
+function InsertSpine_ToggleButton_Callback(hObject, eventdata, handles)
+% hObject    handle to InsertSpine_ToggleButton (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hint: get(hObject,'Value') returns toggle state of InsertSpine_ToggleButton
+
+global gui_CaImageViewer
+
+insertOpt = get(gui_CaImageViewer.figure.handles.InsertSpine_ToggleButton, 'Value');
+
+if insertOpt
+
+    targetdend = str2num(cell2mat(inputdlg('Insert spine on which dendrite?', 'Select Dendrite', 1, {'1'})));
+
+    lastspineondend = cumsum(cell2mat(cellfun(@length, gui_CaImageViewer.SpineDendriteGrouping, 'uni', false)));
+
+    insertedspine = lastspineondend(targetdend)+1;
+        gui_CaImageViewer.InsertPoint = insertedspine;
+        
+end
+
+% 
+% for i = lastspineondend(end):-1:insertedspine %%% Descending because increasing tags by 1, then finding the next in the series results in all ROIs after the target having the same value
+%     set(AllROIs(i), 'Tag', ['ROI', num2str(i+1)])
+%     AllROItext = findobj('Tag', ['ROI', num2str(i), ' Text']);
+%     set(AllROItext, 'String', [num2str(i+1)]);
+%     set(AllROItext, 'Tag', ['ROI', num2str(i+1), ' Text'])
+%     if ~isnan(AllBackgrounds(i))
+%         set(AllBackgrounds(i), 'Tag', ['BackgroundROI', num2str(i+1)]);
+%     end
+% end
+%     
+% ROImat = nan(1,length(gui_CaImageViewer.ROI)+1);
+%     ROImat(1:lastspineondend(targetdend)+1) = gui_CaImageViewer.ROI(1:lastspineondend(targetdend)+1);
+%     ROImat(insertedspine+2:end) = gui_CaImageViewer.ROI(insertedspine+1:end);
+%     gui_Viewer.ROI = ROImat;
+% BGROImat = nan(CaImage1,length(gui_CaImageViewer.BackgroundROI)+1);
+%     BGROImat(1:insertedspine) = gui_CaImageViewer.BackgroundROI(1:insertedspine);
+%     BGROImat(insertedspine+2:end) = gui_CaImageViewer.BackgroundROI(insertedspine+1:end);
+%     gui_CaImageViewer.BackgroundROI = BGROImat;
+%     

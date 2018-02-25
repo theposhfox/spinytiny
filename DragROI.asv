@@ -43,14 +43,15 @@ if strcmpi(clicktype, 'alt') %%% This is the terminal call for the "Fine Select"
         axes(gui_CaImageViewer.figure.handles.GreenGraph)
         
         %%% Delete any ROI features with the same tag
-        delete(findobj('Type', 'rectangle', '-and', 'Tag', ['ROI', num2str(ROInum), ' Starter']))
+%         delete(findobj('Type', 'rectangle', '-and', 'Tag', ['ROI', num2str(ROInum)]))
 %         delete(findobj('Type', 'rectangle', '-and', 'Tag', ['BackgroundROI', num2str(ROInum)]))
-        delete(findobj('Type', 'text', '-and', 'Tag', ['ROI', num2str(ROInum), ' Text Starter']))
+%         delete(findobj('Type', 'text', '-and', 'Tag', ['ROI', num2str(ROInum), ' Text']))
 
         InsertOpt = get(glovar.figure.handles.InsertSpine_ToggleButton,'Value');
         if InsertOpt
             ROInum = glovar.InsertPoint;
             AllROIs = flipud(findobj('Type', 'rectangle', '-and', '-not', {'-regexp', 'Tag', 'Dendrite'}, '-and', '-not', {'-regexp', 'Tag', 'Background'},'-and', '-not', 'Tag', ['ROI0']));
+                AllROIs = A
             AllROItexts = flipud(findobj('Type', 'text', '-and', {'-regexp', 'Tag', 'ROI'}));
             AllROItexts = AllROItexts(2:end);
             AllBackgrounds = nan(1,length(gui_CaImageViewer.BackgroundROI));
