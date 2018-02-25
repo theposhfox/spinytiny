@@ -123,7 +123,9 @@ if strcmpi(clicktype, 'alt') %%% This is the terminal call for the "Fine Select"
                 gui_CaImageViewer.ROI(a+2) = rectangle('Position', oldpositions{a}, 'EdgeColor', [0.2 0.4 0.9], 'Curvature', [1 1],'Tag', ['ROI', num2str(a+1)], 'ButtonDownFcn', {@DragROI, a+1, 'HomeWindow'}, 'Linewidth', 1, 'UIContextMenu', c1);
                 gui_CaImageViewer.ROItext(a+2) = text(oldpositions{a}(1)-6, oldpositions{a}(2)-4, num2str(a+1), 'color', 'white', 'Tag', ['ROI', num2str(a+1), ' Text'],'ButtonDownFcn', 'DeleteROI', 'Fontsize', 6);
                 if ~isempty(oldBGpositions{a})
-                    glovar.BackgroundROI(a+2) = rectangle('Position', oldBGpositions{a}, 'EdgeColor', 'w', 'Curvature', [1 1], 'Tag', ['BackgroundROI', num2str(a+1)], 'Linewidth', 0.75);
+                    gui_CaImageViewer.BackgroundROI(a+2) = rectangle('Position', oldBGpositions{a}, 'EdgeColor', 'w', 'Curvature', [1 1], 'Tag', ['BackgroundROI', num2str(a+1)], 'Linewidth', 0.75);
+                else
+                    gui_CaImageViewer.BackgroundROI(a+2) = NaN;
                 end
             end
         end
