@@ -230,11 +230,8 @@ elseif strcmpi(Router, 'Spine')
     title(['Fine outline of ROI ', num2str(ROInum)])
     set(gca, 'XTick', [], 'YTick', [])
     
-    if InsertOpt
-        glovar.Spine_Number = sum(cell2mat(cellfun(@length, gui_CaImageViewer.SpineDendriteGrouping, 'uni', false)));
-    else
-        glovar.Spine_Number = ROInum;
-    end
+    
+    glovar.Spine_Number = ROInum;
     
     global sideline
     

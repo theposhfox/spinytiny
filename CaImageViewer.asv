@@ -22,7 +22,7 @@ function varargout = CaImageViewer(varargin)
 
 % Edit the above text to modify the response to help CaImageViewer
 
-% Last Modified by GUIDE v2.5 22-Dec-2017 18:25:07
+% Last Modified by GUIDE v2.5 23-Feb-2018 23:30:39
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -450,16 +450,27 @@ function ImageSlider_Slider_Callback(hObject, eventdata, handles)
 
 global gui_CaImageViewer
 
-if isempty(eventdata)
+% if isempty(eventdata)
+    
     ImageNum = str2num(get(gui_CaImageViewer.figure.handles.Frame_EditableText, 'String'));
-
     CaImageSlider(ImageNum);
-else
-    if isempty(strfind(eventdata.Key, 'arrow'))
-       return
-    else
-    end
-end
+
+% else
+%     if isempty(strfind(eventdata.Key, 'arrow'))
+%        return
+%     else
+%         if strcmpi(eventdata.Key, 'rightarrow')
+%             ImageNum = str2num(get(gui_CaImageViewer.figure.handles.Frame_EditableText, 'String'))+1;
+%             CaImageSlider(ImageNum);
+%         elseif strcmpi(eventdata.Key, 'leftarrow')
+%             ImageNum = str2num(get(gui_CaImageViewer.figure.handles.Frame_EditableText, 'String'))-1;
+%                 if ImageNum < 1
+%                     ImageNum = 1;
+%                 end
+%             CaImageSlider(ImageNum);
+%         end
+%     end
+% end
 
 
 % --- Executes during object creation, after setting all properties.
@@ -664,6 +675,7 @@ if SpineROI == 1
     set(handles.NearbySpine_ToggleButton, 'Value', 0);
     set(handles.DendritePolyLines_ToggleButton, 'Value', 0);
     set(gui_CaImageViewer.figure.handles.output, 'WindowButtonDownFcn', {@DrawROI, ROInum, Router})
+    set(gui_CaImageViewer.figure.handles.InsertSpine_ToggleButton, 'Enable', 'on')
 end
 
 if BackgroundROI == 0 && SpineROI == 0 && NearbySpineROI == 0 && Dendrite_PolyLines == 0
@@ -1038,6 +1050,7 @@ for a = 1:length(ROIs)
         axes(axes1);
         c1 = uicontextmenu;
         uimenu(c1, 'Label', 'Add Surround Background', 'Callback', @ModifyROI);
+        uimenu(c1, 'Label', 'Remove Surround Background', 'Callback', @ModifyROI);
         if glovar.NewSpineAnalysis
             c2 = uicontextmenu;
             uimenu(c2, 'Label', 'Set as eliminated', 'Callback', @CategorizeSpines);
@@ -1821,3 +1834,47 @@ else
     PlaceImages(ch1image,ch2image, 'Slider');
 end
 
+
+
+% --- Executes on button press in InsertSpine_ToggleButton.
+function InsertSpine_ToggleButton_Callback(hObject, eventdata, handles)
+% hObject    handle to InsertSpine_ToggleButton (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hint: get(hObject,'Value') returns toggle state of InsertSpine_ToggleButton
+
+global gui_CaImageViewer
+
+targetdend = str2num(cell2mat(inputdlg('Insert spine on which dendrite?', 'Select Dendrite', 1, {'1'})));
+
+
+lastspineondend = cumsum(cell2mat(cellfun(@length, gui_CaImageViewer.SpineDendriteGrouping, 'uni', false)));
+
+insertedspine = lastspineondend(targetdend)+1;
+    gui_CaImageViewer.InsertPoint = insertedspine;
+
+AllROIs = flipud(findobj('Type', 'rectangle', '-and', '-not', {'-regexp', 'Tag', 'Dendrite'}, '-and', '-not', {'-regexp', 'Tag', 'Background'},'-and', '-not', 'Tag', ['ROI0']));
+AllBackgrounds = nan(1,length(gui_CaImageViewer.BackgroundROI));
+AllBackgrounds(logical(~isnan(gui_CaImageViewer.BackgroundROI))) = flipud(findobj('Type', 'rectangle', '-and', {'-regexp', 'Tag', 'Background'}));    
+AllBackgrounds = AllBackgrounds(2:end); %%% ignore "background ROI/ROI0;
+
+for i = lastspineondend(end):-1:insertedspine %%% Descending because increasing tags by 1, then finding the next in the series results in all ROIs after the target having the same value
+    set(AllROIs(i), 'Tag', ['ROI ', num2str(i+1)])
+    AllROItext = findobj('Tag', ['ROI', num2str(i), ' Text']);
+    set(AllROItext, 'String', [num2str(i+1)]);
+    set(AllROItext, 'Tag', ['ROI', num2str(i+1), ' Text'])
+    if ~isnan(AllBackgrounds(i))
+        set(AllBackgrounds(i), 'Tag', ['BackgroundROI', num2str(i+1)]);
+    end
+end
+    
+ROImat = nan(1,length(gui_CaImageViewer.ROI)+1);
+    ROImat(1:lastspineondend(targetdend)+1) = gui_CaImageViewer.ROI(1:lastspineondend(targetdend)+1);
+    ROImat(insertedspine+2:end) = gui_CaImageViewer.ROI(insertedspine+1:end);
+    gui_CaImageViewer.ROI = ROImat;
+BGROImat = nan(1,length(gui_CaImageViewer.BackgroundROI)+1);
+    BGROImat(1:lastspineondend(targetdend)+1) = gui_CaImageViewer.BackgroundROI(1:lastspineondend(targetdend+));
+    BGROImat(insertedspine+2:end) = gui_CaImageViewer.BackgroundROI(insertedspine+1:end);
+    gui_CaImageViewer.BackgroundROI = BGROImat;
+    
