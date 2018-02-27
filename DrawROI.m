@@ -158,8 +158,8 @@ if strcmpi(Router, 'Background')
 elseif strcmpi(Router, 'Spine')
     set(glovar.figure.handles.SpineROI_ToggleButton, 'Value', 0)
     
-    r = round([Fl_ROI(2), Fl_ROI(2), Fl_ROI(2)+Fl_ROI(4), Fl_ROI(2)+Fl_ROI(4)]); %%% ROI y values, to be used as row index for sub-image (indices are: 1) top-left corner, 2) top-right corner, 3) bottom-right, 4)bottom-left
-    c = round([Fl_ROI(1), Fl_ROI(1)+Fl_ROI(3), Fl_ROI(1)+Fl_ROI(3), Fl_ROI(1)]);
+    r = round([Fl_ROI(2), Fl_ROI(2), Fl_ROI(2)+Fl_ROI(4), Fl_ROI(2)+Fl_ROI(4)]); %%% ROI Y values, to be used as row index for sub-image (indices are: 1) top-left corner, 2) top-right corner, 3) bottom-right, 4)bottom-left
+    c = round([Fl_ROI(1), Fl_ROI(1)+Fl_ROI(3), Fl_ROI(1)+Fl_ROI(3), Fl_ROI(1)]); %%% ROI X values
     
     if ~glovar.NewSpineAnalysis
         im = gui_CaImageViewer.GCaMP_Image;
@@ -168,27 +168,52 @@ elseif strcmpi(Router, 'Spine')
     else
         immax = gui_CaImageViewer.ch1image;
     end
-    
+    poschange = 0;
     if r(1)<=0
         r(1) = 1;
+        r(2) = 1;
+        poschange = 1;
     elseif r(1)>length(immax)
         r(1) = length(immax);
+        r(2) = length(immax);
+        poschange = 1;
+    else
     end
     if r(3)<=0
         r(3) = 1;
+        r(4) = 1;
+        poschange = 1;
     elseif r(3)>length(immax)
         r(3) = length(immax);
+        r(4) = length(immax);
+        poschange = 1;
+    else
     end
     if c(1)<0
         c(1) = 1;
+        c(4) = 1;
+        poschange = 1;
     elseif c(1)>length(immax)
         c(1) = length(immax);
+        c(4) = length(immax);
+        poschange = 1;
+    else
     end
     if c(2) <0
         c(2) = 1;
+        c(3) = 1;
+        poschange = 1;
     elseif c(2)>length(immax)
         c(2) = length(immax);
+        c(3) = length(immax);
+        poschange = 1;
+    else
     end
+    if poschange 
+        set(glovar.ROI(ROInum+1), 'Position', [c(1), r(1), abs(c(3)-c(4)), abs(r(4)-r(1))]); %%% 
+        set(glovar.ROItext(ROInum+1),'color', 'red');
+    end
+    
     zoomim = immax(r(1):r(3), c(1):c(2));
     filterwindow = str2num(get(gui_CaImageViewer.figure.handles.SmoothingFactor_EditableText, 'String'));
     padvalue = 5;
@@ -205,7 +230,11 @@ elseif strcmpi(Router, 'Spine')
     title(['Fine outline of ROI ', num2str(ROInum)])
     set(gca, 'XTick', [], 'YTick', [])
     
-    glovar.Spine_Number = ROInum;
+    if InsertOpt
+        glovar.Spine_Number = sum(cell2mat(cellfun(@length, gui_CaImageViewer.SpineDendriteGrouping, 'uni', false)));
+    else
+        glovar.Spine_Number = ROInum;
+    end
     
     global sideline
     

@@ -4,7 +4,7 @@ global gui_CaImageViewer
 
 currentTag = get(gco, 'Tag');
 SelectedPolyROI = regexp(currentTag, 'PolyROI ', 'split'); SelectedPolyROI = str2num(SelectedPolyROI{2});
-SelectedDend = regexp(currentTag, 'Dendrite [0-9]*', 'match'); SelectedDend = SelectedDend{1}(end);
+SelectedDend = regexp(currentTag, 'Dendrite [0-9]*', 'match'); SelectedDend = regexp(SelectedDend{1}, '[0-9]{1,2}', 'match'); SelectedDend = SelectedDend{1};
 PolyLine = findobj(gui_CaImageViewer.figure.handles.GreenGraph, 'Type','Line', '-and', {'-regexp', 'Tag', SelectedDend});
 LineX = get(PolyLine, 'XData');
 LineY = get(PolyLine, 'YData');
