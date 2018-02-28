@@ -15,7 +15,7 @@ if isempty(varargin)
                 cd(foldertouse)
                 load(files(i).name);
                 eval(['current_session = ', mouse, '_', date, '_Summary.Session;'])
-                AdjustFrequency([mouse, '_', date], current_session, 0);
+                SummarizeCaData([mouse, '_', date], current_session, 0);
                 clear(files(i).name(1:end-4))
                 close all
             end
@@ -33,7 +33,7 @@ if isempty(varargin)
                 date = date{1}(2:end-1);
                 cd(foldertouse)
                 currentsession = files{i}{2};
-                AdjustFrequency([mouse, '_', date], currentsession, 0);
+                SummarizeCaData([mouse, '_', date], currentsession, 0);
             end
         end
 
@@ -53,7 +53,7 @@ else
                     cd(foldertouse)
                     load(files(i).name);
                     eval(['current_session = ', mouse, '_', date, '_Summary.Session;'])
-                    AdjustFrequency([mouse, '_', date], current_session, 0);
+                    SummarizeCaData([mouse, '_', date], current_session, 0);
                     clear(files(i).name(1:end-4))
                     close all
                 end
@@ -73,7 +73,7 @@ else
                     date = date{1}(2:end-1);
                     cd(foldertouse)
                     currentsession = files{i}{2};
-                    AdjustFrequency([mouse, '_', date], currentsession, 0);
+                    SummarizeCaData([mouse, '_', date], currentsession, 0);
                 end
             end
         end
