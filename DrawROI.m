@@ -189,7 +189,7 @@ elseif strcmpi(Router, 'Spine')
         poschange = 1;
     else
     end
-    if c(1)<0
+    if c(1)<=0
         c(1) = 1;
         c(4) = 1;
         poschange = 1;
@@ -199,7 +199,7 @@ elseif strcmpi(Router, 'Spine')
         poschange = 1;
     else
     end
-    if c(2) <0
+    if c(2) <=0
         c(2) = 1;
         c(3) = 1;
         poschange = 1;

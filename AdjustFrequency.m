@@ -99,13 +99,6 @@ else
                     end
                 end
             end
-        elseif strcmpi(experimenter, 'XR')                                              
-            cd(['Z:\People\Nathan\Xiangyu\', folder, '\', Date, '\summed'])
-            load(['XR0002_', Date(3:end), '_001_001_summed_50_Analyzed'])
-        elseif strcmpi(experimenter, 'SC')
-            cd(['Z:\People\Simon\Data\Simon\', folder, '\', Date, '\summed'])
-            Date = Date(3:end);
-            load([folder, '_', Date, '_001_001_summed_50_Analyzed'])
         end
     end
     try
@@ -206,8 +199,13 @@ analyzed.dendsmoothwindow = dendsmoothwindow;
 analyzed.ClusterThresh = ClusterThresh;
 analyzed.SpectralLengthConstant = SpectralLengthConstant;
 
+
+%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%% Select which spine to plot %%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%
+
 
 if File.NumberofSpines ==  0 || File.NumberofSpines ~= length(File.deltaF)
     File.NumberofSpines = length(File.deltaF);
@@ -215,7 +213,7 @@ if File.NumberofSpines ==  0 || File.NumberofSpines ~= length(File.deltaF)
 end
 % 
 SpineNo = randi(File.NumberofSpines,1); %%% Will choose a random spine from the available ones for this file
-SpineNo = 20;  %%% Mantually select spine to be considered
+% SpineNo = 45;  %%% Mantually select spine to be considered
 
 
 DendNum = File.NumberofDendrites;

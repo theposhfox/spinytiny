@@ -54,11 +54,18 @@ if strcmpi(clicktype, 'alt') %%% This is the terminal call for the "Fine Select"
             AllROItexts = flipud(findobj('Type', 'text', '-and', {'-regexp', 'Tag', 'ROI'}));
             AllROItexts = AllROItexts(2:end);
             AllBackgrounds = nan(1,length(gui_CaImageViewer.BackgroundROI));
-            AllBackgrounds(logical(~isnan(gui_CaImageViewer.BackgroundROI))) = flipud(findobj('Type', 'rectangle', '-and', {'-regexp', 'Tag', 'Background'}));    
-            AllBackgrounds = AllBackgrounds(2:end); %%% ignore "background ROI/ROI0;
+            if ~isempty(flipud(findobj('Type', 'rectangle', '-and', {'-regexp', 'Tag', 'Background'})))
+                AllBackgrounds(logical(~isnan(gui_CaImageViewer.BackgroundROI))) = flipud(findobj('Type', 'rectangle', '-and', {'-regexp', 'Tag', 'Background'})); 
+                AllBackgrounds = AllBackgrounds(2:end); %%% ignore "background ROI/ROI0;
+            else
+            end
             oldpositions = get(AllROIs, 'Position');
             oldBGpositions = cell(1,length(gui_CaImageViewer.BackgroundROI));
-            oldBGpositions(logical(~isnan(AllBackgrounds))) = get(AllBackgrounds(logical(~isnan(AllBackgrounds))), 'Position');
+            if size(get(AllBackgrounds(logical(~isnan(AllBackgrounds))), 'Position'),1) == 1
+                oldBGpositions{logical(~isnan(AllBackgrounds))} = get(AllBackgrounds(logical(~isnan(AllBackgrounds))), 'Position');
+            else
+                oldBGpositions(logical(~isnan(AllBackgrounds))) = get(AllBackgrounds(logical(~isnan(AllBackgrounds))), 'Position');
+            end
             delete(AllROIs(ROInum:end))
             delete(AllROItexts(ROInum:end))
             Backgroundstodelete = AllBackgrounds(ROInum:end);
