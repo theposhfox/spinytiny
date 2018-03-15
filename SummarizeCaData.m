@@ -14,10 +14,6 @@ if(~exist('User','var'))
     User = 'Nathan'; % User defaults to 'Nathan' if not defined
 end
 
-if(~exist('showFig','var'))
-    showFig = 1; % default to show figure
-end
-
 if(~exist('File', 'var'))
     error('No file specified; either enter a filename, or use the variable itself as the input')
 end
@@ -25,6 +21,10 @@ end
 if(~exist('currentsession', 'var'))
     currentsession = 1;
     warning('Session was not specified. Defaulting to 1');
+end
+
+if(~exist('showFig','var'))
+    showFig = 1; % default to show figure
 end
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -69,50 +69,59 @@ else
     folder = folder{1};
     Date = regexp(File, '\d{6}', 'match');
     Date = Date{1};
-    try
-        cd(['Z:\People\Nathan\Data\', folder, '\', Date, '\summed'])
-        files = dir(cd);
-        check = 0;
-        for i = 1:length(files)
-            if ~isempty(regexp(files(i).name,['_summed_50_Analyzed_By', User])) || ~isempty(regexp(files(i).name,['_summed_50Analyzed_By', User]))
-                load(files(i).name)
-                check = 1;
-            end
-        end
-        if ~check   %%% If no files were found using the above criteria
-            for i = 1:length(files)
-                if ~isempty(regexp(files(i).name, '_summed_50_Analyzed'))
-                    load(files(i).name)
-                else
-                end
-            end
-        else
-        end
-    catch      %%% File naming gets wonked up sometimes; change whatever you need to make the program read the file
-        cd(uigetdir(['Z:\People\', User, '\Data\'], 'Couldn''t automatically open file; Please select ''summed'' file manually'))
-        files = dir(cd);
-        check = 0;
-        for i = 1:length(files)
-            if ~isempty(regexp(files(i).name,['_summed_50_Analyzed_By', User])) || ~isempty(regexp(files(i).name,['_summed_50Analyzed_By', User]))
-                load(files(i).name)
-                check = 1;
-            end
-        end
-        if ~check   %%% If no files were found using the above criteria
-            for i = 1:length(files)
-                if ~isempty(regexp(files(i).name, '_summed_50_Analyzed'))
-                    load(files(i).name)
-                else
-                end
-            end
-        else
-        end
+    if ispc
+        filestart = ['Z:', filesep, 'People'];
+    elseif isunix
+        filestart = ['\usr\local\lab', filesep, 'People'];
+    else
+        error('Operating system not recognized as PC or Unix; terminating');
     end
-    try
-        eval(['File =' folder, '_', Date, '_001_001_summed_50_Analyzed;'])
-    catch
-        temp = who(['*', experimenter, '*']);
-        eval(['File =', temp{1}, ';']);
+    targetdir = [filestart, filesep, 'Nathan', filesep, 'Data', filesep, folder, filesep, Date, filesep, 'summed'];
+    if isdir(targetdir)
+        cd(targetdir)
+        files = dir(cd);
+        check = 0;
+        for i = 1:length(files)
+            if ~isempty(regexp(files(i).name,['_summed_50_Analyzed_By', User])) || ~isempty(regexp(files(i).name,['_summed_50Analyzed_By', User]))
+                load(files(i).name)
+                check = 1;
+            end
+        end
+        if ~check   %%% If no files were found using the above criteria
+            for i = 1:length(files)
+                if ~isempty(regexp(files(i).name, '_summed_50_Analyzed'))
+                    load(files(i).name)
+                else
+                end
+            end
+        else
+        end
+        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+        %%% set "file" data to be used
+        try
+            eval(['File =' folder, '_', Date, '_001_001_summed_50_Analyzed;'])
+        catch
+            temp = who(['*', experimenter, '*']);
+            eval(['File =', temp{1}, ';']);
+        end
+        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    else 
+        cd('C:\Users\Komiyama\Desktop\ActivitySummary_UsingRawData')
+        files = dir(cd);
+        for i = 1:length(files)
+            if ~isempty(regexp(files(i).name, folder)) && ~isempty(regexp(files(i).name,'_Summary')) && isempty(regexp(files(i).name,'Poly'))
+                load(files(i).name)
+            end
+        end
+        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+        %%% set "file" data to be used
+        try
+            eval(['File =' folder, '_', Date, '_Summary;'])
+        catch
+            temp = who(['*', experimenter, '*']);
+            eval(['File =', temp{1}, ';']);
+        end
+        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     end
 end
 
@@ -972,6 +981,8 @@ for i = 1:File.NumberofDendrites
     else
     end
 end
+
+analyzed.DendriteLengthValues = Mic_Dist;
 
 % for j = 1:File.NumberofSpines-1
 %     for k = (j+1):length(File.dF_over_F)

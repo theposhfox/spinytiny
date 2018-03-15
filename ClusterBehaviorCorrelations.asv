@@ -2895,10 +2895,7 @@ if isempty(strfind(inputname(1), 'SpineCorrelationTimecourse'))
     xlabel('Session','Fontsize',14);
     ylabel('Fraction of spines','Fontsize',14);
     title('Classes of Spines', 'Fontsize',14);
-            pos = get(gca,'Position');
-            axes('Position', [pos(1)+0.2*pos(3), pos(2)+0.7*pos(4), 0.25*pos(3), 0.25*pos(4)]);
-            plot(cell2mat(cellfun(@nanmean, MovRelSpinesPer5Microns, 'uni', false)), '--^', 'Color', lgray, 'MarkerFaceColor', lgray, 'Linewidth', 2);
-
+    
         subplot(sub1,sub2,2)
     plot(NumClustSpines, '-o','Color', black, 'MarkerFaceColor', black, 'Linewidth', 2); hold on;
     plot(NumCausClustSpines, '-o', 'Color', dred, 'MarkerFaceColor', dred, 'Linewidth', 2);
