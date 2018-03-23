@@ -13,6 +13,11 @@ if ~isstruct(varargin{end})
     animalname = regexp(inputname(1), '[A-Z]{2,3}0{1,3}[1-9,A-Z]{0,2}', 'match');
     used_sessions = varargin{end};
     ns = length(varargin)-1;
+    if length(varargin)-1 > 14
+        explength = length(varargin)-1;
+    else
+        explength = 14;
+    end
 else
     animalname = regexp(inputname(1), '[A-Z]{2,3}0{1,3}\w{1,2}', 'match');
     used_sessions = 1:length(varargin);
@@ -40,7 +45,7 @@ figure('Position', scrsz);
 
 rewards = zeros(ns,1);
 rxnTime = cell(1,length(used_sessions));
-cs2r = cell(1,length(used_sessions));
+cuestart2reward = cell(1,length(used_sessions));
 trial_length = cell(1,length(used_sessions));
 
 
@@ -65,19 +70,23 @@ for session = 1:ns
                 File{session}.movement{rewards(session,1)} = File{session}.lever_force_smooth(cue_start:next_cue);
                 File{session}.PastThreshRewTrials{rewards(session,1)} = File{session}.lever_force_smooth(cue_start:next_cue).*File{session}.lever_active(cue_start:next_cue);  %%% Binarizes lever motion for a particular cue period
                 
+                %%%%%%%%%%%%%%%%%%%%%%%%%
                 %%%%
-                [File,tlength, rxntime, fault] = ProfileRewardedMovements(File, boundary_frames,session, trialnumber, rewards,cue_start, reward_time, end_trial);
+                [File,tlength, cs2r, rxntime, fault] = ProfileRewardedMovements(File, boundary_frames,session, trialnumber, rewards,cue_start, reward_time, end_trial);
                 if fault
                     continue
                 end
                 %%%%
+                %%%%%%%%%%%%%%%%%%%%%%%%%
+                
                 trial_length{session}(rewards(session,1),1) = tlength;
                 rxnTime{session}(rewards(session,1),1) = rxntime;
+                CuetoRew{session}(rewards(session,1),1) = cs2r;
             else
             end
         end
         AveRxnTime(session,1) = nanmean(rxnTime{session});
-        CueToRew(session,1) = nanmean(cs2r{session});
+        AveCueToRew(session,1) = nanmean(CuetoRew{session});
         trial_length{session}(trial_length{session} == 0) = NaN;
         if ~isempty(trial_length{session})
             range(session,1) = min(trial_length{session});
@@ -147,17 +156,23 @@ for session = 1:ns
                 File{session}.movement{rewards(session,1)} = File{session}.lever_force_smooth(cue_start:end_trial);
                 PastThreshRewTrials{rewards(session,1)} = File{session}.lever_force_smooth(cue_start:end_trial).*File{session}.lever_active(cue_start:end_trial);  %%% Binarizes lever motion for a particular cue period
                 
+                %%%%%%%%%%%%%%%%%%%%%%%%%
                 %%%%
-                [File,trial_length(1,session), rxnTime(1,session), fault] = ProfileRewardedMovements(File, boundary_frames,session, trialnumber, rewards,cue_start, reward_time, end_trial);
+                [File,tlength, cs2r, rxntime, fault] = ProfileRewardedMovements(File, boundary_frames,session, trialnumber, rewards,cue_start, reward_time, end_trial);
                 if fault
                     continue
                 end
                 %%%%
+                %%%%%%%%%%%%%%%%%%%%%%%%%
+                
+                trial_length{session}(rewards(session,1),1) = tlength;
+                rxnTime{session}(rewards(session,1),1) = rxntime;
+                CuetoRew{session}(rewards(session,1),1) = cs2r;
             else
             end
         end
         AveRxnTime(session,1) = nanmean(rxnTime{session});
-        CueToRew(session,1) = nanmean(cs2r{session});
+        AveCueToRew(session,1) = nanmean(CuetoRew{session});
         trial_length{session}(trial_length{session} == 0) = NaN;
         try
             range(session,1) = min(trial_length{session});
@@ -200,31 +215,31 @@ for session = 1:ns
     end
 end
 
-temp = nan(ns,1); 
+temp = nan(explength,1); 
 temp(used_sessions) = (rewards./trials).*100;
 temp(temp == 0) = nan;
 rewards = temp;
 
 subplot(2,ns,1:round(ns/4))
-plot(1:ns, rewards(1:end,1))
+plot(1:explength, rewards(1:end,1))
 rewards;
 title('Correct Trials')
 xlabel('Session')
 ylabel('Rewards')
 
-temp = nan(ns,1); 
+temp = nan(explength,1); 
 temp(used_sessions) = AveRxnTime;
 temp(temp == 0) = nan;
 AveRxnTime = temp;
 
-temp = nan(ns,1); 
-temp(used_sessions) = CueToRew;
+temp = nan(explength,1); 
+temp(used_sessions) = AveCueToRew;
 temp(temp == 0) = nan;
-CueToRew = temp;
+AveCueToRew = temp;
 
 subplot(2,ns,round(ns/4)+1:round(ns/2))
-plot(1:ns, AveRxnTime, 'k'); hold on;
-plot(1:ns, CueToRew, 'r');
+plot(1:explength, AveRxnTime, 'k'); hold on;
+plot(1:explength, AveCueToRew, 'r');
 title('Reaction Time')
 xlabel('Session')
 legend({'Cue to movement', 'Cue to reward'})
@@ -233,7 +248,7 @@ subplot(2,ns, round(ns/2)+2:ns);
 
 %%% Concatenate all the movement traces
 
-unused_days = 14-ns;
+unused_days = explength-ns;
 
 total = 0;
 for session = 1:ns
@@ -271,7 +286,7 @@ end
 
 %%% Find the median of each block of data correlations
 
-r_lever = nan(14,14);
+r_lever = nan(explength,explength);
 
 counter1 = 1;
 for session = 1:ns
@@ -281,8 +296,8 @@ for session = 1:ns
         for trialnumber = session:ns
             current_session_column = used_sessions(trialnumber);
             temp2 = counter2:counter2+size(MovementMat{current_session_column},1)-1;
-            r_lever(current_session_row,current_session_column) = nanmedian(nanmedian(r(temp1,temp2))); 
-            r_lever(current_session_column,current_session_row) = nanmedian(nanmedian(r(temp1,temp2))); %%% Accounts for the symmetry of heatmaps (only half needs to be calculated, the rest can just be filled in, as done here)
+            r_lever(current_session_row,current_session_column) = nanmean(nanmean(r(temp1,temp2))); 
+            r_lever(current_session_column,current_session_row) = nanmean(nanmean(r(temp1,temp2))); %%% Accounts for the symmetry of heatmaps (only half needs to be calculated, the rest can just be filled in, as done here)
             counter2 = counter2+size(MovementMat{current_session_column},1);
         end
     counter1 = counter1 + size(MovementMat{current_session_row},1);
@@ -302,7 +317,7 @@ a.ReactionTime = AveRxnTime;
 a.MovementAverages = MovementAve;
 a.MovementCorrelation = r_lever;
 a.UsedSessions = used_sessions;
-a.CuetoReward = CueToRew;
+a.CuetoReward = AveCueToRew;
 
 try
     cd('C:\Users\Komiyama\Desktop\Output Data');

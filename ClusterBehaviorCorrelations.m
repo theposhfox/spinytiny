@@ -238,7 +238,9 @@ if isempty(strfind(inputname(1), 'SpineCorrelationTimecourse'))
     NumCueRelSpines = nan(1,14);
     NumMovRelSpines = nan(1,14);
     FractionofMovRelSpinesPerDendrite = arrayfun(@(x) x(:), nan(1,14), 'uni', false);
-    MovRelSpinesPer5Microns = arrayfun(@(x) x(:), nan(1,14), 'uni', false);
+    MovRelSpinesPer10Microns = arrayfun(@(x) x(:), nan(1,14), 'uni', false);
+    FractionofSucRelSpinesPerDendrite = arrayfun(@(x) x(:), nan(1,14), 'uni', false);
+    SucRelSpinesPer10Microns = arrayfun(@(x) x(:), nan(1,14), 'uni', false);    
     NumCueORMovRelSpines = nan(1,14);
     NumPreSucRelSpines = nan(1,14);
     NumSucRelSpines = nan(1,14);
@@ -357,6 +359,10 @@ if isempty(strfind(inputname(1), 'SpineCorrelationTimecourse'))
     MeanDistanceBetweenPreSuccessSpines = nan(1,14);
     DistanceBetweenSuccessSpines = cell(1,14);
     MeanDistanceBetweenSuccessSpines = nan(1,14);
+        CorrelationBetweenSuccessSpines = cell(1,14);
+        CorrelationBetweenSuccessSpinesMovePeriods = cell(1,14);
+        CorrelationBetweenSuccessSpinesStillPeriods = cell(1,14);
+        MeanCorrelationBetweenSuccessSpines = cell(1,14);    
     DistanceBetweenMovementDuringCueSpines = cell(1,14);
     MeanDistanceBetweenMovementDuringCueSpines = nan(1,14);
     DistanceBetweenRewardSpines = cell(1,14);
@@ -476,7 +482,9 @@ if isempty(strfind(inputname(1), 'SpineCorrelationTimecourse'))
         if varargin{i}.NumberofSpines ~= length(varargin{i}.dF_over_F)
             varargin{i}.NumberofSpines = length(varargin{i}.dF_over_F);
         end
-       
+        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+        denominator = varargin{i}.NumberofSpines;
+        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
         if ~isempty(Correlations{session})
            
             if isfield(varargin{i}, 'SpineDendriteGrouping')
@@ -763,45 +771,48 @@ if isempty(strfind(inputname(1), 'SpineCorrelationTimecourse'))
             %%% Find number of clustered spines in each category
             %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%            
             
-            NumCueRelSpines(1,session) = sum(CueSpines)/varargin{i}.NumberofSpines;
-            NumMovRelSpines(1,session) = sum(MovementSpines)/varargin{i}.NumberofSpines;
+            
+            NumCueRelSpines(1,session) = sum(CueSpines)/denominator;
+            NumMovRelSpines(1,session) = sum(MovementSpines)/denominator;
                 for d = 1:length(varargin{i}.SpineDendriteGrouping)
                     FractionofMovRelSpinesPerDendrite{session}(1,d) = sum(MovementSpines(varargin{i}.SpineDendriteGrouping{d}))/length(varargin{i}.SpineDendriteGrouping{d});
-                    MovRelSpinesPer5Microns{session}(1,d) = sum(MovementSpines(varargin{i}.SpineDendriteGrouping{d}))/(sum(varargin{i}.DendriteLengthValues{d})/5);
+                    MovRelSpinesPer10Microns{session}(1,d) = sum(MovementSpines(varargin{i}.SpineDendriteGrouping{d}))/(sum(varargin{i}.DendriteLengthValues{d})/10);
+                    FractionofSucRelSpinesPerDendrite{session}(1,d) = sum(SuccessSpines(varargin{i}.SpineDendriteGrouping{d}))/length(varargin{i}.SpineDendriteGrouping{d});
+                    SucRelSpinesPer10Microns{session}(1,d) = sum(SuccessSpines(varargin{i}.SpineDendriteGrouping{d}))/(sum(varargin{i}.DendriteLengthValues{d})/10);
                 end
-            NumCueORMovRelSpines(1,session) = sum(CueORMovementSpines)/varargin{i}.NumberofSpines;
-            NumPreSucRelSpines(1,session) = sum(PreSuccessSpines)/varargin{i}.NumberofSpines;
-            NumSucRelSpines(1,session) = sum(SuccessSpines)/varargin{i}.NumberofSpines;
-            NumMovDuringCueRelSpines(1,session) = sum(MovementDuringCueSpines)/varargin{i}.NumberofSpines;
-            NumRewRelSpines(1,session) = sum(RewardSpines)/varargin{i}.NumberofSpines;
-            NumCausalMovSpines(1,session) = sum(StatClass{session}.CausalMovementSpines)/varargin{i}.NumberofSpines;
+            NumCueORMovRelSpines(1,session) = sum(CueORMovementSpines)/denominator;
+            NumPreSucRelSpines(1,session) = sum(PreSuccessSpines)/denominator;
+            NumSucRelSpines(1,session) = sum(SuccessSpines)/denominator;
+            NumMovDuringCueRelSpines(1,session) = sum(MovementDuringCueSpines)/denominator;
+            NumRewRelSpines(1,session) = sum(RewardSpines)/denominator;
+            NumCausalMovSpines(1,session) = sum(StatClass{session}.CausalMovementSpines)/denominator;
             
-            NumClustSpines(1,session) = length(cluster_ind)/varargin{i}.NumberofSpines;
-            NumClustCueSpines(1,session) = length(cue_cluster_ind)/varargin{i}.NumberofSpines;
-            NumClustMovSpines(1,session) = length(mov_cluster_ind)/varargin{i}.NumberofSpines;
-            NumClustMixSpines(1,session) = length(mix_cluster_ind)/varargin{i}.NumberofSpines;
-            NumClustPreSucSpines(1,session) = length(presuc_cluster_ind)/varargin{i}.NumberofSpines;
-            NumClustSucSpines(1,session) = length(suc_cluster_ind)/varargin{i}.NumberofSpines;
-            NumClustMovDuringCueSpines(1,session) = length(movduringcue_cluster_ind)/varargin{i}.NumberofSpines;
-            NumClustRewSpines(1,session) = length(rew_cluster_ind)/varargin{i}.NumberofSpines;
+            NumClustSpines(1,session) = length(cluster_ind)/denominator;
+            NumClustCueSpines(1,session) = length(cue_cluster_ind)/denominator;
+            NumClustMovSpines(1,session) = length(mov_cluster_ind)/denominator;
+            NumClustMixSpines(1,session) = length(mix_cluster_ind)/denominator;
+            NumClustPreSucSpines(1,session) = length(presuc_cluster_ind)/denominator;
+            NumClustSucSpines(1,session) = length(suc_cluster_ind)/denominator;
+            NumClustMovDuringCueSpines(1,session) = length(movduringcue_cluster_ind)/denominator;
+            NumClustRewSpines(1,session) = length(rew_cluster_ind)/denominator;
             
-            NumFarClustSpines(1,session) = length(Farcluster_ind)/varargin{i}.NumberofSpines;
-            NumFarClustCueSpines(1,session) = length(Farcue_cluster_ind)/varargin{i}.NumberofSpines;
-            NumFarClustMovSpines(1,session) = length(Farmov_cluster_ind)/varargin{i}.NumberofSpines;
-            NumFarClustMixSpines(1,session) = length(Farmix_cluster_ind)/varargin{i}.NumberofSpines;
-            NumFarClustPreSucSpines(1,session) = length(Farpresuc_cluster_ind)/varargin{i}.NumberofSpines;
-            NumFarClustSucSpines(1,session) = length(Farsuc_cluster_ind)/varargin{i}.NumberofSpines;
-            NumFarClustMovDuringCueSpines(1,session) = length(Farmovduringcue_cluster_ind)/varargin{i}.NumberofSpines;
-            NumFarClustRewSpines(1,session) = length(Farrew_cluster_ind)/varargin{i}.NumberofSpines;
+            NumFarClustSpines(1,session) = length(Farcluster_ind)/denominator;
+            NumFarClustCueSpines(1,session) = length(Farcue_cluster_ind)/denominator;
+            NumFarClustMovSpines(1,session) = length(Farmov_cluster_ind)/denominator;
+            NumFarClustMixSpines(1,session) = length(Farmix_cluster_ind)/denominator;
+            NumFarClustPreSucSpines(1,session) = length(Farpresuc_cluster_ind)/denominator;
+            NumFarClustSucSpines(1,session) = length(Farsuc_cluster_ind)/denominator;
+            NumFarClustMovDuringCueSpines(1,session) = length(Farmovduringcue_cluster_ind)/denominator;
+            NumFarClustRewSpines(1,session) = length(Farrew_cluster_ind)/denominator;
 
-            NumCausClustSpines(1,session) = length(Caus_cluster_ind)/varargin{i}.NumberofSpines;
-            NumCausClustCueSpines(1,session) = length(Caus_cue_cluster_ind)/varargin{i}.NumberofSpines;
-            NumCausClustMovSpines(1,session) = length(Caus_mov_cluster_ind)/varargin{i}.NumberofSpines;
-            NumCausClustMixSpines(1,session) = length(Caus_mix_cluster_ind)/varargin{i}.NumberofSpines;
-            NumCausClustPreSucSpines(1,session) = length(Caus_presuc_cluster_ind)/varargin{i}.NumberofSpines;
-            NumCausClustSucSpines(1,session) = length(Caus_suc_cluster_ind)/varargin{i}.NumberofSpines;
-            NumCausClustMovDuringCueSpines(1,session) = length(Caus_movduringcue_cluster_ind)/varargin{i}.NumberofSpines;
-            NumCausClustRewSpines(1,session) = length(Caus_rew_cluster_ind)/varargin{i}.NumberofSpines;
+            NumCausClustSpines(1,session) = length(Caus_cluster_ind)/denominator;
+            NumCausClustCueSpines(1,session) = length(Caus_cue_cluster_ind)/denominator;
+            NumCausClustMovSpines(1,session) = length(Caus_mov_cluster_ind)/denominator;
+            NumCausClustMixSpines(1,session) = length(Caus_mix_cluster_ind)/denominator;
+            NumCausClustPreSucSpines(1,session) = length(Caus_presuc_cluster_ind)/denominator;
+            NumCausClustSucSpines(1,session) = length(Caus_suc_cluster_ind)/denominator;
+            NumCausClustMovDuringCueSpines(1,session) = length(Caus_movduringcue_cluster_ind)/denominator;
+            NumCausClustRewSpines(1,session) = length(Caus_rew_cluster_ind)/denominator;
             
             %%
             %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -1164,6 +1175,9 @@ if isempty(strfind(inputname(1), 'SpineCorrelationTimecourse'))
                 corr_between_mov_spines_stillperiods = nan(1,size(movspine_combos,1));
             dist_between_presuc_spines = nan(1,size(presucspine_combos,1));
             dist_between_suc_spines = nan(1,size(sucspine_combos,1));
+                corr_between_suc_spines = nan(1,size(sucspine_combos,1));
+                corr_between_suc_spines_movperiods = nan(1,size(sucspine_combos,1));
+                corr_between_suc_spines_stillperiods = nan(1,size(sucspine_combos,1));
             dist_between_movduringcue_spines = nan(1,size(movduringcuespine_combos,1));
             dist_between_rew_spines = nan(1,size(rewspine_combos,1));
             dist_between_far_mov_spines = nan(1,size(allspine_combos,1));
@@ -1209,6 +1223,23 @@ if isempty(strfind(inputname(1), 'SpineCorrelationTimecourse'))
             end
             for n = 1:size(sucspine_combos,1)
                 dist_between_suc_spines(1,n) = DistanceMap(sucspine_combos(n,1), sucspine_combos(n,2));
+                corr_between_suc_spines(1,n) = samedendcorrmat(sucspine_combos(n,1), sucspine_combos(n,2));
+                corr_between_suc_spines_movperiods(1,n) = samedendmovcorrmat(sucspine_combos(n,1), sucspine_combos(n,2));
+                corr_between_suc_spines_stillperiods(1,n) = samedendstillcorrmat(sucspine_combos(n,1), sucspine_combos(n,2));
+                counter = 1;
+                if ~isnan(separatedendcorrmat(sucspine_combos(n,1), sucspine_combos(n,2)))
+                    numpos = find(separatedendcorrlist==separatedendcorrmat(sucspine_combos(n,1), sucspine_combos(n,2)));
+                    if length(numpos)>1
+                        separatedendcorrlist(numpos(1)) = NaN;  %%% Set the value in the correlation list to NaN so that it is not found again
+                        numpos = numpos(1);
+                    else
+                        dist_between_far_suc_spines(1,n) = varargin{i}.FarSpineToSpineDistance(numpos);
+                        corr_between_far_suc_spines(1,n) = separatedendcorrmat(sucspine_combos(n,1), sucspine_combos(n,2));
+                    end
+                else
+                    dist_between_far_suc_spines(1,n) = nan;
+                    corr_between_far_suc_spines(1,n) = nan;
+                end
             end
             for n = 1:size(movduringcuespine_combos,1)
                 dist_between_movduringcue_spines = DistanceMap(movduringcuespine_combos(n,1), movduringcuespine_combos(n,2));
@@ -1244,6 +1275,13 @@ if isempty(strfind(inputname(1), 'SpineCorrelationTimecourse'))
             dist_between_presuc_spines = dist_between_presuc_spines(~isnan(dist_between_presuc_spines));
                 DistanceBetweenPreSuccessSpines{session} = dist_between_presuc_spines;
                 MeanDistanceBetweenPreSuccessSpines(1,session) = nanmean(dist_between_presuc_spines);
+            corr_between_suc_spines = corr_between_suc_spines(~isnan(dist_between_suc_spines)); %%% Needs to be calculated prior to updating (dist_between_suc_spines)!!
+            corr_between_suc_spines_movperiods = corr_between_suc_spines_movperiods(~isnan(dist_between_suc_spines));
+            corr_between_suc_spines_stillperiods = corr_between_suc_spines_stillperiods(~isnan(dist_between_suc_spines));
+                CorrelationBetweenSuccessSpines{session} = corr_between_suc_spines;
+                CorrelationBetweenSuccessSpinesMovePeriods{session} = corr_between_suc_spines_movperiods;
+                CorrelationBetweenSuccessSpinesStillPeriods{session} = corr_between_suc_spines_stillperiods;
+                MeanCorrelationBetweenSuccessSpines{1,session} = nanmean(corr_between_suc_spines);
             dist_between_suc_spines = dist_between_suc_spines(~isnan(dist_between_suc_spines));
                 DistanceBetweenSuccessSpines{session} = dist_between_suc_spines;
                 MeanDistanceBetweenSuccessSpines(1,session) = nanmean(dist_between_suc_spines);
@@ -2306,7 +2344,9 @@ if isempty(strfind(inputname(1), 'SpineCorrelationTimecourse'))
             NumCueRelSpines(1,session) = nan;
             NumMovRelSpines(1,session) = nan;
             FractionofMovRelSpinesPerDendrite{session} = nan;
-            MovRelSpinesPer5Microns{session} = nan;
+            MovRelSpinesPer10Microns{session} = nan;
+            FractionofSucRelSpinesPerDendrite{session} = nan;
+            SucRelSpinesPer10Microns{session} = nan;
             NumCueORMovRelSpines(1,session) = nan;
             NumPreSucRelSpines(1,session) = nan;
             NumSucRelSpines(1,session) = nan;
@@ -2314,7 +2354,7 @@ if isempty(strfind(inputname(1), 'SpineCorrelationTimecourse'))
             NumRewRelSpines(1,session) = nan;
             NumCausalMovSpines(1,session) = nan;
             
-            NumClustSpines(1,session) = length(cluster_ind)/varargin{i}.NumberofSpines;
+            NumClustSpines(1,session) = length(cluster_ind)/denominator;
             NumClustCueSpines(1,session) = nan;
             NumClustMovSpines(1,session) = nan;
             NumClustMixSpines(1,session) = nan;
@@ -2323,7 +2363,7 @@ if isempty(strfind(inputname(1), 'SpineCorrelationTimecourse'))
             NumClustMovDuringCueSpines(1,session) = nan;
             NumClustRewSpines(1,session) = nan;
             
-            NumFarClustSpines(1,session) = length(Farcluster_ind)/varargin{i}.NumberofSpines;
+            NumFarClustSpines(1,session) = length(Farcluster_ind)/denominator;
             NumFarClustCueSpines(1,session) = nan;
             NumFarClustMovSpines(1,session) = nan;
             NumFarClustMixSpines(1,session) = nan;
@@ -2332,7 +2372,7 @@ if isempty(strfind(inputname(1), 'SpineCorrelationTimecourse'))
             NumFarClustMovDuringCueSpines(1,session) = nan;
             NumFarClustRewSpines(1,session) = nan;
 
-            NumCausClustSpines(1,session) = length(Caus_cluster_ind)/varargin{i}.NumberofSpines;
+            NumCausClustSpines(1,session) = length(Caus_cluster_ind)/denominator;
             NumCausClustCueSpines(1,session) = nan;
             NumCausClustMovSpines(1,session) = nan;
             NumCausClustMixSpines(1,session) = nan;
@@ -2884,20 +2924,22 @@ if isempty(strfind(inputname(1), 'SpineCorrelationTimecourse'))
         subplot(sub1,sub2,1)
     plot(NumCueRelSpines, '-o', 'Color', lgreen, 'MarkerFaceColor', lgreen,'Linewidth', 2); hold on;
     plot(NumMovRelSpines, '-o', 'Color', black, 'MarkerFaceColor', black, 'Linewidth', 2);
-    plot(cell2mat(cellfun(@nanmean, FractionofMovRelSpinesPerDendrite, 'uni', false)), '-o', 'Color', gray, 'MarkerFaceColor', gray, 'Linewidth', 2);
+    plot(cell2mat(cellfun(@nanmean, FractionofMovRelSpinesPerDendrite, 'uni', false)), '--o', 'Color', black, 'MarkerFaceColor', gray, 'Linewidth', 2);
     plot(NumCueORMovRelSpines, '--o', 'Color', red, 'MarkerFaceColor', red, 'Linewidth', 2); 
     plot(NumPreSucRelSpines, '-o', 'Color', bgreen, 'MarkerFaceColor', bgreen, 'Linewidth', 2);
     plot(NumSucRelSpines, '-o', 'Color', lblue, 'MarkerFaceColor', lblue, 'Linewidth', 2);
+    plot(cell2mat(cellfun(@nanmean, FractionofSucRelSpinesPerDendrite, 'uni', false)), '--o', 'Color', lblue, 'MarkerFaceColor', lblue, 'Linewidth', 2);
     plot(NumMovDuringCueRelSpines, '-o', 'Color', green, 'MarkerFaceColor', green, 'Linewidth', 2);
     plot(NumRewRelSpines, '-o', 'Color', purple, 'MarkerFaceColor', purple, 'Linewidth', 2);
     plot(NumCausalMovSpines, '-o', 'Color', dred, 'MarkerFaceColor', dred, 'Linewidth', 2)
-    legend({'Cue Rel', 'Mov Rel (/field)', 'Mov Rel (/dend)', 'MovORCue Rel', 'PreSuc Rel', 'Suc Rel', 'MovDuringCue','Rew Rel','Caus Mov Rel'}, 'Location', 'NorthEast');
+    legend({'Cue Rel', 'Mov Rel (/field)', 'Mov Rel (/dend)', 'MovORCue Rel', 'PreSuc Rel', 'Suc Rel (/field)','Suc Rel (/dend)', 'MovDuringCue','Rew Rel','Caus Mov Rel'}, 'Location', 'NorthEast');
     xlabel('Session','Fontsize',14);
     ylabel('Fraction of spines','Fontsize',14);
     title('Classes of Spines', 'Fontsize',14);
             pos = get(gca,'Position');
             axes('Position', [pos(1)+0.2*pos(3), pos(2)+0.7*pos(4), 0.25*pos(3), 0.25*pos(4)]);
-            plot(cell2mat(cellfun(@nanmean, MovRelSpinesPer5Microns, 'uni', false)), '--^', 'Color', lgray, 'MarkerFaceColor', lgray, 'Linewidth', 2);
+            plot(cell2mat(cellfun(@nanmean, MovRelSpinesPer10Microns, 'uni', false)), '--^', 'Color', lgray, 'MarkerFaceColor', lgray, 'Linewidth', 2); hold on;
+            plot(cell2mat(cellfun(@nanmean, SucRelSpinesPer10Microns, 'uni', false)), '--^', 'Color', lblue, 'MarkerFaceColor', lblue, 'Linewidth', 2);
 
         subplot(sub1,sub2,2)
     plot(NumClustSpines, '-o','Color', black, 'MarkerFaceColor', black, 'Linewidth', 2); hold on;
@@ -3370,7 +3412,9 @@ if isempty(strfind(inputname(1), 'SpineCorrelationTimecourse'))
     a.NumberofCueSpines = NumCueRelSpines;
     a.NumberofMovementRelatedSpines = NumMovRelSpines;
     a.FractionofMovementRelatedSpinesPerDendrite = FractionofMovRelSpinesPerDendrite;
-    a.MovementRelatedSpinesPer5Microns = MovRelSpinesPer5Microns;
+    a.MovementRelatedSpinesPer10Microns = MovRelSpinesPer10Microns;
+    a.FractionofSuccessRelatedSpinesPerDendrite = FractionofSucRelSpinesPerDendrite;
+    a.SuccessRelatedSpinesPer10Microns = SucRelSpinesPer10Microns;
     a.NumberofCueORMovementRelatedSpines = NumCueORMovRelSpines;
     a.NumberofPreSuccessSpines = NumPreSucRelSpines;
     a.NumberofSuccessSpines = NumSucRelSpines;
@@ -3488,6 +3532,10 @@ if isempty(strfind(inputname(1), 'SpineCorrelationTimecourse'))
     a.DistanceBetweenPreSuccessSpines = DistanceBetweenPreSuccessSpines;
     a.MeanDistanceBetweenPreSuccessSpines = MeanDistanceBetweenPreSuccessSpines;
     a.DistanceBetweenSuccessSpines = DistanceBetweenSuccessSpines;
+        a.CorrelationBetweenSuccessSpines = CorrelationBetweenSuccessSpines;
+        a.CorrelationBetweenSuccessSpinesMovementPeriods = CorrelationBetweenSuccessSpinesMovePeriods;
+        a.CorrelationBetweenSuccessSpinesStillPeriods = CorrelationBetweenSuccessSpinesStillPeriods;
+        a.MeanCorrelationBetweenSuccessSpines = MeanCorrelationBetweenSuccessSpines;
     a.MeanDistanceBetweenSuccessSpines = MeanDistanceBetweenSuccessSpines;
     a.DistanceBetweenMovementDuringCueSpines = DistanceBetweenMovementDuringCueSpines;
     a.MeanDistanceBetweenMovementDuringCueSpines = MeanDistanceBetweenMovementDuringCueSpines;
@@ -3588,6 +3636,9 @@ else
     %%%% Initialize variables
     
     FractionofMovementRelatedSpinesPerDendrite = cell(1,14);
+    MovementRelatedSpinesPer10Microns = cell(1,14);
+    FractionofSuccessRelatedSpinesPerDendrite = cell(1,14);
+    SuccessRelatedSpinesPer10Microns = cell(1,14);
     SpatialDegree = cell(1,14);
     TemporalDegree = cell(1,14);
     SpatioTemporalDegree = cell(1,14);
@@ -3607,9 +3658,15 @@ else
     AllDistancesBetweenMovementSpines = cell(1,14);
         AllDistancesBetweenFarMovementSpines = cell(1,14);
     CorrelationBetweenMovementSpines = cell(1,14);
+        MeanCorrelationBetweenMovementSpines = nan(length(varargin),14);
     CorrelationBetweenMovementSpinesMovePeriods = cell(1,14);
     CorrelationBetweenMovementSpinesStillPeriods = cell(1,14);
         CorrelationBetweenFarMovementSpines = cell(1,14);
+    CorrelationBetweenSuccessSpines = cell(1,14);
+        MeanCorrelationBetweenSuccessSpines = nan(length(varargin),14);
+    CorrelationBetweenSuccessSpinesMovePeriods = cell(1,14);
+    CorrelationBetweenSuccessSpinesStillPeriods = cell(1,14);
+    AllDistancesBetweenSuccessSpines = cell(1,14);
     MovSpinetoNearestMovementRelatedSpine = cell(1,14);
     MovSpinetoNextClosestMovementRelatedSpine= cell(1,14);
     MovSpinetoThirdClosestMovementRelatedSpine = cell(1,14);
@@ -3683,11 +3740,11 @@ else
             CausalSuccessRelatedNonClusteredCorrwithSuccess(i,1:14) = varargin{i}.CausalSuccessNonClustCorrwithSuccess;
         CausalRewardRelatedClustersCorrwithReward(i,1:14) = varargin{i}.CausalRewardClustersCorrwithReward; 
             CausalRewardRelatedNonClusteredCorrwithReward(i,1:14) = varargin{i}.CausalRewardNonClustCorrwithReward; 
-
-        if any(cell2mat(cellfun(@isempty, varargin{i}.MeanCorrelationBetweenMovementSpines, 'Uni', false)))
-            varargin{i}.MeanCorrelationBetweenMovementSpines(cell2mat(cellfun(@isempty, varargin{i}.MeanCorrelationBetweenMovementSpines, 'Uni', false))) = {NaN};
-        end
-        MeanCorrelationBetweenMovementSpines(i,1:14) = cell2mat(varargin{i}.MeanCorrelationBetweenMovementSpines);
+% 
+%         if any(cell2mat(cellfun(@isempty, varargin{i}.MeanCorrelationBetweenMovementSpines, 'Uni', false)))
+%             varargin{i}.MeanCorrelationBetweenMovementSpines(cell2mat(cellfun(@isempty, varargin{i}.MeanCorrelationBetweenMovementSpines, 'Uni', false))) = {NaN};
+%         end
+%         MeanCorrelationBetweenMovementSpines(i,1:14) = cell2mat(varargin{i}.MeanCorrelationBetweenMovementSpines);
                 
         FractionofCueSpinesThatAreClustered(i,1:14) = varargin{i}.FractionofCueSpinesThatAreClustered;
         FractionofMovementSpinesThatAreClustered(i,1:14) = varargin{i}.FractionofMovementSpinesThatAreClustered;
@@ -3783,7 +3840,10 @@ else
         
         NumCueRelSpines(i,1:14) = varargin{i}.NumberofCueSpines;
         NumMovRelSpines(i,1:14) = varargin{i}.NumberofMovementRelatedSpines;
-        FractionofMovementRelatedSpinesPerDendrite(1:14) = cellfun(@(x,y) [x,y], FractionofMovementRelatedSpinesPerDendrite, varargin{i}.FractionofMovementRelatedSpinesPerDendrite, 'Uni', false);
+            FractionofMovementRelatedSpinesPerDendrite(1:14) = cellfun(@(x,y) [x,y], FractionofMovementRelatedSpinesPerDendrite, varargin{i}.FractionofMovementRelatedSpinesPerDendrite, 'Uni', false);
+            MovementRelatedSpinesPer10Microns(1:14) = cellfun(@(x,y) [x,y], MovementRelatedSpinesPer10Microns, varargin{i}.MovementRelatedSpinesPer10Microns, 'Uni', false);
+            FractionofSuccessRelatedSpinesPerDendrite(1:14) = cellfun(@(x,y) [x,y], FractionofSuccessRelatedSpinesPerDendrite, varargin{i}.FractionofSuccessRelatedSpinesPerDendrite, 'Uni', false);
+            SuccessRelatedSpinesPer10Microns(1:14) = cellfun(@(x,y) [x,y], SuccessRelatedSpinesPer10Microns, varargin{i}.SuccessRelatedSpinesPer10Microns, 'Uni', false);
         NumCueORMovRelSpines(i,1:14) = varargin{i}.NumberofCueORMovementRelatedSpines;
         NumPreSucRelSpines(i,1:14) = varargin{i}.NumberofPreSuccessSpines;
         NumSucRelSpines(i,1:14) = varargin{i}.NumberofSuccessSpines;
@@ -3872,7 +3932,7 @@ else
             problemdays = find(cell2mat(cellfun(@(x,y) length(x)~=length(y), varargin{i}.CorrelationBetweenFarSpines, varargin{i}.DistanceBetweenFarSpines, 'Uni', false)));
             file = inputname(i); file = file(1:5);
             for c = 1:length(problemdays)
-                fprintf('Correlation and distance vectors \n not equal for session %d \n from input %2s \n', problemdays(c), file)
+                fprintf('Correlation and distance vectors \n not equal for session %d \n from input %2s \n', problemdays(c), file)  %%% If this happens, check the original file; this usually comes from Spine-Dendrite grouping data having duplicate values!!
             end
         end
         
@@ -3905,9 +3965,15 @@ else
         DistanceBetweenCueSpines(i,1:14) = varargin{i}.MeanDistanceBetweenCueSpines;
         DistanceBetweenMovementSpines(i,1:14) = varargin{i}.MeanDistanceBetweenMovementSpines;
         AllDistancesBetweenMovementSpines(1:14) = cellfun(@(x,y) [x,y], AllDistancesBetweenMovementSpines, varargin{i}.DistanceBetweenMovementSpines, 'Uni', false);
+        AllDistancesBetweenSuccessSpines(1:14) = cellfun(@(x,y) [x,y], AllDistancesBetweenSuccessSpines, varargin{i}.DistanceBetweenSuccessSpines, 'Uni', false);
         CorrelationBetweenMovementSpines(1:14) = cellfun(@(x,y) [x,y], CorrelationBetweenMovementSpines, varargin{i}.CorrelationBetweenMovementSpines, 'Uni', false);
+            MeanCorrelationBetweenMovementSpines(i,1:14) = cell2mat(cellfun(@(x) nanmean(x), varargin{i}.CorrelationBetweenMovementSpines, 'Uni', false));
         CorrelationBetweenMovementSpinesMovePeriods(1:14) = cellfun(@(x,y) [x,y], CorrelationBetweenMovementSpinesMovePeriods, varargin{i}.CorrelationBetweenMovementSpinesMovementPeriods, 'Uni', false);
         CorrelationBetweenMovementSpinesStillPeriods(1:14) = cellfun(@(x,y) [x,y], CorrelationBetweenMovementSpinesStillPeriods, varargin{i}.CorrelationBetweenMovementSpinesStillPeriods, 'Uni', false);
+        CorrelationBetweenSuccessSpines(1:14) = cellfun(@(x,y) [x,y], CorrelationBetweenSuccessSpines, varargin{i}.CorrelationBetweenSuccessSpines, 'Uni', false);
+            MeanCorrelationBetweenSuccessSpines(i,1:14) = cell2mat(cellfun(@(x) nanmean(x), varargin{i}.CorrelationBetweenSuccessSpines, 'Uni', false));
+        CorrelationBetweenSuccessSpinesMovePeriods(1:14) = cellfun(@(x,y) [x,y], CorrelationBetweenSuccessSpinesMovePeriods, varargin{i}.CorrelationBetweenSuccessSpinesMovementPeriods, 'Uni', false);
+        CorrelationBetweenSuccessSpinesStillPeriods(1:14) = cellfun(@(x,y) [x,y], CorrelationBetweenSuccessSpinesStillPeriods, varargin{i}.CorrelationBetweenSuccessSpinesStillPeriods, 'Uni', false);
         AllDistancesBetweenFarMovementSpines(1:14) = cellfun(@(x,y) [x,y], AllDistancesBetweenFarMovementSpines, varargin{i}.DistanceBetweenFarMovementSpines, 'Uni', false);
         CorrelationBetweenFarMovementSpines(1:14) = cellfun(@(x,y) [x,y], CorrelationBetweenFarMovementSpines, varargin{i}.CorrelationBetweenFarMovementSpines, 'Uni', false);
         MeanCorrelationBetweenFarMovementSpines(i,1:14) = cell2mat(cellfun(@nanmean, varargin{i}.CorrelationBetweenFarMovementSpines, 'Uni', false));
@@ -4073,6 +4139,10 @@ else
         
         a.NumCueRelSpines = NumCueRelSpines;
         a.NumMvmtSpines = NumMovRelSpines;
+        a.FractionofMovementRelatedSpinesPerDendrite = FractionofMovementRelatedSpinesPerDendrite;
+        a.MovementRelatedSpinesPer10Microns = MovementRelatedSpinesPer10Microns;
+        a.FractionofSuccessRelatedSpinesPerDendrite = FractionofSuccessRelatedSpinesPerDendrite;
+        a.SuccessRelatedSpinesPer10Microns = SuccessRelatedSpinesPer10Microns;
         a.NumCueORMovRelSpines = NumCueORMovRelSpines;
         a.NumPreSucRelSpines = NumPreSucRelSpines;
         a.NumSucRelSpines = NumSucRelSpines;
@@ -4145,10 +4215,14 @@ else
         a.DistanceBetweenCueSpines = DistanceBetweenCueSpines;
         a.DistanceBetweenMovementSpines = DistanceBetweenMovementSpines;
         a.AllDistancesBetweenMovementSpines = AllDistancesBetweenMovementSpines;
+        a.AllDistancesBetweenSuccessSpines = AllDistancesBetweenSuccessSpines;
         a.CorrelationBetweenMovementSpines = CorrelationBetweenMovementSpines;
         a.MeanCorrelationBetweenMovementSpines = MeanCorrelationBetweenMovementSpines;
+        a.CorrelationBetweenFarMovementSpines = CorrelationBetweenFarMovementSpines;
         a.MeanCorrelationBetweenFarMovementSpines = MeanCorrelationBetweenFarMovementSpines;
         a.DistanceBetweenSuccessSpines = DistanceBetweenSuccessSpines;
+        a.CorrelationBetweenSuccessSpines = CorrelationBetweenSuccessSpines;
+        a.MeanCorrelationBetweenSuccessSpines = MeanCorrelationBetweenSuccessSpines;
         a.DistanceBetweenRewardSpines = DistanceBetweenRewardSpines;
         
         a.ClusteredSpines_CorrwithDend = ClusteredSpines_CorrwithDend;
@@ -4211,7 +4285,7 @@ else
     scrsz = get(0, 'ScreenSize');
     figure('Position', scrsz); 
     
-    stattype = 'nonparametric';
+    stattype = 'parametric';
     
     subplot(2,5,1)
         flex_plot(1:14, AllClustersCorrwithCue, stattype, black, 2); 
@@ -4396,17 +4470,27 @@ else
     subplot(sub1,sub2,1)
         a = flex_plot(1:14, NumCueRelSpines,stattype, lgreen, 2); hold on;
         b = flex_plot(1:14, NumMovRelSpines,stattype, black, 3);
-        c = flex_plot(1:14, NumCueORMovRelSpines, stattype, red, 2);
-        d = flex_plot(1:14, NumPreSucRelSpines, stattype, bgreen, 2);
+        c = flex_plot(1:14, FractionofMovementRelatedSpinesPerDendrite,stattype, gray, 3);
+        d = flex_plot(1:14, NumCueORMovRelSpines, stattype, red, 2);
+        e = flex_plot(1:14, NumPreSucRelSpines, stattype, bgreen, 2);
         f = flex_plot(1:14, NumSucRelSpines,stattype, lblue, 2);
-        g = flex_plot(1:14, NumMovDuringCueRelSpines, stattype, green, 2);
-        h = flex_plot(1:14, NumRewRelSpines,stattype, purple, 2);
-        legend([a b c d f g h], {'All Cue Spines', 'All Mvmt Spines', 'Cue OR Mov Spines', 'Pre Success Spines', 'All Success Spines', 'Mov. during Cue Spines', 'All Reward Spines'});
+        g = flex_plot(1:14, FractionofSuccessRelatedSpinesPerDendrite, stattype, blue,3);
+        h = flex_plot(1:14, NumMovDuringCueRelSpines, stattype, green, 2);
+        i = flex_plot(1:14, NumRewRelSpines,stattype, purple, 2);
+        legend([a b c d e f g h i], {'All Cue Spines', 'All Mvmt Spines', 'Mov Spines/Dend', 'Cue OR Mov Spines', 'Pre Success Spines', 'All Success Spines', 'Suc Spines/Dend' 'Mov. during Cue Spines', 'All Reward Spines'});
         uistack(b, 'top');
         xlim([0 15]);
         xlabel('Session', 'FontSize', 14);
         ylabel('Fraction of total spines', 'FontSize', 14);
         title('Classes of Spines', 'Fontsize', 14);
+                pos = get(gca,'Position');
+        axes('Position', [pos(1)+0.2*pos(3), pos(2)+0.6*pos(4), 0.35*pos(3), 0.25*pos(4)]);
+        flex_plot(1:14, MovementRelatedSpinesPer10Microns, stattype, gray, 3); hold on;
+        flex_plot(1:14, SuccessRelatedSpinesPer10Microns, stattype, lblue, 3); 
+        xlabel('Session', 'Fontsize', 10)
+        ylabel('Spines/5\mum')
+        title('Move Spines /5\mum', 'Fontsize', 8)
+
     
     subplot(sub1,sub2,2)
         a = flex_plot(1:14, NumClustSpines, stattype, black, 2); hold on;
@@ -4607,8 +4691,9 @@ else
         xlim([0 15])
         
     subplot(3,2,4)
-        a = flex_plot(1:14, CorrelationBetweenMovementSpines, stattype, black, 2);
-        b = flex_plot(1:14, CorrelationBetweenFarMovementSpines, stattype, gray, 2);
+        a = flex_plot(1:14, MeanCorrelationBetweenMovementSpines, stattype, black, 2);
+        b = flex_plot(1:14, MeanCorrelationBetweenFarMovementSpines, stattype, gray, 2);
+        c = flex_plot(1:14, MeanCorrelationBetweenSuccessSpines, stattype, lblue,2);
         legend([a b],{'Mov spines same dend', 'Mov spines sep dends'});
         xlim([0 15])
         ylabel('Correlation', 'Fontsize', 14)
@@ -4750,12 +4835,15 @@ else
     
     earlysessions = 1:3;
     latesessions  = 10:14; 
+    
+    DistanceDataChoice = AllDistancesBetweenSuccessSpines;
+    CorrelationDataChoice = CorrelationBetweenSuccessSpinesMovePeriods;
 
     figure('Position', scrsz)
     currentplot = 1;
     subplot(2,4,1)
-        xdata = cell2mat(AllDistancesBetweenMovementSpines(earlysessions))';
-        ydata = cell2mat(CorrelationBetweenMovementSpinesMovePeriods(earlysessions))';
+        xdata = cell2mat(DistanceDataChoice(earlysessions))';
+        ydata = cell2mat(CorrelationDataChoice(earlysessions))';
         ydata(isnan(ydata)) = 0;
         %%% K-means clustering 
 %         X = [(xdata-nanmean(xdata))/nanstd(xdata), (ydata-nanmean(ydata))/nanstd(ydata)];   %%% Standardized data!!!!
@@ -4790,7 +4878,8 @@ else
         bincount = 1;
         ydata2 = ydata(ydata>0.5);
         xdata2 = xdata(ydata>0.5);
-        for i = 1:binstep:50
+        maxdist = 100;
+        for i = 1:binstep:maxdist
             corratbin{currentplot}(1,bincount) = nanmean(ydata(find(xdata>=(i-1) & xdata<(i+binstep))));
             highcorratbin{currentplot}(1,bincount) = nanmean(ydata2(find(xdata2>=(i-1) & xdata2<(i+binstep))));
             bincount = bincount+1;
@@ -4799,7 +4888,7 @@ else
         axes('Position', [pos(1)+0.7*pos(3), pos(2)+0.7*pos(4), 0.35*pos(3), 0.25*pos(4)]);
         bar(highcorratbin{currentplot}, 'FaceColor', lgreen, 'EdgeColor', 'k'); hold on;
         bar(corratbin{currentplot}, 'FaceColor', 'k', 'EdgeColor', gray)
-        xlim([-1 11])
+        xlim([-1 (maxdist/binstep)+1])
         ylim([0 1])
         
     currentplot = 2;
@@ -4825,24 +4914,24 @@ else
         bincount = 1;
         ydata2 = ydata(ydata>0.5);
         xdata2 = xdata(ydata>0.5);
-        for i = 1:binstep:50
-            corratbin{currentplot}(1,bincount) = nanmean(ydata(find(xdata>=(i-1) & xdata<(i+binstep))));
-            highcorratbin{currentplot}(1,bincount) = nanmean(ydata2(find(xdata2>=(i-1) & xdata2<(i+binstep))));
+        for i = 1:binstep:maxdist
+            corratbin{currentplot}(1,bincount) = nanmedian(ydata(find(xdata>=(i-1) & xdata<(i+binstep))));
+            highcorratbin{currentplot}(1,bincount) = nanmedian(ydata2(find(xdata2>=(i-1) & xdata2<(i+binstep))));
             bincount = bincount+1;
         end
         pos = get(gca,'Position');
         axes('Position', [pos(1)+0.7*pos(3), pos(2)+0.7*pos(4), 0.35*pos(3), 0.25*pos(4)]);
         bar(highcorratbin{currentplot}, 'FaceColor', lgreen, 'EdgeColor', 'k'); hold on;
         bar(corratbin{currentplot}, 'FaceColor', 'k', 'EdgeColor', gray)
-        xlim([-1 11])
+        xlim([-1 (maxdist/binstep)+1])
         ylim([0 1])
         
     currentplot = 3;
     subplot(2,4,currentplot)
-        xdata = cell2mat(AllDistancesBetweenMovementSpines(latesessions))';
-        ydata = cell2mat(CorrelationBetweenMovementSpinesMovePeriods(latesessions))';
+        xdata = cell2mat(DistanceDataChoice(latesessions))';
+        ydata = cell2mat(CorrelationDataChoice(latesessions))';
         ydata(isnan(ydata)) = 0;
-%         X = [(xdata-nanmean(xdata))/nanstd(xdata), (ydata-nanmean(ydata))/nanstd(ydata)];   %%% Standardized data!!!!
+%         X = [(xdata-nanmedian(xdata))/nanstd(xdata), (ydata-nanmean(ydata))/nanstd(ydata)];   %%% Standardized data!!!!
 %         [idx, C] = kmeans(X,2);
 %         x1 = min(X(:,1)):0.01:max(X(:,1));
 %         x2 = min(X(:,2)):0.01:max(X(:,2));
@@ -4871,16 +4960,16 @@ else
         bincount = 1;
         ydata2 = ydata(ydata>0.5);
         xdata2 = xdata(ydata>0.5);
-        for i = 1:binstep:50
-            corratbin{currentplot}(1,bincount) = nanmean(ydata(find(xdata>=(i-1) & xdata<(i+binstep))));
-            highcorratbin{currentplot}(1,bincount) = nanmean(ydata2(find(xdata2>=(i-1) & xdata2<(i+binstep))));
+        for i = 1:binstep:maxdist
+            corratbin{currentplot}(1,bincount) = nanmedian(ydata(find(xdata>=(i-1) & xdata<(i+binstep))));
+            highcorratbin{currentplot}(1,bincount) = nanmedian(ydata2(find(xdata2>=(i-1) & xdata2<(i+binstep))));
             bincount = bincount+1;
         end
         pos = get(gca,'Position');
         axes('Position', [pos(1)+0.7*pos(3), pos(2)+0.7*pos(4), 0.35*pos(3), 0.25*pos(4)]);
         bar(highcorratbin{currentplot}, 'FaceColor', lgreen, 'EdgeColor', 'k'); hold on;
         bar(corratbin{currentplot}, 'FaceColor', 'k', 'EdgeColor', gray)
-        xlim([-1 11])
+        xlim([-1 (maxdist/binstep)+1])
         ylim([0 1])
         
     currentplot = 4;
@@ -4906,16 +4995,16 @@ else
         bincount = 1;
         ydata2 = ydata(ydata>0.5);
         xdata2 = xdata(ydata>0.5);
-        for i = 1:binstep:50
-            corratbin{currentplot}(1,bincount) = nanmean(ydata(find(xdata>=(i-1) & xdata<(i+binstep))));
-            highcorratbin{currentplot}(1,bincount) = nanmean(ydata2(find(xdata2>=(i-1) & xdata2<(i+binstep))));
+        for i = 1:binstep:maxdist
+            corratbin{currentplot}(1,bincount) = nanmedian(ydata(find(xdata>=(i-1) & xdata<(i+binstep))));
+            highcorratbin{currentplot}(1,bincount) = nanmedian(ydata2(find(xdata2>=(i-1) & xdata2<(i+binstep))));
             bincount = bincount+1;
         end
         pos = get(gca,'Position');
         axes('Position', [pos(1)+0.7*pos(3), pos(2)+0.7*pos(4), 0.35*pos(3), 0.25*pos(4)]);
         bar(highcorratbin{currentplot}, 'FaceColor', lgreen, 'EdgeColor', 'k'); hold on;
         bar(corratbin{currentplot}, 'FaceColor', 'k', 'EdgeColor', gray)
-        xlim([-1 11])
+        xlim([-1 (maxdist/binstep)+1])
         ylim([0 1])
         
     currentplot = 5;
@@ -4923,7 +5012,7 @@ else
         xdata = cell2mat(AllDistancesBetweenAllSpines(earlysessions))';
         ydata = cell2mat(CorrelationBetweenAllSpinesMovePeriods(earlysessions))';
         ydata(isnan(ydata)) = 0;
-%         X = [(xdata-nanmean(xdata))/nanstd(xdata), (ydata-nanmean(ydata))/nanstd(ydata)];   %%% Standardized data!!!!
+%         X = [(xdata-nanmedian(xdata))/nanstd(xdata), (ydata-nanmean(ydata))/nanstd(ydata)];   %%% Standardized data!!!!
 %         [idx, C] = kmeans(X,2);
 %         x1 = min(X(:,1)):0.01:max(X(:,1));
 %         x2 = min(X(:,2)):0.01:max(X(:,2));
@@ -4953,16 +5042,16 @@ else
         bincount = 1;
         ydata2 = ydata(ydata>0.5);
         xdata2 = xdata(ydata>0.5);
-        for i = 1:binstep:50
-            corratbin{currentplot}(1,bincount) = nanmean(ydata(find(xdata>=(i-1) & xdata<(i+binstep))));
-            highcorratbin{currentplot}(1,bincount) = nanmean(ydata2(find(xdata2>=(i-1) & xdata2<(i+binstep))));
+        for i = 1:binstep:maxdist
+            corratbin{currentplot}(1,bincount) = nanmedian(ydata(find(xdata>=(i-1) & xdata<(i+binstep))));
+            highcorratbin{currentplot}(1,bincount) = nanmedian(ydata2(find(xdata2>=(i-1) & xdata2<(i+binstep))));
             bincount = bincount+1;
         end
         pos = get(gca,'Position');
         axes('Position', [pos(1)+0.7*pos(3), pos(2)+0.7*pos(4), 0.35*pos(3), 0.25*pos(4)]);
         bar(highcorratbin{currentplot}, 'FaceColor', dred, 'EdgeColor', 'k'); hold on;
         bar(corratbin{currentplot}, 'FaceColor', 'k', 'EdgeColor', gray)
-        xlim([-1 11])
+        xlim([-1 (maxdist/binstep)+1])
         ylim([0 1])
         
     currentplot = 6;
@@ -4988,16 +5077,16 @@ else
         bincount = 1;
         ydata2 = ydata(ydata>0.5);
         xdata2 = xdata(ydata>0.5);
-        for i = 1:binstep:50
-            corratbin{currentplot}(1,bincount) = nanmean(ydata(find(xdata>=(i-1) & xdata<(i+binstep))));
-            highcorratbin{currentplot}(1,bincount) = nanmean(ydata2(find(xdata2>=(i-1) & xdata2<(i+binstep))));
+        for i = 1:binstep:maxdist
+            corratbin{currentplot}(1,bincount) = nanmedian(ydata(find(xdata>=(i-1) & xdata<(i+binstep))));
+            highcorratbin{currentplot}(1,bincount) = nanmedian(ydata2(find(xdata2>=(i-1) & xdata2<(i+binstep))));
             bincount = bincount+1;
         end
         pos = get(gca,'Position');
         axes('Position', [pos(1)+0.7*pos(3), pos(2)+0.7*pos(4), 0.35*pos(3), 0.25*pos(4)]);
         bar(highcorratbin{currentplot}, 'FaceColor', dred, 'EdgeColor', 'k'); hold on;
         bar(corratbin{currentplot}, 'FaceColor', 'k', 'EdgeColor', gray)
-        xlim([-1 11])
+        xlim([-1 (maxdist/binstep)+1])
         ylim([0 1])
         
     currentplot = 7;
@@ -5034,16 +5123,16 @@ else
         bincount = 1;
         ydata2 = ydata(ydata>0.5);
         xdata2 = xdata(ydata>0.5);
-        for i = 1:binstep:50
-            corratbin{currentplot}(1,bincount) = nanmean(ydata(find(xdata>=(i-1) & xdata<(i+binstep))));
-            highcorratbin{currentplot}(1,bincount) = nanmean(ydata2(find(xdata2>=(i-1) & xdata2<(i+binstep))));
+        for i = 1:binstep:maxdist
+            corratbin{currentplot}(1,bincount) = nanmedian(ydata(find(xdata>=(i-1) & xdata<(i+binstep))));
+            highcorratbin{currentplot}(1,bincount) = nanmedian(ydata2(find(xdata2>=(i-1) & xdata2<(i+binstep))));
             bincount = bincount+1;
         end
         pos = get(gca,'Position');
         axes('Position', [pos(1)+0.7*pos(3), pos(2)+0.7*pos(4), 0.35*pos(3), 0.25*pos(4)]);
         bar(highcorratbin{currentplot}, 'FaceColor', dred, 'EdgeColor', 'k'); hold on;
         bar(corratbin{currentplot}, 'FaceColor', 'k', 'EdgeColor', gray)
-        xlim([-1 11])
+        xlim([-1 (maxdist/binstep)+1])
         ylim([0 1])
     currentplot = 8;
     subplot(2,4,currentplot)
@@ -5068,10 +5157,10 @@ else
         bincount = 1;
         ydata2 = ydata(ydata>0.5);
         xdata2 = xdata(ydata>0.5);
-        for i = 1:binstep:50
+        for i = 1:binstep:maxdist
             try
-                corratbin{currentplot}(1,bincount) = nanmean(ydata(find(xdata>=(i-1) & xdata<(i+binstep))));
-                highcorratbin{currentplot}(1,bincount) = nanmean(ydata2(find(xdata2>=(i-1) & xdata2<(i+binstep))));
+                corratbin{currentplot}(1,bincount) = nanmedian(ydata(find(xdata>=(i-1) & xdata<(i+binstep))));
+                highcorratbin{currentplot}(1,bincount) = nanmedian(ydata2(find(xdata2>=(i-1) & xdata2<(i+binstep))));
                 bincount = bincount+1;
             catch
             end
@@ -5080,13 +5169,14 @@ else
         axes('Position', [pos(1)+0.7*pos(3), pos(2)+0.7*pos(4), 0.35*pos(3), 0.25*pos(4)]);
         bar(highcorratbin{currentplot}, 'FaceColor', dred, 'EdgeColor', 'k'); hold on;
         bar(corratbin{currentplot}, 'FaceColor', 'k', 'EdgeColor', gray)
-        xlim([-1 11])
+        xlim([-1 (maxdist/binstep)+1])
         ylim([0 1])
         
 
-        
-    %% Figure 9
-
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    %% Figure 9: Clustering validation
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    
     figure('Position', scrsz, 'Name', 'Clustering Validation'); hold on;
     %%% Shuffled data plots: uncomment the following and set stop point
     
@@ -5097,12 +5187,12 @@ else
     corrtouse{2} = cell2mat(CorrelationBetweenAllSpinesMovePeriods(latesessions));
     disttouse{2} = cell2mat(AllDistancesBetweenAllSpines(latesessions));
 
-    corrtouse{3} = cell2mat(CorrelationBetweenMovementSpinesMovePeriods(earlysessions));
-    disttouse{3} = cell2mat(AllDistancesBetweenMovementSpines(earlysessions));
+    corrtouse{3} = cell2mat(CorrelationDataChoice(earlysessions));
+    disttouse{3} = cell2mat(DistanceDataChoice(earlysessions));
     %         farcorrtouse = CorrelationBetweenFarSpines{sessiontouse};
 
-    corrtouse{4} = cell2mat(CorrelationBetweenMovementSpinesMovePeriods(latesessions));
-    disttouse{4} = cell2mat(AllDistancesBetweenMovementSpines(latesessions));
+    corrtouse{4} = cell2mat(CorrelationDataChoice(latesessions));
+    disttouse{4} = cell2mat(DistanceDataChoice(latesessions));
     
     usenorm = 1;
 
@@ -5280,13 +5370,18 @@ else
         pos = get(gca,'Position');
         axes('Position', [pos(1)+0.7*pos(3), pos(2)+0.7*pos(4), 0.25*pos(3), 0.25*pos(4)], 'Fontsize', 6);
         nearcorr = cell2mat(CorrelationwithNearestMovementRelatedSpine(latesessions)); hold on;
-        plot(nanmean(nearcorr)*ones(1,max(hist(nearcorr))), 1:max(hist(nearcorr)), ':k')
+        plot(nanmean(nearcorr)*ones(1,max(hist(nearcorr))), 1:max(hist(nearcorr)), ':', 'Color', lblue)
         hist(nearcorr); set(findobj(gca, 'Facecolor', 'flat'), 'FaceColor', dred)
         ylabel('Count')
         xlabel('Correlation with nearest MRS')
         
-        
-        
+        axes('Position', [pos(1)+0.7*pos(3), pos(2)+0.35*pos(4), 0.25*pos(3), 0.25*pos(4)], 'Fontsize', 6);
+        plot(1:2, [nanmean(cell2mat(CorrelationwithNearestMovementRelatedSpine(earlysessions))), nanmean(cell2mat(CorrelationwithNearestMovementRelatedSpine(latesessions)))], '-k')
+        r_errorbar(1:2,  [nanmean(cell2mat(CorrelationwithNearestMovementRelatedSpine(earlysessions))), nanmean(cell2mat(CorrelationwithNearestMovementRelatedSpine(latesessions)))],  [nanstd(cell2mat(CorrelationwithNearestMovementRelatedSpine(earlysessions)))/sqrt(length(cell2mat(CorrelationwithNearestMovementRelatedSpine(earlysessions)))), nanstd(cell2mat(CorrelationwithNearestMovementRelatedSpine(latesessions)))/sqrt(length(cell2mat(CorrelationwithNearestMovementRelatedSpine(latesessions))))], 'k')
+        xlim([0 3])
+        ylabel({'Correlation with nearest', 'movement-related spine'})
+        set(gca, 'XTick', [1 2])
+        set(gca, 'XTickLabel', {'Early', 'Late'})
         
     subplot(2,4,8); hold on;
         h = hist(disttouse{2}, round(max(disttouse{2}))/5);

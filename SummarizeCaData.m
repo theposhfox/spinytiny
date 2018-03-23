@@ -224,7 +224,7 @@ if File.NumberofSpines ==  0 || File.NumberofSpines ~= length(File.deltaF)
 end
 % 
 SpineNo = randi(File.NumberofSpines,1); %%% Will choose a random spine from the available ones for this file
-SpineNo = 20;  %%% Mantually select spine to be considered
+SpineNo = 5;  %%% Mantually select spine to be considered
 
 
 DendNum = File.NumberofDendrites;
@@ -493,7 +493,7 @@ globaldendriteevents = cell(1,DendNum);
 cumulativepolypoints = cumsum(File.DendritePolyPointNumber);
 File.Poly_Fluorescence_Measurement = File.Poly_Fluorescence_Measurement(~cell2mat(cellfun(@(x) isempty(x), File.Poly_Fluorescence_Measurement, 'UniformOutput', false))); %%% Remove any empty cells
 if length(File.Poly_Fluorescence_Measurement) ~= sum(File.DendritePolyPointNumber)
-    disp(['File ', File.Filename, ' has weird poly point problems... check it, bro'])
+    disp(['File ', File.Filename, ' has weird poly point problems... check it, broh'])
     return
 end
 
