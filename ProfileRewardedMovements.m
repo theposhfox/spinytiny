@@ -2,26 +2,37 @@ function [File,trial_length,cs2r, rxnTime, fault] = ProfileRewardedMovements(Fil
 
 
 %%% Discard any trials for which the animal is already moving 
-% if File{session}.PastThreshRewTrials{rewards(session,1)}(1) ~= 0        
-%     disp(['Animal was moving at the beginning of trial ', num2str(trialnumber), ' from session ', num2str(session)]);
-%     File{session}.SuccessfulMovements{rewards(session,1)} = [];
-%     trial_length = [];
-%     rxnTime = [];
-%     fault = 1;
-%     return
-% end
-% if length(File{session}.movement{rewards(session,1)}) < 1000 || cue_start == end_trial
-%     File{session}.SuccessfulMovements{rewards(session,1)} = [];
-%     trial_length = [];
-%     rxnTime = [];
-% 	return
-% end
+if any(File{session}.lever_active(cue_start-100:cue_start)) 
+    disp(['Animal was moving at the beginning of trial ', num2str(trialnumber), ' from session ', num2str(session)]);
+    File{session}.SuccessfulMovements{rewards(session,1)} = [];
+    cs2r = [];
+    trial_length = [];
+    rxnTime = [];
+    fault = 1;
+    return
+end
+if length(File{session}.movement{rewards(session,1)}) < 1000 || cue_start == end_trial
+    File{session}.SuccessfulMovements{rewards(session,1)} = [];
+    cs2r = [];
+    trial_length = [];
+    rxnTime = [];
+    fault = 1;
+	return
+end
 
 File{session}.CueStarttoReward{rewards(session,1)} = File{session}.lever_force_smooth(cue_start:reward_time);
 cs2r = length(File{session}.CueStarttoReward{rewards(session,1)})/1000;
 %%% The following are all ways to determine the beginning of
 %%% a movement... select based on what works!
     temp = find(boundary_frames < reward_time);
+    if isempty(temp)
+        File{session}.SuccessfulMovements{rewards(session,1)} = [];
+        cs2r = [];
+        trial_length = [];
+        rxnTime = [];
+        fault = 1;
+        return
+    end
     if boundary_frames(temp(end))<400
         baseLine_start = length(1:boundary_frames(temp(end)));
     else

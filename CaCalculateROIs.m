@@ -322,6 +322,12 @@ if ~isempty(existing_ROI)
             imseriesend = inf;
         end
         
+        if ~isempty(gui_CaImageViewer.IgnoreFrames)
+            flagframes = gui_CaImageViewer.IgnoreFrames;
+        else
+            flagframes = [];
+        end
+        
         if strcmpi(load_type, 'Compressed')
             for j = 1:gui_CaImageViewer.imageserieslength       %%% Assumes that the first ROI (actually labeled 'ROI 0') is the background
                 Background_Intensity = gui_CaImageViewer.GCaMP_Image{j}(ROIreg{1});
@@ -434,7 +440,17 @@ if ~isempty(existing_ROI)
 
                 for k = 1:length(CaImage_File_info)
                     
-                    
+                    if any(actual_image_counter == flagframes)
+                        Background_Mean_Int = NaN;
+                        for i = 2:length(existing_ROI)
+                            Fluorescence_Measurement{i-1}(1,actual_image_counter) = NaN;
+                        end
+                        for i = I_handles
+                            Poly_Fluorescence_Measurement{i}(1,actual_image_counter) = NaN;
+                        end
+                        actual_image_counter = actual_image_counter+1;
+                        continue
+                    end
                     current_image = all_images(:,:,k);
                     isNaNPossible = isa(current_image,'float');
                     

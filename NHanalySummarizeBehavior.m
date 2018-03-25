@@ -13,11 +13,7 @@ if ~isstruct(varargin{end})
     animalname = regexp(inputname(1), '[A-Z]{2,3}0{1,3}[1-9,A-Z]{0,2}', 'match');
     used_sessions = varargin{end};
     ns = length(varargin)-1;
-    if length(varargin)-1 > 14
-        explength = length(varargin)-1;
-    else
-        explength = 14;
-    end
+    explength = length(1:used_sessions(end));
 else
     animalname = regexp(inputname(1), '[A-Z]{2,3}0{1,3}\w{1,2}', 'match');
     used_sessions = 1:length(varargin);
@@ -45,7 +41,7 @@ figure('Position', scrsz);
 
 rewards = zeros(ns,1);
 rxnTime = cell(1,length(used_sessions));
-cuestart2reward = cell(1,length(used_sessions));
+CuetoRew = cell(1,length(used_sessions));
 trial_length = cell(1,length(used_sessions));
 
 
@@ -84,38 +80,6 @@ for session = 1:ns
                 CuetoRew{session}(rewards(session,1),1) = cs2r;
             else
             end
-        end
-        AveRxnTime(session,1) = nanmean(rxnTime{session});
-        AveCueToRew(session,1) = nanmean(CuetoRew{session});
-        trial_length{session}(trial_length{session} == 0) = NaN;
-        if ~isempty(trial_length{session})
-            range(session,1) = min(trial_length{session});
-        else
-            range(session,1) = nan;
-        end
-        subplot(2,ns,ns+session); hold on;
-        for rewardedtrial = 1:rewards(session,1) 
-            try
-                if ~isempty(File{session}.SuccessfulMovements{rewardedtrial})
-                    MovementMat{current_session}(rewardedtrial,1:range(session,1)) = File{session}.SuccessfulMovements{rewardedtrial}(1:range(session,1));
-                    MovementMat{current_session}(MovementMat{current_session}==0) = nan;
-                    plot(MovementMat{current_session}(rewardedtrial,1:3000), 'k');
-                    drawnow;
-                else
-                    MovementMat{current_session}(rewardedtrial,1:3001) = nan(1,3001);
-                end
-            catch
-                MovementMat{current_session}(rewardedtrial,1:3001) = nan(1,3001);
-                disp(['Movement was not tracked for trial ', num2str(rewardedtrial), ' from session ', num2str(session)])
-            end
-        end
-        if rewards(session,1) ~= 0
-            MovementAve(current_session,:) = nanmean(MovementMat{current_session}(:,1:3000),1);
-            plot(MovementAve(current_session,1:3000), 'r', 'Linewidth', 2); drawnow;
-            ylim([-2.5 0])
-            title(['Session', num2str(current_session)])
-        else
-            MovementAve(current_session,:) = nan(1,3000);
         end
         trials(session,1) = length(File{session}.Behavior_Frames);
     else  %%% This section is for using data that is not aligned to imaging frames
@@ -171,47 +135,39 @@ for session = 1:ns
             else
             end
         end
-        AveRxnTime(session,1) = nanmean(rxnTime{session});
-        AveCueToRew(session,1) = nanmean(CuetoRew{session});
-        trial_length{session}(trial_length{session} == 0) = NaN;
+        trials(session,1) = File{i}.DispatcherData.saved.ProtocolsSection_n_done_trials;
+    end
+    AveRxnTime(session,1) = nanmean(rxnTime{session});
+    AveCueToRew(session,1) = nanmean(CuetoRew{session});
+    trial_length{session}(trial_length{session} == 0) = NaN;
+    if ~isempty(trial_length{session})
+        range(session,1) = min(trial_length{session});
+    else
+        range(session,1) = nan;
+    end
+    subplot(2,ns,ns+session); hold on;
+    for rewardedtrial = 1:rewards(session,1) 
         try
-            range(session,1) = min(trial_length{session});
-        catch
-            range(session,1) = nan;
-        end
-        subplot(2,ns,ns+session); hold on;
-        for trialnumber = 1:rewards(session,1) 
-            try
-                if ~isempty(RecordedSuccessfulMovement{trialnumber})
-                    MovementMat{current_session}(trialnumber,1:range(session,1)) = RecordedSuccessfulMovement{trialnumber}(1:range(session,1));
-                    MovementMat{current_session}(MovementMat{current_session}==0) = nan;
-                    plot(MovementMat{current_session}(trialnumber,1:3000), 'k');
-                else
-                    MovementMat{current_session}(trialnumber,1:3001) = nan(1,3001);
-                    disp(['Movement was not tracked for trial ', num2str(trialnumber), ' from session ', num2str(session)])
-                    drawnow;
-                end
-            catch
-                MovementMat{current_session}(trialnumber,1:3001) = nan(1,3001);
-                disp(['Movement was not tracked for trial ', num2str(trialnumber), ' from session ', num2str(session)])
+            if ~isempty(File{session}.SuccessfulMovements{rewardedtrial})
+                MovementMat{current_session}(rewardedtrial,1:range(session,1)) = File{session}.SuccessfulMovements{rewardedtrial}(1:range(session,1));
+                MovementMat{current_session}(MovementMat{current_session}==0) = nan;
+                plot(MovementMat{current_session}(rewardedtrial,1:3000), 'k');
+                drawnow;
+            else
+                MovementMat{current_session}(rewardedtrial,1:3001) = nan(1,3001);
             end
+        catch
+            MovementMat{current_session}(rewardedtrial,1:3001) = nan(1,3001);
+            disp(['Movement was not tracked for trial ', num2str(rewardedtrial), ' from session ', num2str(session)])
         end
-        if rewards(session,1) ~= 0
-            MovementAve(current_session,:) = nanmean(MovementMat{current_session}(:,1:3000),1);
-            plot(MovementAve(current_session,1:3000), 'r', 'Linewidth', 2); drawnow;
-            ylim([-2.5 0])
-            title(['Session', num2str(current_session)])
-        else
-            MovementAve(current_session,:) = nan(1,3000);
-        end
-        trials(session,1) = length(File{session}.DispatcherData.saved_history.ProtocolsSection_parsed_events);
-        if rewards(session,1) == 0
-            File{session}.SuccessfulMovements = [];
-            File{session}.PastThreshRewTrials = [];
-        else
-            File{session}.SuccessfulMovements = RecordedSuccessfulMovement;
-            File{session}.PastThreshRewTrials = PastThreshRewTrials;
-        end
+    end
+    if rewards(session,1) ~= 0
+        MovementAve(current_session,:) = nanmean(MovementMat{current_session}(:,1:3000),1);
+        plot(MovementAve(current_session,1:3000), 'r', 'Linewidth', 2); drawnow;
+        ylim([-2.5 0])
+        title(['Session', num2str(current_session)])
+    else
+        MovementAve(current_session,:) = nan(1,3000);
     end
 end
 

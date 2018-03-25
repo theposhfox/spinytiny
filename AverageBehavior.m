@@ -25,12 +25,31 @@ for i = 1:length(varargin)
     rewards(i,varargin{i}.UsedSessions) = varargin{i}.rewards(varargin{i}.UsedSessions);
     ReactionTime(i,varargin{i}.UsedSessions) = varargin{i}.ReactionTime(varargin{i}.UsedSessions);
     CuetoReward(i,varargin{i}.UsedSessions) = varargin{i}.CuetoReward(varargin{i}.UsedSessions);
-%     MovementAverages(i,varargin{i}.UsedSessions) = 
+    missingsessions = setdiff([1:14], varargin{i}.UsedSessions);
+    if ~isempty(missingsessions)
+        sessionsaccountedfor = [];
+        for j = 1:length(missingsessions);
+            if length(varargin{i}.MovementCorrelation)>=missingsessions(j)
+                if ~sum(~isnan(varargin{i}.MovementCorrelation(missingsessions(j),:)))
+                    sessionsaccountedfor = [sessionsaccountedfor, j];
+                end
+            end
+        end
+        sessionstoadd = setdiff(missingsessions, sessionsaccountedfor);
+        newlength = length(varargin{i}.MovementCorrelation)+length(sessionstoadd);
+        newmat = nan(newlength,newlength);
+        newmat(varargin{i}.UsedSessions,varargin{i}.UsedSessions) = varargin{i}.MovementCorrelation(varargin{i}.UsedSessions,varargin{i}.UsedSessions);
+        varargin{i}.MovementCorrelation = newmat;
+    end
     MovementCorrelation(:,:,i) = varargin{i}.MovementCorrelation(1:14,1:14);
 end
 
+rewards = rewards(:,1:14);
+ReactionTime = ReactionTime(:,1:14);
+CuetoReward = CuetoReward(:,1:14);
+
 for i = 1:14
-    rewardsSEM(1,i) = nanstd(rewards(:,i),0,1)/sqrt(length(~isnan(rewards(:,i))));
+    rewardsSEM(1,i) = nanstd(rewards(:,i),0,1)/sqrt(sum(~isnan(rewards(:,i))));
     RTSEM(1,i) = nanstd(ReactionTime(:,i),0,1)/sqrt(length(~isnan(ReactionTime(:,i))));
     CtRSEM(1,i) = nanstd(CuetoReward(:,i),0,1)/sqrt(length(~isnan(CuetoReward(:,i))));
 end
@@ -67,7 +86,7 @@ scrsz = get(0, 'ScreenSize');
 figure('Position', scrsz);
 
 subplot(6,6,[1:3, 7:9]); plot(nanmean(rewards,1), 'b'); xlim([0 15]); ylabel('% Rewarded'); xlabel('Session');
-r_errorbar(1:14, nanmean(rewards, 1), rewardsSEM, 'b');
+r_errorbar(1:14, nanmean(rewards, 1), rewardsSEM(1:14), 'b');
 set(gca, 'XTick', 1:14)
 subplot(6,6,[4:6, 10:12]); reactplot = plot(nanmean(ReactionTime,1), 'k'); xlim([0 15]); ylabel('Time (s)'); xlabel('Session');
 hold on; c2rplot = plot(nanmean(CuetoReward,1), 'r');
@@ -93,10 +112,10 @@ subplot(6,6,[16:18, 22:24, 28:30, 34:36]);
 withinplot = plot(1:14,nanmean(within,1),'k', 'Linewidth', 2); hold on;
 acrossplot = plot(2:14, nanmean(across,1), 'Color', [0.5 0.5 0.5], 'Linewidth', 2);
 for i = 1:14
-    within_SEM(1,i) = nanstd(within(:,i))/sqrt(sum(~isnan(within(i))));
+    within_SEM(1,i) = nanstd(within(:,i))/sqrt(sum(~isnan(within(:,i))));
 end
 for i = 1:13
-    across_SEM(1,i) = nanstd(across(:,i))/sqrt(sum(~isnan(across(i))));
+    across_SEM(1,i) = nanstd(across(:,i))/sqrt(sum(~isnan(across(:,i))));
 end
 r_errorbar(1:14, nanmean(within,1), within_SEM, 'k')
 r_errorbar(2:14, nanmean(across,1), across_SEM, [0.5 0.5 0.5])

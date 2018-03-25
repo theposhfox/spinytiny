@@ -10,11 +10,7 @@ function [Threshold, DriftBaseline, ProcessedData] = AnalyzeTrace(Data, Options)
     
    %%% Data with NaN cannot be smoothed well, so find and fix any NaNs
     if any(isnan(Data))
-        try
-            Data(isnan(Data)) = nanmean([Data(find(isnan(Data))-1),Data(find(isnan(Data))+1)]);
-        catch
-            Data(isnan(Data)) = 0;
-        end
+        Data(isnan(Data)) = 0;
     end
     
     %%% Values at the ends can mess up smoothing; set the first few to the

@@ -199,7 +199,7 @@ set(gui_CaImageViewer.figure.handles.ImageSlider_Slider, 'Enable', 'on');
 set(gui_CaImageViewer.figure.handles.Merge_ToggleButton, 'Value', 0)
 gui_CaImageViewer.NewSpineAnalysis = 0;
 gui_CaImageViewer.SelectedStopFrame = [];
-
+gui_CaImageViewer.IgnoreFrames = [];
 
 [filename, pathname] = uigetfile('.tif');
 
@@ -1781,9 +1781,11 @@ catch
     tc_length = 0;
 end
 xlabel('Frame (Actual)', 'FontSize', 14)
+title('Attempted drift correction')
 
-uicontrol(gcf, 'Style', 'pushbutton', 'String', {'Set end frame'}, 'Fontsize', 8, 'Units', 'Normalized', 'Position', [0.915 0.45 0.08 0.2], 'Callback', {@SetEndFrame,tc_length})
+uicontrol(gcf, 'Style', 'pushbutton', 'String', {'Set end frame'}, 'Fontsize', 8, 'Units', 'Normalized', 'Position', [0.915 0.56 0.08 0.09], 'Callback', {@SetEndFrame,tc_length})
 uicontrol(gcf, 'Style', 'pushbutton', 'String', {'Clip image '}, 'Fontsize', 8, 'Units', 'Normalized', 'Position', [0.005 0.45 0.08 0.2], 'Callback', {@ClipImageSeriesLength, length(gui_CaImageViewer.GCaMP_Image)})
+uicontrol(gcf, 'Style', 'pushbutton', 'String', {'Cut frames'}, 'Fontsize', 8, 'Units', 'Normalized', 'Position', [0.915, 0.45 0.08 0.09], 'Callback', {@RemoveFrames})
 set(gcf, 'ToolBar', 'figure')
 
 
