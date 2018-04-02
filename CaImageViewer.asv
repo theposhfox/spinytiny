@@ -1043,7 +1043,6 @@ uicontrol('Parent', d, 'Style', 'pushbutton', 'Position', [dlgwdth/3+85 30 75 25
 uiwait(d)
 usesurroundBGchoice = get(d, 'UserData');
 delete(d);
-nonedrawn = 0;
 
 for a = 1:length(ROIs)
     if ~isempty(ROIs{a})
@@ -1078,8 +1077,7 @@ for a = 1:length(ROIs)
                         glovar.BackgroundROI(ROInum+1) = NaN;
                     end
                 else
-                    usesurroundBGchoice = 'No';
-                    nonedrawn = 1;
+                    msgbox('Surround ROIs were not drawn for this file!');
                     glovar.UsingSurroundBackground = 0;
                     glovar.BackgroundROI(ROInum+1) = NaN;
                 end
@@ -1094,10 +1092,6 @@ for a = 1:length(ROIs)
         else
         end
     end
-end
-
-if nonedrawn
-    msgbox('Surround ROIs were not drawn for this file!');
 end
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -1784,25 +1778,14 @@ try
     plot(t);
     tc_length = length(t);
 catch
+    tc_length = 0;
     animal = regexp(gui_CaImageViewer.filename, '[A-Z]{2,3}0*[0-9]*', 'match');
     animal = animal{1};
     date= regexp(gui_CaImageViewer.save_directory, '[0-9]{6}', 'match'); date = date{1};
     t = CheckMC(animal, date);
-    plot(t);
-    tc_length = length(t);
 end
-
 xlabel('Frame (Actual)', 'FontSize', 14)
 title('Attempted drift correction')
-legend('X', 'Y')
-ylim([-110 110])
-
-subplot(2,2,4)
-plot(t(:,1), t(:,2), '.k')
-ylabel('Y Correction')
-xlabel('X Correction')
-ylim([-110 110])
-xlim([-110 110])
 
 uicontrol(gcf, 'Style', 'pushbutton', 'String', {'Set end frame'}, 'Fontsize', 8, 'Units', 'Normalized', 'Position', [0.915 0.56 0.08 0.09], 'Callback', {@SetEndFrame,tc_length})
 uicontrol(gcf, 'Style', 'pushbutton', 'String', {'Clip image '}, 'Fontsize', 8, 'Units', 'Normalized', 'Position', [0.005 0.45 0.08 0.2], 'Callback', {@ClipImageSeriesLength, length(gui_CaImageViewer.GCaMP_Image)})

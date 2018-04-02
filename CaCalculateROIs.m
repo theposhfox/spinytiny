@@ -448,6 +448,14 @@ if ~isempty(existing_ROI)
                         for i = I_handles
                             Poly_Fluorescence_Measurement{i}(1,actual_image_counter) = NaN;
                         end
+                        for i = 1:DendNum
+                            if i == 1
+                                dendgroup = 1:DendPPNum(1,i);
+                            else
+                                dendgroup = (DendPPNum(1,i-1)+1):(DendPPNum(1,i-1)+DendPPNum(1,i));
+                            end
+                            Mean_Dend(i,actual_image_counter) = NaN;
+                        end
                         actual_image_counter = actual_image_counter+1;
                         continue
                     end

@@ -53,16 +53,19 @@ if baseLine_start<400
 else
     shift = 0;
 end
+if successful_mvmt_start+(3000-shift) > length(File{session}.lever_force_smooth)
+    endingbuffer = nan(abs(length(File{session}.lever_force_smooth)-(successful_mvmt_start+(3000-shift))),1);
+    File{session}.lever_force_smooth = [File{session}.lever_force_smooth; endingbuffer];
+end
 File{session}.SuccessfulMovements{rewards(session,1)} = [nan(shift,1);File{session}.lever_force_smooth(successful_mvmt_start:successful_mvmt_start+(3000-shift))];
 trial_length = length(File{session}.SuccessfulMovements{rewards(session,1)});
 if trial_length == 0
     dbstop
 end
-try
-    rxnTime = find(File{session}.PastThreshRewTrials{rewards(session,1)}, 1, 'first')/1000; %%% Reaction time in seconds (Starts at cue and ends at motion start) (note that this data is downsampled from ephus' 10,000Hz to 1,000Hz by Andy's code)
-catch
-    rxnTime = NaN;
-end
+
+
+rxnTime = find(File{session}.PastThreshRewTrials{rewards(session,1)}, 1, 'first')/1000; %%% Reaction time in seconds (Starts at cue and ends at motion start) (note that this data is downsampled from ephus' 10,000Hz to 1,000Hz by Andy's code)
+
 
 if isempty(rxnTime)
     rxnTime = 0;

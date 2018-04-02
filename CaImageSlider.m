@@ -7,6 +7,7 @@ ImageNum = get(gui_CaImageViewer.figure.handles.ImageSlider_Slider, 'Value');
 twochannels = get(gui_CaImageViewer.figure.handles.TwoChannels_CheckBox, 'Value');
 
 set(gui_CaImageViewer.figure.handles.MaxProjection_CheckBox, 'Value', 0);
+set(gui_CaImageViewer.figure.handles.AveProjection_CheckBox, 'Value', 0);
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     

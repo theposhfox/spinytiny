@@ -46,8 +46,6 @@ trial_length = cell(1,length(used_sessions));
 
 
 for session = 1:ns
-    ch = find(strcmp(File{session}.xsg_data.channel_names,'Trial_number'));
-    bitcode = parse_behavior_bitcode(File{session}.xsg_data.channels(:,ch));
     if ~isempty(File{session}.Behavior_Frames)
         current_session = used_sessions(session);
         movements_only = File{session}.lever_force_smooth.*File{session}.lever_active;
@@ -83,7 +81,13 @@ for session = 1:ns
         end
         trials(session,1) = length(File{session}.Behavior_Frames);
     else  %%% This section is for using data that is not aligned to imaging frames
+        ch = find(strcmp(File{session}.xsg_data.channel_names,'Trial_number'));
+        bitcode = parse_behavior_bitcode(File{session}.xsg_data.channels(:,ch));
         current_session = used_sessions(session);
+        if isempty(bitcode)
+            disp(['Could not extract bitcode information from session ', num2str(current_session)])
+        continue
+        end
         movements_only = File{session}.lever_force_smooth.*File{session}.lever_active;
         boundary_frames = find(diff([Inf; File{session}.lever_active;Inf])~=0);
         if boundary_frames(1) == 1;
@@ -118,7 +122,7 @@ for session = 1:ns
                 end
                 
                 File{session}.movement{rewards(session,1)} = File{session}.lever_force_smooth(cue_start:end_trial);
-                PastThreshRewTrials{rewards(session,1)} = File{session}.lever_force_smooth(cue_start:end_trial).*File{session}.lever_active(cue_start:end_trial);  %%% Binarizes lever motion for a particular cue period
+                File{session}.PastThreshRewTrials{rewards(session,1)} = File{session}.lever_force_smooth(cue_start:end_trial).*File{session}.lever_active(cue_start:end_trial);  %%% Binarizes lever motion for a particular cue period
                 
                 %%%%%%%%%%%%%%%%%%%%%%%%%
                 %%%%
@@ -161,7 +165,7 @@ for session = 1:ns
             disp(['Movement was not tracked for trial ', num2str(rewardedtrial), ' from session ', num2str(session)])
         end
     end
-    if rewards(session,1) ~= 0
+    if rewards(session,1) ~= 0 && sum(~isnan(MovementMat{current_session}(:,1500))) > 2
         MovementAve(current_session,:) = nanmean(MovementMat{current_session}(:,1:3000),1);
         plot(MovementAve(current_session,1:3000), 'r', 'Linewidth', 2); drawnow;
         ylim([-2.5 0])
