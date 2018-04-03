@@ -40,13 +40,17 @@ figure('Position', scrsz);
 
 rewards = zeros(ns,1);
 rxnTime = cell(1,length(used_sessions));
-cs2r = cell(1,length(used_sessions));
 trial_length = cell(1,length(used_sessions));
 
+CueToRew = nan(length(used_sessions),1);
+AveRxnTime = nan(length(used_sessions),1);
 
 for session = 1:ns
     ch = find(strcmp(File{session}.xsg_data.channel_names,'Trial_number'));
     bitcode = parse_behavior_bitcode(File{session}.xsg_data.channels(:,ch));
+    if isempty(bitcode)
+        continue
+    end
     if ~isempty(File{session}.Behavior_Frames)
         current_session = used_sessions(session);
         movements_only = File{session}.lever_force_smooth.*File{session}.lever_active;
@@ -54,6 +58,7 @@ for session = 1:ns
         for trialnumber = 1:length(File{session}.Behavior_Frames)
             if ~isempty(File{session}.Behavior_Frames{trialnumber}.states.reward)
                 rewards(session,1) = rewards(session,1)+1;
+                %%% Collect timing information
                 reward_time = round(File{session}.Frame_Times(round(File{session}.Behavior_Frames{trialnumber}.states.reward(1)))*1000);
                 cue_start = round(File{session}.Frame_Times(round(File{session}.Behavior_Frames{trialnumber}.states.cue(1)))*1000);
                 if trialnumber ~= length(File{session}.Behavior_Frames)         %%% The last behavioral trial must be treated differently, since there is no future cue to use as a reference
@@ -66,10 +71,12 @@ for session = 1:ns
                 File{session}.PastThreshRewTrials{rewards(session,1)} = File{session}.lever_force_smooth(cue_start:next_cue).*File{session}.lever_active(cue_start:next_cue);  %%% Binarizes lever motion for a particular cue period
                 
                 %%%%
-                [File,tlength, rxntime, fault] = ProfileRewardedMovements(File, boundary_frames,session, trialnumber, rewards,cue_start, reward_time, end_trial);
+                %%%%
+                [File,tlength, cs2r(rewards(session,1)), rxntime, fault] = ProfileRewardedMovements(File, boundary_frames,session, trialnumber, rewards,cue_start, reward_time, end_trial);
                 if fault
                     continue
                 end
+                %%%%
                 %%%%
                 trial_length{session}(rewards(session,1),1) = tlength;
                 rxnTime{session}(rewards(session,1),1) = rxntime;
@@ -77,7 +84,7 @@ for session = 1:ns
             end
         end
         AveRxnTime(session,1) = nanmean(rxnTime{session});
-        CueToRew(session,1) = nanmean(cs2r{session});
+        CueToRew(session,1) = nanmean(cs2r);
         trial_length{session}(trial_length{session} == 0) = NaN;
         if ~isempty(trial_length{session})
             range(session,1) = min(trial_length{session});
@@ -133,6 +140,7 @@ for session = 1:ns
             end_trial = start_trial+round((File{session}.DispatcherData.saved_history.ProtocolsSection_parsed_events{trialnumber}.states.state_0(2,1)-t0)*1000); %%% Subtract the starting point of each trial  (t0) on Dispatcher's terms so as to align it with the start point according to the .xsg data
 
             if ~isempty(File{session}.DispatcherData.saved_history.ProtocolsSection_parsed_events{trialnumber}.states.reward) %%% If the trial was rewarded
+                %%% Collect timing information
                 rewards(session,1) = rewards(session,1)+1;
                 reward_time = round(start_trial+(File{session}.DispatcherData.saved_history.ProtocolsSection_parsed_events{trialnumber}.states.reward(1)-t0)*1000);
                 cue_start = round(start_trial+(File{session}.DispatcherData.saved_history.ProtocolsSection_parsed_events{trialnumber}.states.cue(1)-t0)*1000);
@@ -145,19 +153,26 @@ for session = 1:ns
                 end
                 
                 File{session}.movement{rewards(session,1)} = File{session}.lever_force_smooth(cue_start:end_trial);
-                PastThreshRewTrials{rewards(session,1)} = File{session}.lever_force_smooth(cue_start:end_trial).*File{session}.lever_active(cue_start:end_trial);  %%% Binarizes lever motion for a particular cue period
+                File{session}.PastThreshRewTrials{rewards(session,1)} = File{session}.lever_force_smooth(cue_start:end_trial).*File{session}.lever_active(cue_start:end_trial);  %%% Binarizes lever motion for a particular cue period
                 
-                %%%%
-                [File,trial_length(1,session), rxnTime(1,session), fault] = ProfileRewardedMovements(File, boundary_frames,session, trialnumber, rewards,cue_start, reward_time, end_trial);
+
+                [tempfile,tlength,cs2r(rewards(session,1)),rxntime, fault] = ProfileRewardedMovements(File, boundary_frames,session, trialnumber, rewards,cue_start, reward_time, end_trial);
+                File = tempfile;%                 if session == 16 
+%                     disp('hello');
+%                 end
                 if fault
                     continue
                 end
                 %%%%
+                %%%%
+                trial_length{session}(rewards(session,1),1) = tlength;
+                rxnTime{session}(rewards(session,1),1) = rxntime;
+                
             else
             end
         end
-        AveRxnTime(session,1) = nanmean(rxnTime{session});
-        CueToRew(session,1) = nanmean(cs2r{session});
+        AveRxnTime(session,1)= nanmean(rxnTime{session});
+        CueToRew(session,1) = nanmean(cs2r);
         trial_length{session}(trial_length{session} == 0) = NaN;
         try
             range(session,1) = min(trial_length{session});
@@ -165,20 +180,19 @@ for session = 1:ns
             range(session,1) = nan;
         end
         subplot(2,ns,ns+session); hold on;
-        for trialnumber = 1:rewards(session,1) 
+        for rewardedtrial = 1:rewards(session,1) 
             try
-                if ~isempty(RecordedSuccessfulMovement{trialnumber})
-                    MovementMat{current_session}(trialnumber,1:range(session,1)) = RecordedSuccessfulMovement{trialnumber}(1:range(session,1));
+                if ~isempty(File{session}.SuccessfulMovements{rewardedtrial})
+                    MovementMat{current_session}(rewardedtrial,1:range(session,1)) = File{session}.SuccessfulMovements{rewardedtrial}(1:range(session,1));
                     MovementMat{current_session}(MovementMat{current_session}==0) = nan;
-                    plot(MovementMat{current_session}(trialnumber,1:3000), 'k');
-                else
-                    MovementMat{current_session}(trialnumber,1:3001) = nan(1,3001);
-                    disp(['Movement was not tracked for trial ', num2str(trialnumber), ' from session ', num2str(session)])
+                    plot(MovementMat{current_session}(rewardedtrial,1:3000), 'k');
                     drawnow;
+                else
+                    MovementMat{current_session}(rewardedtrial,1:3001) = nan(1,3001);
                 end
             catch
-                MovementMat{current_session}(trialnumber,1:3001) = nan(1,3001);
-                disp(['Movement was not tracked for trial ', num2str(trialnumber), ' from session ', num2str(session)])
+                MovementMat{current_session}(rewardedtrial,1:3001) = nan(1,3001);
+                disp(['Movement was not tracked for trial ', num2str(rewardedtrial), ' from session ', num2str(session)])
             end
         end
         if rewards(session,1) ~= 0
@@ -190,41 +204,41 @@ for session = 1:ns
             MovementAve(current_session,:) = nan(1,3000);
         end
         trials(session,1) = length(File{session}.DispatcherData.saved_history.ProtocolsSection_parsed_events);
-        if rewards(session,1) == 0
-            File{session}.SuccessfulMovements = [];
-            File{session}.PastThreshRewTrials = [];
-        else
-            File{session}.SuccessfulMovements = RecordedSuccessfulMovement;
-            File{session}.PastThreshRewTrials = PastThreshRewTrials;
-        end
+%         if rewards(session,1) == 0
+%             File{session}.SuccessfulMovements = [];
+%             File{session}.PastThreshRewTrials = [];
+%         else
+%             File{session}.SuccessfulMovements = RecordedSuccessfulMovement;
+%             File{session}.PastThreshRewTrials = PastThreshRewTrials;
+%         end
     end
 end
 
 temp = nan(ns,1); 
-temp(used_sessions) = (rewards./trials).*100;
+temp(used_sessions-used_sessions(1)+1) = (rewards./trials).*100;
 temp(temp == 0) = nan;
 rewards = temp;
 
 subplot(2,ns,1:round(ns/4))
-plot(1:ns, rewards(1:end,1))
+plot(used_sessions(1):used_sessions(end), rewards(1:end,1))
 rewards;
 title('Correct Trials')
 xlabel('Session')
 ylabel('Rewards')
 
 temp = nan(ns,1); 
-temp(used_sessions) = AveRxnTime;
+temp(used_sessions-used_sessions(1)+1) = AveRxnTime;
 temp(temp == 0) = nan;
 AveRxnTime = temp;
 
 temp = nan(ns,1); 
-temp(used_sessions) = CueToRew;
+temp(used_sessions-used_sessions(1)+1) = CueToRew;
 temp(temp == 0) = nan;
 CueToRew = temp;
 
 subplot(2,ns,round(ns/4)+1:round(ns/2))
-plot(1:ns, AveRxnTime, 'k'); hold on;
-plot(1:ns, CueToRew, 'r');
+plot(used_sessions(1):used_sessions(end), AveRxnTime, 'k'); hold on;
+plot(used_sessions(1):used_sessions(end), CueToRew, 'r');
 title('Reaction Time')
 xlabel('Session')
 legend({'Cue to movement', 'Cue to reward'})
@@ -307,7 +321,7 @@ a.CuetoReward = CueToRew;
 try
     cd('C:\Users\Komiyama\Desktop\Output Data');
 catch
-    cd('C:\Users\komiyama\Desktop\Giulia\All Behavioral Data')
+    cd('D:\Sara\Output Data')
 end
 eval([animalname{1}, '_SummarizedBehavior = a']);
 save([animalname{1}, '_SummarizedBehavior'], [animalname{1}, '_SummarizedBehavior']);

@@ -1,4 +1,4 @@
-function [File,trial_length, rxnTime, fault] = ProfileRewardedMovements(File, boundary_frames,session, trialnumber, rewards,cue_start, reward_time, end_trial)
+function [File,trial_length, cs2r, rxnTime, fault] = ProfileRewardedMovements(File, boundary_frames,session, trialnumber, rewards,cue_start, reward_time, end_trial)
 
 
 %%% Discard any trials for which the animal is already moving 
@@ -18,10 +18,18 @@ function [File,trial_length, rxnTime, fault] = ProfileRewardedMovements(File, bo
 % end
 
 File{session}.CueStarttoReward{rewards(session,1)} = File{session}.lever_force_smooth(cue_start:reward_time);
-cs2r{session}(rewards(session,1)) = length(File{session}.CueStarttoReward{rewards(session,1)})/1000;
+cs2r = length(File{session}.CueStarttoReward{rewards(session,1)})/1000;
+
 %%% The following are all ways to determine the beginning of
 %%% a movement... select based on what works!
     temp = find(boundary_frames < reward_time);
+    if isempty(temp)
+        File{session}.SuccessfulMovements{rewards(session,1)} = [];
+        trial_length = NaN;
+        rxnTime = NaN;
+        fault = 1;
+        return
+    end
     if boundary_frames(temp(end))<400
         baseLine_start = length(1:boundary_frames(temp(end)));
     else
@@ -42,7 +50,13 @@ if baseLine_start<400
 else
     shift = 0;
 end
-File{session}.SuccessfulMovements{rewards(session,1)} = [nan(shift,1),File{session}.lever_force_smooth(successful_mvmt_start:successful_mvmt_start+3000)];
+if length(File{session}.lever_force_smooth)>(successful_mvmt_start+3000)
+    File{session}.SuccessfulMovements{rewards(session,1)} = [nan(shift,1);File{session}.lever_force_smooth(successful_mvmt_start:successful_mvmt_start+3000)];
+else
+    endshift = 3000-length(File{session}.lever_force_smooth(successful_mvmt_start:end));
+    File{session}.SuccessfulMovements{rewards(session,1)} = [nan(shift,1);File{session}.lever_force_smooth(successful_mvmt_start:end); nan(endshift,1)];
+end
+    
 trial_length = length(File{session}.SuccessfulMovements{rewards(session,1)});
 if trial_length == 0
     dbstop
@@ -51,6 +65,11 @@ try
     rxnTime = find(File{session}.PastThreshRewTrials{rewards(session,1)}, 1, 'first')/1000; %%% Reaction time in seconds (Starts at cue and ends at motion start) (note that this data is downsampled from ephus' 10,000Hz to 1,000Hz by Andy's code)
 catch
     rxnTime = NaN;
+end
+
+if isempty(rxnTime)
+    rxnTime = NaN;
+    disp(['Problem calculating reaction time in session ', num2str(session), ', trial ', num2str(trialnumber)])
 end
 
 fault = 0;

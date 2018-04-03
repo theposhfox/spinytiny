@@ -1,5 +1,12 @@
 function a = NHanaly_LeverPressBehavior(Imaged)
 
+global BehaviorDirectory
+
+if ~isfield(BehaviorDirectory, 'AllBehaviorFolder')
+    BehaviorDirectory.AllBehaviorFolder = uigetdir([], 'No behavioral output folder found; select manually');
+else
+end
+
 %%% Provided that all behaviorally relevant files are IN THE SAME FOLDER,
 %%% the following will analyze them all, and save the output
 
@@ -17,6 +24,10 @@ for i = 1:length(files)
         dispatcher_data = load(files(i).name);
         fname = files(i).name;
     end
+end
+
+if isempty(dispatcher_data)
+    error('No dispatcher data found; make folder of interest your current directory')
 end
     
 
@@ -48,11 +59,9 @@ eval([experiment_name{1}, '_Behavior = a']);
 
 save_name = [experiment_name{1}, '_Behavior'];
 save(save_name, save_name);
-try
-    cd('C:\Users\Komiyama\Desktop\Behavioral Data\All Summarized Behavior Files list')
-catch
-    cd('C:\Users\komiyama\Desktop\Giulia\All Behavioral Data')
-end
+
+cd(BehaviorDirectory.AllBehaviorFolder);
+
 save(save_name, save_name);
 cd(pname);
 

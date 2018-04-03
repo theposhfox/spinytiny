@@ -75,7 +75,7 @@ Scrsz = get(0, 'Screensize');
     txt = uicontrol('Parent', d, 'Style', 'text', 'Position', [10 100 230 30], 'String', 'Select User:');
     btn1 = uicontrol('Parent', d, 'Style', 'pushbutton', 'Position', [35 30 50 25], 'String', 'Nathan', 'Callback', @UserName);
     btn2 = uicontrol('Parent', d, 'Style', 'pushbutton', 'Position', [85.5 30 70 25], 'String', 'Zhongmin', 'Callback', @UserName);
-    btn3 = uicontrol('Parent', d, 'Style', 'pushbutton', 'Position', [156 30 50 25], 'String', 'Giulia', 'Callback', @UserName);
+    btn3 = uicontrol('Parent', d, 'Style', 'pushbutton', 'Position', [156 30 50 25], 'String', 'Sara', 'Callback', @UserName);
     uiwait(d)
     choice = get(d, 'UserData');
     set(handles.figure1, 'UserData', choice);
@@ -427,14 +427,8 @@ h1 = waitbar(0, 'Initializing...');
 user = get(handles.figure1, 'UserData');
 
 if length(listpos) ==1
-    try
-        folder = dir('C:\Users\Komiyama\Desktop\Behavioral Data\All Summarized Behavior Files list');
-        cd('C:\Users\Komiyama\Desktop\Behavioral Data\All Summarized Behavior Files list');
-    catch
-        [fname pname] = uigetfile();
-        folder = dir(pname(1:end-1));
-        cd(pname);
-    end
+    folder = dir('D:\Sara\All Behavioral Data');
+    cd('D:\Sara\All Behavioral Data');
     filestoanalyze = [];
     animal = list{listpos};
     session = get(handles.Session_EditableText, 'String');
