@@ -85,10 +85,9 @@ if strcmpi(Router, 'Initial')
     Dthresh = File.DendriteThreshold;
     for i = 1:DendNum
         counter = 1;
-        dendDataforfit = File.Processed_Dendrite_dFoF(i,:);
-    %     dendDataforfit = File.Compiled_Dendrite_Fluorescence_Measurement;
-        dendDataforfit(dendDataforfit<=Dthresh(i)) = nan;
-        dendDataforfit = File.Compiled_Dendrite_Fluorescence_Measurement;
+%         dendDataforfit = File.Processed_Dendrite_dFoF(i,:);
+%         dendDataforfit(dendDataforfit<=Dthresh(i)) = nan;
+        dendDataforfit = File.Processed_Dendrite_dFoF;
 
 
         for j = File.SpineDendriteGrouping{i}(1):File.SpineDendriteGrouping{i}(end)
@@ -123,9 +122,8 @@ else
         for i = 1:DendNum
             counter = 1;
             dendDataforfit = File.Processed_Dendrite_dFoF(i,:);
-        %     dendDataforfit = File.Compiled_Dendrite_Fluorescence_Measurement;
             dendDataforfit(dendDataforfit<=Dthresh(i)) = nan;
-            dendDataforfit = File.Compiled_Dendrite_Fluorescence_Measurement;
+%             dendDataforfit = File.Compiled_Dendrite_Fluorescence_Measurement;
 
 
             for j = File.SpineDendriteGrouping{i}(1):File.SpineDendriteGrouping{i}(end)

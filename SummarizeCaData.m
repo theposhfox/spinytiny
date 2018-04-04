@@ -105,7 +105,8 @@ else
             eval(['File =', temp{1}, ';']);
         end
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    else 
+    else
+        disp('COULD NOT LINK TO TARGET DIRECTORY; PULLING FROM PREVIOUS ANALYSIS!!')
         cd('C:\Users\Komiyama\Desktop\ActivitySummary_UsingRawData')
         files = dir(cd);
         for i = 1:length(files)
