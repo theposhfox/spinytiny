@@ -742,6 +742,9 @@ if Dendrite_PolyLines == 1
     set(handles.SpineROI_ToggleButton, 'Value', 0);
     set(handles.NearbySpine_ToggleButton, 'Value', 0);
         DendriteNum = inputdlg({'Dendrite number:'}, 'Input', 1, {num2str(CurrentDendNum)});
+        if isempty(DendriteNum)
+            return
+        end
     DendriteNum = str2num(DendriteNum{1});
     set(gui_CaImageViewer.figure.handles.output, 'WindowButtonDownFcn', {@DrawPolyLines, DendriteNum});
 end

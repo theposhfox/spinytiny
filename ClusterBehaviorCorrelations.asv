@@ -699,7 +699,6 @@ if isempty(strfind(inputname(1), 'SpineCorrelationTimecourse'))
 
 
                 DiffDendSameCell = [];
-                spinesonthiscell = [];
                 for sc = 1:length(samecell)
                     if ~isempty(samecell{sc})
                         spinesonthiscell{sc} = cell2mat(cellfun(@(x) cell2mat(varargin{i}.SpineDendriteGrouping(x)), samecell, 'uni', false));
@@ -3825,8 +3824,6 @@ else
         MeanCorrelationBetweenAlloDendriticMovementSpines = nan(length(varargin),14);
         CorrelationBetweenSameCellDiffBranchMovementSpines = cell(1,14);
         MeanCorrelationBetweenSameCellDiffBranchMovementSpines = nan(length(varargin),14);
-        CorrelationBetweenSameCellDiffBranchSuccessSpines = cell(1,14);
-        MeanCorrelationBetweenSameCellDiffBranchSuccessSpines = nan(length(varargin),14);
     CorrelationBetweenMovementSpinesMovePeriods = cell(1,14);
     CorrelationBetweenMovementSpinesStillPeriods = cell(1,14);
     CorrelationBetweenSuccessSpines = cell(1,14);
@@ -4166,9 +4163,6 @@ else
         AllDistancesBetweenSameCellDiffBranchMovementSpines(1:14) = cellfun(@(x,y) [x,y], AllDistancesBetweenSameCellDiffBranchMovementSpines, varargin{i}.DistanceBetweenBranchMovementSpines, 'Uni', false);
         CorrelationBetweenSameCellDiffBranchMovementSpines(1:14) = cellfun(@(x,y) [x,y], CorrelationBetweenSameCellDiffBranchMovementSpines, varargin{i}.CorrelationBetweenBranchMovementSpines, 'Uni', false);
             MeanCorrelationBetweenSameCellDiffBranchMovementSpines(i,1:14) = cell2mat(cellfun(@nanmean, varargin{i}.CorrelationBetweenBranchMovementSpines, 'Uni', false));
-        AllDistancesBetweenSameCellDiffBranchSuccessSpines(1:14) = cellfun(@(x,y) [x,y], AllDistancesBetweenSameCellDiffBranchSuccessSpines, varargin{i}.DistanceBetweenBranchSuccessSpines, 'Uni', false);
-        CorrelationBetweenSameCellDiffBranchSuccessSpines(1:14) = cellfun(@(x,y) [x,y], CorrelationBetweenSameCellDiffBranchSuccessSpines, varargin{i}.CorrelationBetweenBranchSuccessSpines, 'Uni', false);
-            MeanCorrelationBetweenSameCellDiffBranchSuccessSpines(i,1:14) = cell2mat(cellfun(@nanmean, varargin{i}.CorrelationBetweenBranchSuccessSpines, 'Uni', false));
         DistanceBetweenPreSuccessSpines(i,1:14) = varargin{i}.MeanDistanceBetweenPreSuccessSpines;
         DistanceBetweenSuccessSpines(i,1:14) = varargin{i}.MeanDistanceBetweenSuccessSpines;
         DistanceBetweenMovementDuringCueSpines(i,1:14) = varargin{i}.MeanDistanceBetweenMovementDuringCueSpines;
@@ -4428,9 +4422,7 @@ else
         a.AllDistancesBetweenSameCellDiffBranchMovementSpines = AllDistancesBetweenSameCellDiffBranchMovementSpines;
         a.CorrelationBetweenSameCellDiffBranchMovementSpines = CorrelationBetweenSameCellDiffBranchMovementSpines;
         a.MeanCorrelationBetweenSameCellDiffBranchMovementSpines = MeanCorrelationBetweenSameCellDiffBranchMovementSpines;
-        a.AllDistancesBetweenSameCellDiffBranchSuccessSpines = AllDistancesBetweenSameCellDiffBranchSuccessSpines;
-        a.CorrelationBetweenSameCellDiffBranchSuccessSpines = CorrelationBetweenSameCellDiffBranchSuccessSpines;
-        a.MeanCorrelationbetweenSameCellDiffBranchSuccessSpines = MeanCorrelationBetweenSameCellDiffBranchSuccessSpines;
+%         a.AllDistancesBetweenSameCellDiffBranchSuccessSpines
 
 
         a.MeanCorrelationBetweenAlloDendriticMovementSpines = MeanCorrelationBetweenAlloDendriticMovementSpines;
@@ -5066,8 +5058,8 @@ else
     AlloDendDistanceUmbrellaDataChoice = AllDistancesBetweenAlloDendriticSpines; 
     AlloDendCorrelationUmbrellaDataChoice = CorrelationBetweenAlloDendriticSpines; 
     
-    AlloDendDistanceStatDataChoice = AllDistancesBetweenSameCellDiffBranchSuccessSpines; 
-    AlloDendCorrelationStatDataChoice = CorrelationBetweenSameCellDiffBranchSuccessSpines; 
+    AlloDendDistanceStatDataChoice = AllDistancesBetweenSameCellDiffBranchMovementSpines; 
+    AlloDendCorrelationStatDataChoice = CorrelationBetweenSameCellDiffBranchMovementSpines; 
 
 %     AlloDendDistanceStatDataChoice = AllDistancesBetweenAlloDendriticMovementSpines;
 %     AlloDendCorrelationStatDataChoice = CorrelationBetweenAllodendriticMovementSpines;

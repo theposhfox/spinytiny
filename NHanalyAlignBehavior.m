@@ -363,21 +363,23 @@ else
 end
 
 for s = 1:length(Fluor.dF_over_F)
+    outcome_pos = max(Fluor.Processed_dFoF(s,:));
+    OverallSpine_Data(1:im_numframes,s) = FramedOverallSpineActivity(s,:);   %%% Used binarized spine data prior to excluding periods of dendritic activity
+    spine_Data(1:im_numframes,s) = FramedSynapseOnlyBinarized(s,:);
+    spine_Data_DendriteSubtracted(1:im_numframes,s) = FramedSynapseOnlyBinarized_DendriteSubtracted(s,:);
+    causal_Data(1:im_numframes,s) = FramedCausalBinarized(s,:);
+    
     if s>60
         continue
     end
+    
     col1 = mod(s-1, length(colorj))+1;
     h1 = subplot(10,6,s); hold on;
     imagetime = LastImagingFrameTime-imstart;
     plot([0:(imagetime/numframes):(imagetime-(imagetime/numframes))], FramedProcessed_dFoF(s,:), 'color', colorj{col1})
     xlabel('Time (min)');
     ylabel('\DeltaF_S_p_i_n_e/F_0');
-    
-    outcome_pos = max(Fluor.Processed_dFoF(s,:));
-    OverallSpine_Data(1:im_numframes,s) = FramedOverallSpineActivity(s,:);   %%% Used binarized spine data prior to excluding periods of dendritic activity
-    spine_Data(1:im_numframes,s) = FramedSynapseOnlyBinarized(s,:);
-    spine_Data_DendriteSubtracted(1:im_numframes,s) = FramedSynapseOnlyBinarized_DendriteSubtracted(s,:);
-    causal_Data(1:im_numframes,s) = FramedCausalBinarized(s,:);
+   
     
     for i = 1:numberofTrials
         if trialstouse(i)

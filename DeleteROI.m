@@ -11,6 +11,7 @@ if strcmp(clicktype, 'alt')
     delete(findobj('Tag', ROI_tag));
     oldspines = gui_CaImageViewer.ROI;
     oldsurrounds = gui_CaImageViewer.BackgroundROI;
+        oldsurrounds(oldsurrounds==0) = NaN;
     oldspinetext = gui_CaImageViewer.ROItext;
     delete(findobj('Tag', 'ROI confine'));
     AllROIs = flipud(findobj('Type', 'rectangle', '-and', '-not', {'-regexp', 'Tag', 'Dendrite'}, '-and', '-not', {'-regexp', 'Tag', 'Background'}));         %%% ***** NOTE: this captures the ROIs in reverse order (i.e. top--> bottom is arranged as last-->first

@@ -48,6 +48,7 @@ trial_length = cell(1,length(used_sessions));
 for session = 1:ns
     if ~isempty(File{session}.Behavior_Frames)
         current_session = used_sessions(session);
+        trials(session,1) = length(File{session}.Behavior_Frames);
         movements_only = File{session}.lever_force_smooth.*File{session}.lever_active;
         boundary_frames = find(diff([Inf; File{session}.lever_active;Inf])~=0);
         for trialnumber = 1:length(File{session}.Behavior_Frames)
@@ -79,11 +80,11 @@ for session = 1:ns
             else
             end
         end
-        trials(session,1) = length(File{session}.Behavior_Frames);
     else  %%% This section is for using data that is not aligned to imaging frames
         ch = find(strcmp(File{session}.xsg_data.channel_names,'Trial_number'));
         bitcode = parse_behavior_bitcode(File{session}.xsg_data.channels(:,ch));
         current_session = used_sessions(session);
+        trials(session,1) = File{session}.DispatcherData.saved.ProtocolsSection_n_done_trials;
         if isempty(bitcode)
             disp(['Could not extract bitcode information from session ', num2str(current_session)])
         continue
@@ -139,7 +140,6 @@ for session = 1:ns
             else
             end
         end
-        trials(session,1) = File{i}.DispatcherData.saved.ProtocolsSection_n_done_trials;
     end
     AveRxnTime(session,1) = nanmean(rxnTime{session});
     AveCueToRew(session,1) = nanmean(CuetoRew{session});
