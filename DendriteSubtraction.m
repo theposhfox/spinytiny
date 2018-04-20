@@ -162,7 +162,7 @@ File.Alphas = alpha;
 UseMinAlpha = 1;
 File.UsedMinAlpha = UseMinAlpha;
 
-MinAlpha = 0.5;
+MinAlpha = 1;
 File.MinAlpha = MinAlpha;
 
 for i = 1:DendNum
@@ -284,7 +284,7 @@ if strcmp(Router, 'Redo')
         plot(File.Dendrite_Binarized(DendriteChoice, :)/2-2, 'm', 'Linewidth', 2)
         plot(File.Processed_dFoF_DendriteSubtracted(SpineNo,:), 'Color', [0.6 0.6 0.6], 'Linewidth', 2)
         plot(File.SynapseOnlyBinarized_DendriteSubtracted(SpineNo, :)/2, 'g', 'Linewidth', 2)
-        title(['Processed data using calc alpha of ', num2str(alpha{DendriteChoice}(2,SpineNo)), ' and a min alpha of ', num2str(MinAlpha)])
+        title(['Processed data using calc alpha of ', num2str(alpha{DendriteChoice}(2,find(File.SpineDendriteGrouping{DendriteChoice}==SpineNo))), ' and a min alpha of ', num2str(MinAlpha)])
         linkaxes([h1,h2], 'x')
 
         legend({'Processed Spine Trace', 'Processed Dend Trace', 'Binarized Spine', 'Binarized Dend', 'Dend-subtracted spine trace', 'Binarized dend-sub'})
