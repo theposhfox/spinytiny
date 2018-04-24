@@ -75,25 +75,15 @@ if strcmpi(load_type, 'Compressed')
     timecourse_image_number = numel(CaImage_File_info);
     steps = 5;
 elseif strcmpi(load_type, 'Full')
-    if ~isempty(strfind(fname, 'SC'))
-        a = regexp(fname, ['\w+00[0]*\d+_\d+'], 'match');
-        parsefile = a{1}(1:end-4);
-        animal = regexp(fname, 'SC\d+', 'match');
-        animal = animal{1};
-        date = regexp(filename, '\d{4}', 'match');
-        date = ['16', date{1}];
-        altname = [animal, '_', date, '_', '001_001_summed_50'];
-        fname = [pname, parsefile];
-        CaImage_File_info = imfinfo([fname,'_001_corrected.tif']);   
-    else
-        a = regexp(fname, '\w+00[0]*\d+_\d+', 'match');
-        parsefile = a{1}(1:end-4);
-        animal = regexp(fname, '[A-Z]{2,3}0*[0-9]*', 'match');
-        animal = animal{1};
-        fname = [pname,parsefile];
-        CaImage_File_info = imfinfo([fname,'_001_corrected.tif']);
-    end
-    
+    a = regexp(fname, '\w+00[0]*\d+_\d+', 'match');
+    feat_sep = regexp(a{1}, '_');           %%% File identifiers are separated by underscores
+    filegeneral = a{1}(1:feat_sep(end-1)-1);
+    firstimfile = a{1}(1:feat_sep(end)-1);    %%% Use the last underscore as an indicator of where the filename is separated for frame bin numbers (e.g. NH002(animal)_160316(date)_001(acquisition/experiment)_001(frame bin))
+    animal = regexp(fname, '[A-Z]{2,3}0*[0-9]*', 'match');
+    animal = animal{1};
+    fname = [pname,filegeneral];
+    numberofzerosusedinnaming = length(regexp(a{1}(feat_sep(end):end), '0'));
+    CaImage_File_info = imfinfo([pname,firstimfile,'_',repmat('0', 1,numberofzerosusedinnaming),'1_corrected.tif']);
     D = dir(pname);
     if isempty(D)
         if strcmp(pname(end), filesep)
@@ -103,9 +93,14 @@ elseif strcmpi(load_type, 'Full')
     end
 
     timecourse_image_number = 0;
+    acquisition_step = [];
+    frame_bin_count = [];
     for i = 1:length(D)
         if ~isempty(strfind(D(i).name, 'corrected.tif'))
             timecourse_image_number = timecourse_image_number + 1;
+            feat_step = regexp(D(i).name, '_');
+            acquisition_step = [acquisition_step; D(i).name(feat_step(2)+1:feat_step(3)-1)];
+            frame_bin_count = [frame_bin_count; D(i).name(feat_step(3)+1:feat_step(4)-1)];
         else
         end
     end
@@ -431,12 +426,14 @@ if ~isempty(existing_ROI)
                 if actual_image_counter>=imseriesend
                     break
                 end
-                imnum = sprintf('%03d',j);
+%                 imnum = sprintf(['%0', num2str(numberofzerosusedinnaming+1), 'd'], j);
+                imnum = frame_bin_count(j,:);
+                filepattern = [fname, '_',acquisition_step(j,:),'_',imnum, '_corrected.tif'];
                 if j == 1 || j ==2 || j == timecourse_image_number  %%% Acquisition 1 is easily overwritten by an accidental double-click of the 'grab' button, and can therefore be a different length; thus, find the length of the first file, then establish the standard length of acqusition two (all others except the final should be this length).
-                    CaImage_File_info = imfinfo([fname,'_', imnum, '_corrected.tif']);
+                    CaImage_File_info = imfinfo(filepattern);
                 else
                 end
-                all_images = read_tiff([fname, '_', imnum, '_corrected.tif'],CaImage_File_info);
+                all_images = read_tiff(filepattern,CaImage_File_info);
 
                 for k = 1:length(CaImage_File_info)
                     

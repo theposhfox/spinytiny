@@ -61,7 +61,7 @@ if isstruct(File)
     folder = folder{1};
     Date = regexp(File.Filename, '_\d+_', 'match');
     Date = Date{1};
-%     cd(['Z:\People\Nathan\Data\', folder, Date(2:end-1), '\summed'])
+    cd(['Z:\People\Nathan\Data\', folder, '\16', Date(2:end-1), '\summed'])
 else
     experimenter = regexp(File, '[ABCDEFGHIJKLMNOPQRSTUVWXYZ]{2}', 'match');
     experimenter = experimenter{1};
@@ -72,7 +72,7 @@ else
     if ispc
         filestart = ['Z:', filesep, 'People'];
     elseif isunix
-        filestart = [filesep,'usr',filesep,'local',filesep,'lab', filesep, 'People'];
+        filestart = ['\usr\local\lab', filesep, 'People'];
     else
         error('Operating system not recognized as PC or Unix; terminating');
     end
@@ -191,9 +191,9 @@ else
     Dendthreshmultiplier = 2*ones(1,File.NumberofDendrites);
     DendSubthreshmultiplier = ones(1,length(File.dF_over_F));
     Dendvalueslimitforbaseline = 2;
-    Dendvalueslimitfornoise = spinevalueslimitfornoise;
+    Dendvalueslimitfornoise = 2;
     dendbaselinesmoothwindow = 60;
-    dendsmoothwindow = spinesmoothwindow;
+    dendsmoothwindow = 30;
     alphaminimum = 0.5;
 
     polypercentrequirement = 0.75;

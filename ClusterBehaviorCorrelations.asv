@@ -5461,7 +5461,7 @@ else
         Correlations_fraction(isnan(Correlations_fraction))= 0;
         plot(sortedDistances,cumsum(Correlations_fraction),'color',color, 'LineWidth', 3)
         plot(sortedDistances(2:end),(smooth(diff(cumsum(Correlations_fraction)),1000)-smooth(diff(cumsum(nanmean(sortedshuffled,2)))',1000))/max(smooth(diff(cumsum(Correlations_fraction)),1000)-smooth(diff(cumsum(nanmean(sortedshuffled,2)))',1000)), 'color', green, 'Linewidth', 2)
-        plot(sortedDistances, cumsum(Correlations_fraction)-cumsum(nanmean(sortedshuffled,2))', 'Color', lpurple, 'Linewidth', 2)
+        plot(sortedDistances, cumsum(Correlations_fraction)-cumsum(nanmean(sortedshuffled,2))', 'Color', lpurple, 'Linewdith', 2)
         ylabel('Cumulative Correlation', 'Fontsize', 14)
         xlabel('Distance (\mum)')
         title(['Session(s) ', sessiontag], 'Fontsize', 14)

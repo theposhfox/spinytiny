@@ -21,61 +21,13 @@ function [Threshold, DriftBaseline, ProcessedData] = AnalyzeTrace(Data, Options)
     raw = Data;
     
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    
-    %%% Smoothing
-    smoothed = smooth(raw,smoothwindow);     
-        smoothed = reshape(smoothed, 1, length(smoothed));
-        %%% Remove large negative values 
-        if traceoption ==4
-            smoothed(smoothed<(median(smoothed)-nanstd(smoothed))) = median(smoothed)-nanstd(smoothed);   %%% If using dendrite-subtracted data, it's possible that there are very large negative events, which are artificial, and should be reduced to ~the level of noise
-        end
-        smoothed_forbaseline = smoothed;
-    rawmed = nanmedian(smoothed);
-    rawspread = nanstd(smoothed);
-    
-    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     %%%%%%%%%%% Baseline %%%%%%%%%%%%%%
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    
-    %%% Estimate baseline by performing x successful rounds of capping off large and small values,
-    %%% then re-calculating the median 
-    
-%     roundstodo = 50;
-%     roundnum = 1;    
-%     
-%     while roundnum<=roundstodo 
-%         smoothed_forbaseline(smoothed_forbaseline>rawmed+valueslimitforbaseline*rawspread) = rawmed+valueslimitforbaseline*rawspread;      %%% Cap off large and small values to pinch the data towards the true baseline
-%         smoothed_forbaseline(smoothed_forbaseline<rawmed-valueslimitforbaseline*rawspread) = rawmed-valueslimitforbaseline*rawspread;      %%%
-%             rawspread = nanstd(smoothed_forbaseline);
-%             rawmed = nanmedian(smoothed_forbaseline);
-%         roundnum = roundnum+1;
-%     end
-% 
-%     DriftBaseline = reshape(smooth(smoothed_forbaseline,driftbaselinesmoothwindow), 1, length(smoothed));
-%     
-%     driftsub = (smoothed-DriftBaseline)+nanmedian(DriftBaseline);
-%     
-%     roundnum = 1;    
-%     
-%     smoothed_forbaseline = driftsub;
-%     rawmed = nanmedian(driftsub);
-%     rawspread = nanstd(driftsub);
-% 
-%     while roundnum<=roundstodo 
-%         smoothed_forbaseline(smoothed_forbaseline>rawmed+valueslimitforbaseline*rawspread) = rawmed+valueslimitforbaseline*rawspread;      %%% Cap off large and small values to pinch the data towards the true baseline
-%         smoothed_forbaseline(smoothed_forbaseline<rawmed-valueslimitforbaseline*rawspread) = rawmed-valueslimitforbaseline*rawspread;      %%%
-%             rawspread = nanstd(smoothed_forbaseline);
-%             rawmed = nanmedian(smoothed_forbaseline);
-%         roundnum = roundnum+1;
-%     end
-
-%     truebaseline = smooth(smoothed_forbaseline, baselinesmoothwindow)';
-
 
     starterdata = raw;
 
     %%% Kernel Density Estimation (Aki's method) %%%
-    truebaseline = baseline_kde(starterdata',50,50,20);    %%% inputs = downsample ratio, window size, step
+    truebaseline = baseline_kde(starterdata',50,30,20);    %%% inputs = downsample ratio, window size, step
     DriftBaseline = truebaseline;
     
 
@@ -97,14 +49,14 @@ function [Threshold, DriftBaseline, ProcessedData] = AnalyzeTrace(Data, Options)
     
     if traceoption == 1 
         if nanmedian(truebaseline)~= 0
-            dFoF = blsub/nanmedian(truebaseline);
+            dFoF = blsub./truebaseline';
 %             blsub(blsub<0) = 0;
             rawmed = nanmedian(dFoF);
             rawspread = nanstd(dFoF);
         else
             blsub = blsub+1;
             truebaseline = truebaseline+1;
-            dFoF = blsub/nanmedian(truebaseline);
+            dFoF = blsub./truebaseline';
 %             blsub(blsub<0) = 0;
             rawmed = nanmedian(dFoF);
             rawspread = nanstd(dFoF);
@@ -112,8 +64,10 @@ function [Threshold, DriftBaseline, ProcessedData] = AnalyzeTrace(Data, Options)
         
             %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
             %%% Final variable
+            
+            filterorder = 5;
     
-             processed_dFoF = smooth(dFoF, smoothwindow);
+             processed_dFoF = sgolayfilt(dFoF,filterorder,smoothwindow+1);
 
             %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
             
@@ -156,20 +110,20 @@ function [Threshold, DriftBaseline, ProcessedData] = AnalyzeTrace(Data, Options)
     else
         switch BeingAnalyzed
             case 'Spine';
-                if spread < 0.5
-                    thresh = 0.5;
+                if spread < 0.75
+                    thresh = 0.75;
                 else
                     thresh = spread;
                 end
             case 'Poly';
-                if spread < 0.5
-                    thresh = 0.5;
+                if spread < 0.75
+                    thresh = 0.75;
                 else
                     thresh = spread;
                 end
             case 'Dendrite'
-                if spread < 0.5
-                    thresh = 0.5;
+                if spread < 0.75
+                    thresh = 0.75;
                 else
                     thresh = spread;
                 end

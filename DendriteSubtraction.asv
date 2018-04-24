@@ -162,9 +162,7 @@ for i = 1:DendNum
                 betatouse = alpha{i}(1,counter);
             end
             denddatatouse = File.Processed_Dendrite_dFoF(i,:); denddatatouse(denddatatouse<0) = 0;
-            signaltosubtract = betatouse+alphatouse*denddatatouse;
-            File.Processed_dFoF_DendriteSubtracted(j,:) = File.Processed_dFoF(j,:)-(signaltosubtract);   %%% Subtract all individual points  
-            File.Processed_dFoF_DendriteSubtracted(j,File.Processed_dFoF_DendriteSubtracted(j,:)<=0)=0;
+            File.Processed_dFoF_DendriteSubtracted(j,:) = File.Processed_dFoF(j,:)-(betatouse+alphatouse*denddatatouse);   %%% Subtract all individual points   
             counter = counter+1;
         end
     else
@@ -172,11 +170,9 @@ for i = 1:DendNum
             if alpha{i}(2,counter) == 0
                 disp(['Spine ', num2str(j), ' was not fit properly'])
             end
-            alphatouse = alpha{i}(2,counter);
-            betatouse = alpha{i}(1,counter);
             denddatatouse = File.Processed_Dendrite_dFoF(i,:); denddatatouse(denddatatouse<0) = 0;
-            signaltosubtract = betatouse+alphatouse*denddatatouse;
-            File.Processed_dFoF_DendriteSubtracted(j,:) = File.Processed_dFoF(j,:)-(signaltosubtract);   %%% Subtract all individual points  %             processed_dFoF_Dendsubtracted(j,:) = processed_dFoF(j,:)-(alpha{i}(2,counter)*floored_Dend(i,:));%.*Dglobal(i,:);           %%% Use Dglobal to only subtract times when the ENTIRE dendrite is active
+            File.Processed_dFoF_DendriteSubtracted(j,:) = File.Processed_dFoF(j,:)-(alpha{i}(2,counter)*denddatatouse);   %%% Subtracted all individual points   
+%             processed_dFoF_Dendsubtracted(j,:) = processed_dFoF(j,:)-(alpha{i}(2,counter)*floored_Dend(i,:));%.*Dglobal(i,:);           %%% Use Dglobal to only subtract times when the ENTIRE dendrite is active
             counter = counter + 1;
         end
     end

@@ -22,7 +22,7 @@ function varargout = CaImageViewer(varargin)
 
 % Edit the above text to modify the response to help CaImageViewer
 
-% Last Modified by GUIDE v2.5 28-Mar-2018 14:16:41
+% Last Modified by GUIDE v2.5 20-Apr-2018 14:01:21
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -689,7 +689,7 @@ function ClearROIS_PushButton_Callback(hObject, eventdata, handles)
 % handles    structure with handles and user data (see GUIDATA)
 
 
-ClearROIs
+ClearROIs('Query')
 
 
 % --- Executes on button press in NearbySpine_ToggleButton.
@@ -941,81 +941,94 @@ end
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 Scrsz = get(0, 'Screensize');
+User = get(gui_CaImageViewer.figure.handles.figure1, 'UserData');
 
-try
-    count = 1;
-    roifile = [];
-    if gui_CaImageViewer.NewSpineAnalysis
-        for i = 1:length(folder)
-            match = regexp(folder(i).name, 'NewSpineAnalysisROIs');
-            if ~isempty(match)
-                roifile{count} = folder(i).name;
-                count = count+1;
-            end
-        end
-    else
-        for i = 1:length(folder)
-            match = regexp(folder(i).name, [experiment, '_SavedROIs']);
-            if ~isempty(match)
-                roifile{count} = folder(i).name;
-                count = count+1;
-            end
+count = 1;
+roifile = [];
+found = 0;
+if gui_CaImageViewer.NewSpineAnalysis
+    for i = 1:length(folder)
+        match = regexp(folder(i).name, 'NewSpineAnalysisROIs');
+        if ~isempty(match)
+            roifile{count} = folder(i).name;
+            count = count+1;
+            found = 1;
         end
     end
-
-    if length(roifile)>1
-        for i = 1:length(roifile)
-            temp = regexp(roifile{i}, 'DrawnBy', 'split');
-            if length(temp)>1           
-                useroption{i} = temp{2}(1:end-4);
-            else
-                useroption{i} = 'undefined';    %%% If the file doesn't contain the "DrawnBy" tag, then it will only return 1 answer, and therefore was made prior to qualifying the file according to username
-            end
-        end
-        d = dialog('Position', [(Scrsz(3)/2)-125 Scrsz(4)/2-75 250 150], 'Name', 'Found multiple ROI files...');
-        txt = uicontrol('Parent', d, 'Style', 'text', 'Position', [10 100 230 30], 'String', 'Load ROIs drawn by whom?');
-        for j = 1:length(roifile)
-            uicontrol('Parent', d, 'Style', 'pushbutton', 'Position', [30+((j-1)*55) 30 50 25], 'String', useroption{j}, 'Callback', @DlgChoice)
-        end
-        uiwait(d)
-        choice = get(d, 'UserData');
-        delete(d);
-        roifilename = [experiment, '_SavedROIs_DrawnBy', choice];
-    else
-        roifilename = roifile{1}(1:end-4);
-    end
-        load(roifilename)
-        savedFile = roifilename;
-        disp('Successfully pulled ROIs from saved ROI file')
-catch
-    try
-        load(roifilename)
-        savedFile = roifilename;
-        disp('Successfully pulled ROIs from saved ROI file')
-    catch
-        if ispc
-            cd(['Z:\People\Nathan\Data\', animal])
-        else
-            cd(['/usr/local/lab/People/Nathan/Data/', animal])
-        end
-        try
-            load([file, '_Analyzed'])
-            savedFile = [file, '_Analyzed'];
-            disp('Couldn''t find designated ROI file, but could pull ROIs from analyzed file')
-        catch
-            try
-                [fname pname] = uigetfile();
-                file = fname(1:end-4);
-                savedFile = file;
-                cd(pname)
-                load(file)
-            catch
-                disp('This file has not yet been analyzed, so no ROIs are saved...')
-                return
-            end
+else
+    for i = 1:length(folder)
+        match = regexp(folder(i).name, [experiment, '_SavedROIs_DrawnBy', User]);
+        if ~isempty(match)
+            roifile{count} = folder(i).name;
+            count = count+1;
+            found = 1;
         end
     end
 end
+
+if ~found
+    boxwidth = 250;
+    d = dialog('Position', [(Scrsz(3)/2)-125 Scrsz(4)/2-75 boxwidth 150], 'Name', 'No user-specific ROI file');
+    txt = uicontrol('Parent', d, 'Style', 'text', 'Position', [10 100 230 30], 'String', 'No user-specific ROI file... manually select or automatically find one?');
+    buttonwidth = 50;
+    uicontrol('Parent', d, 'Style', 'pushbutton', 'Position', [boxwidth/2-buttonwidth-10 30 buttonwidth 25], 'String', 'Manual', 'Callback', @DlgChoice)
+    uicontrol('Parent', d, 'Style', 'pushbutton', 'Position', [boxwidth/2+10 30 buttonwidth 25], 'String', 'Auto', 'Callback', @DlgChoice)
+    uiwait(d)
+    choice = get(d,'UserData');
+    delete(d);
+    if strcmpi(choice, 'Manual')
+        [roifilename, roipath] = uigetfile();
+        cd(roipath)
+    elseif strcmpi(choice, 'Auto')
+        count = 1;
+        roifile = [];
+        if gui_CaImageViewer.NewSpineAnalysis
+            for i = 1:length(folder)
+                match = regexp(folder(i).name, 'NewSpineAnalysisROIs');
+                if ~isempty(match)
+                    roifile{count} = folder(i).name;
+                    count = count+1;
+                end
+            end
+        else
+            for i = 1:length(folder)
+                match = regexp(folder(i).name, [experiment, '_SavedROIs']);
+                if ~isempty(match)
+                    roifile{count} = folder(i).name;
+                    count = count+1;
+                end
+            end
+        end
+        if length(roifile)>1
+            for i = 1:length(roifile)
+                temp = regexp(roifile{i}, 'DrawnBy', 'split');
+                if length(temp)>1           
+                    useroption{i} = temp{2}(1:end-4);
+                else
+                    useroption{i} = 'undefined';    %%% If the file doesn't contain the "DrawnBy" tag, then it will only return 1 answer, and therefore was made prior to qualifying the file according to username
+                end
+            end
+            d = dialog('Position', [(Scrsz(3)/2)-125 Scrsz(4)/2-75 250 150], 'Name', 'Found multiple ROI files...');
+            txt = uicontrol('Parent', d, 'Style', 'text', 'Position', [10 100 230 30], 'String', 'Load ROIs drawn by whom?');
+            for j = 1:length(roifile)
+                uicontrol('Parent', d, 'Style', 'pushbutton', 'Position', [30+((j-1)*55) 30 50 25], 'String', useroption{j}, 'Callback', @DlgChoice)
+            end
+            uiwait(d)
+            choice = get(d, 'UserData');
+            delete(d);
+            roifilename = [experiment, '_SavedROIs_DrawnBy', choice];
+        else
+            roifilename = roifile{1}(1:end-4);
+        end
+    end
+else
+    roifilename = roifile{1}(1:end-4);
+end
+
+load(roifilename)
+savedFile = roifilename;
+disp('Successfully pulled ROIs from saved ROI file')
+cd(gui_CaImageViewer.save_directory)
 
 try
     eval(['savedFile =', savedFile]);
@@ -2033,3 +2046,35 @@ function Raw_DropDown_Callback(hObject, eventdata, handles)
 % handles    structure with handles and user data (see GUIDATA)
 
 
+% --------------------------------------------------------------------
+function ShiftROIsBetweenSessions_DropDown_Callback(hObject, eventdata, handles)
+% hObject    handle to ShiftROIsBetweenSessions_DropDown (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+warpmatrix = [1.0056,-0.0555,76.16581; 0.0575,1.0269,-23.3092];
+
+global gui_CaImageViewer
+
+ROIs_original = round(cell2mat(cellfun(@(x) x(1:4), get(gui_CaImageViewer.ROI, 'Position'),'uni', false)));
+
+ClearROIs('AssumeAll')
+
+imsize = size(gui_CaImageViewer.ch1image,1);
+c1 = uicontextmenu;
+
+uimenu(c1, 'Label', 'Add Surround Background', 'Callback', @ModifyROI);
+uimenu(c1, 'Label', 'Remove Surround Background', 'Callback', @ModifyROI);
+uimenu(c1, 'Label', 'Set as eliminated', 'Callback', @CategorizeSpines);
+uimenu(c1, 'Label', 'Set as active', 'Callback', @CategorizeSpines);
+
+for i = 1:length(ROIs_original)
+    tempim = zeros(imsize,imsize);
+    tempim(ROIs_original(i,1), ROIs_original(i,2)) = 1;
+    transpos = spatial_interp(double(tempim'), warpmatrix, 'linear', 'affine', [1:imsize], [1:imsize]);
+    stats = regionprops(logical(transpos));
+    newpos(i,1:2) = stats.Centroid;
+    ROInum = i-1;
+    gui_CaImageViewer.ROI(i) = rectangle('Position', [round(newpos(i,1)),round(newpos(i,2)),ROIs_original(i,3), ROIs_original(i,4)], 'EdgeColor', [0.2 0.4 0.9], 'Curvature', [1 1],'Tag', ['ROI', num2str(ROInum)], 'ButtonDownFcn', {@DragROI, ROInum, 'HomeWindow'}, 'Linewidth', 1, 'UIContextMenu', c1);
+    gui_CaImageViewer.ROItext(i) = text(round(newpos(i,1))-6, round(newpos(i,2))-4, num2str(i-1), 'color', 'white', 'Tag', ['ROI', num2str(ROInum), ' Text'],'ButtonDownFcn', 'DeleteROI', 'Fontsize', 6);
+end
