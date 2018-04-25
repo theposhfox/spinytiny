@@ -10,14 +10,16 @@ if length(selectedaxes)>2
     selectedaxes = selectedaxes(1:2);
 end
 
+selectedaxes = flipud(selectedaxes);
+
 %%% Pull images from selected axes
 for i = 1:length(selectedaxes)
     im{i} = uint16(get(get(selectedaxes(i), 'Children'), 'CData'));
 end
 
 %%%%%%%%%%%%%%%%%%%%%%%
-centeredimage = im{1};
-mobileimage = im{2};
+centeredimage = im{2};
+mobileimage = im{1};
 %%%%%%%%%%%%%%%%%%%%%%%
 
 alignchoice = get(findobj('Tag', 'Alignment_CheckBox'), 'Value');
@@ -63,8 +65,10 @@ im2post3(1:end,1:end,1) = im2post;
 im5 = axes('Units', 'Normalized','XTick', [], 'YTick', []); 
 imshow(im1pre3+im2post3)
 title('Color-coded alignment', 'Fontsize', 12)
-linkaxes([im1,im2,im3,im4,im5], 'xy')
+linkaxes([im1,im2,im3,im4,im5, gui_CaImageViewer.figure.handles.GreenGraph], 'xy')
 
 warpmatrix
+
+
 
 

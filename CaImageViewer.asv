@@ -981,9 +981,6 @@ if ~found || ForceManual
     delete(d);
     if strcmpi(choice, 'Manual')
         [roifilename, roipath] = uigetfile();
-        if isnumeric(roifilename) && isnumeric(roipath)
-            return
-        end
         cd(roipath)
     elseif strcmpi(choice, 'Auto')
         count = 1;
@@ -2060,16 +2057,11 @@ function ShiftROIsBetweenSessions_DropDown_Callback(hObject, eventdata, handles)
 
 %%% To use this code, you need a 2x3 matrix, the "warp matrix", that is
 %%% dreived from motion correction between the two images. If you run
-%%% the "Compare Image Pair" code from the "Multiple Sessions Analysis"
-%%% window, or otherwise run the function ecc on two images, you can get
-%%% this matrix as an output. The "directionality" of the transformation
-%%% should match; i.e. if you're moving the ROIs from session 2 to match
-%%% session 1, then the transformation matrix should be derived from moving
-%%% the session 2 image to the template of the session 1 image. 
+%%% 
 
 % warpmatrix = [1.0056,-0.0555,76.16581; 0.0575,1.0269,-23.3092];
 warpmatrix = [    0.9908    0.0536  -74.1310;...
-   -0.0555    0.9703   27.0142];
+   -0.0555    0.9703   27.0142]
 
 global gui_CaImageViewer
 

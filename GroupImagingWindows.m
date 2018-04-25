@@ -14,7 +14,7 @@ end
 %%%%% Move to parent folder
 
 fullpath = gui_CaImageViewer.save_directory;
-allseps = strfind(fullpath, '\');
+allseps = strfind(fullpath, filesep);
 stepsup = 2;
 newpath = fullpath(1:allseps(end-stepsup)-1); %%% move two steps up in the path directory to get bath to the main animal folder (e.g. Z:/People/Nathan/Data/NH004 instead of Z:/People/Nathan/Data/NH004/160316/summed)
 cd(newpath)

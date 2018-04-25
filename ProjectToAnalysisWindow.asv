@@ -9,7 +9,7 @@ selectedaxes = findobj(gcf, 'XColor', [0 1 0]);     %%% Finds the selected axes 
     animal = animal{1};
     experimenter = regexp(gui_CaImageViewer.save_directory, ['People.\w+'], 'match');
     experimenter = experimenter{1};
-    experimenter = experimenter(strfind(experimenter, '\')+1:end);
+    experimenter = experimenter(strfind(experimenter, '\')+1:end)
 
     
 %%%% Project either 1 or multiple images to the CaImageViewer window. If a
@@ -52,7 +52,7 @@ else
     [sorteddates, sort_index] = sortrows(date);
     
    
-    gui_CaImageViewer.save_directory = ['Z:\People\',experimenter,'\Data\', animal, '\', sorteddates(1,:), '\summed\'];
+    gui_CaImageViewer.save_directory = ['Z:\People\',,'\Data\', animal, '\', sorteddates(1,:), '\summed\'];
     
     for i = 1:length(selectedaxes)
         im{i} = get(get(selectedaxes(sort_index(i)), 'Children'), 'CData');
