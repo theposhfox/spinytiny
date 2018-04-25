@@ -24,14 +24,10 @@ function [Threshold, DriftBaseline, ProcessedData] = AnalyzeTrace(Data, Options)
     Data(end-9:end) = Data(randi([length(Data)-100,length(Data)-20],1,10));
     raw = Data;
     
-    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    %%% Pad data for protecting edges while estimating baseline
-    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    
-    padlength = 2000;
-    pad_start = randi([20,100],1,padlength);
-    pad_end = randi([length(raw)-80,length(raw)],1,padlength);
-    padded_data = [raw(pad_start), raw, raw(pad_end)];
+    %%%
+    starterdata = raw;
+    pad = randi([20,100],1,100);
+    starterdata = [pad, Data, pad];
     
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     %%%%%%%%%%% Baseline %%%%%%%%%%%%%%
@@ -39,8 +35,7 @@ function [Threshold, DriftBaseline, ProcessedData] = AnalyzeTrace(Data, Options)
 
 
     %%% Kernel Density Estimation (Aki's method) %%%
-    truebaseline = baseline_kde(padded_data',50,30,20);    %%% inputs = downsample ratio, window size, step
-    truebaseline = truebaseline(padlength+1:end-padlength);
+    truebaseline = baseline_kde(starterdata',50,30,20);    %%% inputs = downsample ratio, window size, step
     DriftBaseline = truebaseline;
     
 
@@ -49,14 +44,13 @@ function [Threshold, DriftBaseline, ProcessedData] = AnalyzeTrace(Data, Options)
     
     %%% Baseline Subtraction
     
-    if any(truebaseline<=0)
-        constant = abs(min(truebaseline))+max(abs(truebaseline));
-        raw = raw+constant;
-        truebaseline = truebaseline+constant;
+    if nanmedian(truebaseline)<0
+        raw = raw+abs(min(truebaseline));
+        truebaseline = truebaseline+abs(min(truebaseline));
     end
     
 %     blsub = driftsub-truebaseline;                                                             %%% Baseline-subtracted value
-    blsub = raw-truebaseline';
+    blsub = starterdata-truebaseline';
 
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     %%% Baseline division (if using raw traces)

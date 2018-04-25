@@ -76,7 +76,7 @@ else
     else
         error('Operating system not recognized as PC or Unix; terminating');
     end
-    targetdir = [filestart, filesep, 'Nathan', filesep, 'Data', filesep, folder, filesep, Date, filesep, 'summed'];
+    targetdir = [filestart, filesep, User, filesep, 'Data', filesep, folder, filesep, Date, filesep, 'summed'];
     if isdir(targetdir)
         cd(targetdir)
         files = dir(cd);
@@ -225,7 +225,7 @@ if File.NumberofSpines ==  0 || File.NumberofSpines ~= length(File.deltaF)
 end
 % 
 % SpineNo = randi(File.NumberofSpines,1); %%% Will choose a random spine from the available ones for this file
-SpineNo = 12;  %%% Manually select spine to be considered
+SpineNo = 18;  %%% Manually select spine to be considered
 
 
 DendNum = File.NumberofDendrites;
@@ -536,7 +536,7 @@ for i = 1:DendNum
             temp(isnan(temp)) = 0;
         end
         
-        temp(1:10) = 0; temp(end-10) = 0;
+        temp(1:10) = temp(randi([20,100],1,10)); temp(end-9:end) = temp(randi([length(temp)-100,length(temp)-20],1,10));
         File.Poly_Fluorescence_Measurement{j} = temp;
         poly.Poly_Fluorescence_Measurement{j} = temp;
         
