@@ -62,7 +62,20 @@ imagingframestouse = [];
 behaviorframestouse = [];
 trialstouse = zeros(numberofTrials,1);
 
+ch = find(strcmp(Behavior.xsg_data.channel_names,'Trial_number'));
+bitcode = parse_behavior_bitcode(Behavior.xsg_data.channels(:,ch));
+bitcode_offset = [bitcode.behavior_trial_num]-(1:length(bitcode));
+
 for i = firsttrial:lasttrial
+    if abs(bitcode_offset(i))>=2
+        continue
+    end
+    i_bitcode = i-bitcode_offset(i);
+    start_trial = round(bitcode(i_bitcode).xsg_sec*1000);
+    t0 = Behavior.DispatcherData.saved_history.ProtocolsSection_parsed_events{i}.states.bitcode(1);
+    end_trial = start_trial+round((Behavior.DispatcherData.saved_history.ProtocolsSection_parsed_events{i}.states.state_0(2,1)-t0)*1000);
+    trial_movement{i} = Behavior.lever_force_smooth(start_trial:end_trial);
+    trial_activity{i} = Fluor.Processed_dFoF_DendriteSubtracted(1,Behavior.Behavior_Frames{i}.states.state_0(1,2):Behavior.Behavior_Frames{i}.states.state_0(2,1));
     if ~mod(Behavior.Behavior_Frames{i}.states.state_0(1,2),1); %%% Test if integer value (any integer value put into 'mod' (e.g. mod(3,1)) returns zero. Any non-integer returns a nonzero. So using a 'not' boolean means the value is an integer)
         trial_frames(i,1:2) = [Behavior.Behavior_Frames{i}.states.state_0(1,2), Behavior.Behavior_Frames{i}.states.state_0(2,1)];
         imagingframestouse = [imagingframestouse,Behavior.Behavior_Frames{i}.states.state_0(1,2):Behavior.Behavior_Frames{i}.states.state_0(2,1)];  %%% Designates the imaging frames to use according to when Dispatcher starts each trials
@@ -87,7 +100,7 @@ if ~isempty(overlaps)
 else
 end
 if ~isempty(extreme_overlaps)
-    disp([num2str(length(extreme_overlaps)), ' trials are significantly overlapping! This might be a big problem!'])
+    disp([num2str(length(extreme_overlaps)), ' trials are significantly overlapping! This might be a big problem!']);
 else
 end
 
@@ -120,45 +133,57 @@ allpossibleframes = imagingframestouse(starterframe):imagingframestouse(end);
 skippedframes = allpossibleframes(~ismember(allpossibleframes,imagingframestouse));
 
 if ~isempty(skippedframes)
-    disp('Some imaging frames were skipped during this experiment!')
-    valstosort = [imagingframestouse, skippedframes];
-    [imagingframestouse sortedindices] = sort(valstosort);
-    blankframes = zeros(1,length(skippedframes));
+    warning('Some imaging frames were skipped during this experiment!')
+%     valstosort = [imagingframestouse, skippedframes];
+%     [imagingframestouse sortedindices] = sort(valstosort);
+%     blankframes = zeros(1,length(imagingframestouse)+length(skippedframes));
     
-    for s = 1:numberofSpines
-        extendeddata = [Fluor.Processed_dFoF(s,:), blankframes];
-        FramedProcessed_dFoF(s,1:length(extendeddata(sortedindices))) = extendeddata(sortedindices);
-    end
+%     for s = 1:numberofSpines
+%         extendeddata = [Fluor.Processed_dFoF(s,:), blankframes];
+%         FramedProcessed_dFoF(s,1:length(extendeddata(sortedindices))) = extendeddata(sortedindices);
+        blankdata = zeros(numberofSpines,length(imagingframestouse)+length(skippedframes));
+        tempdata = blankdata;
+        tempdata(:,imagingframestouse) = Fluor.Processed_dFoF(:,imagingframestouse);
+        FramedProcessed_dFoF = tempdata(:,imagingframestouse(1):imagingframestouse(end));
+%     end
     
-    for s = 1:numberofSpines
-        extendeddata = [Fluor.Processed_dFoF_DendriteSubtracted(s,:), blankframes];
-        FramedProcessed_dFoF_DendriteSubtracted(s,1:length(extendeddata(sortedindices))) = extendeddata(sortedindices);
-    end
+%     for s = 1:numberofSpines
+%         extendeddata = [Fluor.Processed_dFoF_DendriteSubtracted(s,:), blankframes];
+%         FramedProcessed_dFoF_DendriteSubtracted(s,1:length(extendeddata(sortedindices))) = extendeddata(sortedindices);
+        tempdata = blankdata;
+        tempdata(:,imagingframestouse) = Fluor.Processed_dFoF_DendriteSubtracted(:,imagingframestouse);
+        FramedProcessed_dFoF_DendriteSubtracted =tempdata(:,imagingframestouse(1):imagingframestouse(end));
+%     end
     
-    useddata = Fluor.OverallSpineActivity(:,imagingframestouse);
-    extendeddata = [useddata, repmat(blankframes,numberofSpines,1)]; %%% add nans ("blankframes") onto the end of the data
-        FramedOverallSpineActivity = extendeddata(:,sortedindices);
+    tempdata = blankdata;
+    tempdata(:,imagingframestouse) = Fluor.OverallSpineActivity(:,imagingframestouse);
+    FramedOverallSpineActivity = tempdata(:,imagingframestouse(1):imagingframestouse(end));
     
-    useddata = Fluor.SynapseOnlyBinarized(:,imagingframestouse);
-    extendeddata = [useddata, repmat(blankframes,numberofSpines,1)]; %%% add nans ("blankframes") onto the end of the data
-        FramedSynapseOnlyBinarized = extendeddata(:,sortedindices);
+%     useddata = Fluor.OverallSpineActivity(:,imagingframestouse);
+%     extendeddata = [useddata, repmat(blankframes,numberofSpines,1)]; %%% add nans ("blankframes") onto the end of the data
+%         FramedOverallSpineActivity = extendeddata(:,sortedindices);
+    
+    tempdata = blankdata;
+    tempdata(:,imagingframestouse) = Fluor.SynapseOnlyBinarized(:,imagingframestouse);
+    FramedSynapseOnlyBinarized = tempdata(:,imagingframestouse(1):imagingframestouse(end));
+    
 
-    useddata = Fluor.SynapseOnlyBinarized_DendriteSubtracted(:,imagingframestouse);
-    extendeddata = [useddata, repmat(blankframes,numberofSpines,1)]; %%% add nans ("blankframes") onto the end of the data
-        FramedSynapseOnlyBinarized_DendriteSubtracted = extendeddata(:,sortedindices);
+    tempdata = blankdata;
+    tempdata(:,imagingframestouse) = Fluor.SynapseOnlyBinarized_DendriteSubtracted(:,imagingframestouse);
+    FramedSynapseOnlyBinarized_DendriteSubtracted = tempdata(:,imagingframestouse(1):imagingframestouse(end));
     
-
-    useddata = Fluor.CausalBinarized(:,imagingframestouse);
-    extendeddata = [useddata, repmat(blankframes,numberofSpines,1)]; %%% add nans ("blankframes") onto the end of the data
-        FramedCausalBinarized = extendeddata(:,sortedindices);
+    tempdata = blankdata;
+    tempdata(:,imagingframestouse) = Fluor.CausalBinarized(:,imagingframestouse);
+    FramedCausalBinarized = tempdata(:,imagingframestouse(1):imagingframestouse(end));
     
-    useddata = Fluor.Processed_Dendrite_dFoF(:,imagingframestouse);
-    extendeddata = [useddata, repmat(blankframes,size(Fluor.Dendrite_dFoF,1),1)]; %%% add nans ("blankframes") onto the end of the data
-        FramedDendrite_dFoF = extendeddata(:,sortedindices);
+    blankdata = zeros(numberofDendrites,length(imagingframestouse)+length(skippedframes));
+    tempdata = blankdata;
+    tempdata(:,imagingframestouse) = Fluor.Processed_Dendrite_dFoF(:,imagingframestouse);
+    FramedDendrite_dFoF = tempdata(:,imagingframestouse(1):imagingframestouse(end));
     
-    useddata = Fluor.Dendrite_Binarized(:,imagingframestouse);
-    extendeddata = [useddata, repmat(blankframes,size(Fluor.Dendrite_Binarized,1),1)]; %%% add nans ("blankframes") onto the end of the data
-        FramedDendrite_Binarized = extendeddata(:,sortedindices);
+    tempdata = blankdata;
+    tempdata(:,imagingframestouse) = Fluor.Dendrite_Binarized(:,imagingframestouse);
+    FramedDendrite_Binarized = tempdata(:,imagingframestouse(1):imagingframestouse(end));
 else
     FramedProcessed_dFoF = Fluor.Processed_dFoF(:,imagingframestouse);
     
@@ -172,7 +197,7 @@ else
     FramedDendrite_Binarized = Fluor.Dendrite_Binarized(:,imagingframestouse);
 end
 
-numframes = length(imagingframestouse);
+numframes = size(FramedProcessed_dFoF,2);
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%% Change buffer region around which to ignore dendritic events
@@ -209,6 +234,7 @@ end
 %%% Find start and end times for different reads
 
 im_freq = 30.49;    %%% This is always the imaging frequency at 12.1x zoom
+% im_freq = 29.96;    %%% at 8.5x
 beh_sample_freq = 1000;   %%% There are usually 1000x more frames in the lever measurement 
 
 LastImagingFrameTime = Behavior.Frame_Times(imagingframestouse(end));
@@ -250,7 +276,7 @@ if compbehframes ~= numframes
     end
 end
 
-compressed_behavior_duration = compbehframes/30.49/60;
+compressed_behavior_duration = compbehframes/im_freq/60;
 compressed_behavior_time_interval = 0:(compressed_behavior_duration/(compbehframes-1)):compressed_behavior_duration;
 
 % binary_behavior_full = resample(double(Behavior.lever_active),n,d); %%% Needed for future comparison to cue, rewards, etc., since the imaged_binary_behavior window is shifted
@@ -277,7 +303,7 @@ AlignPlot = figure('Position', scsz);
 
 % if length(Fluor.dF_over_F)+(12-mod(length(Fluor.dF_over_F), 6))<=60
 %     h2 = subplot(10,6,(length(Fluor.dF_over_F)+(12-mod(length(Fluor.dF_over_F), 6))):60); hold on;
-%     imstart = imagingframestouse(1)/30.49/60;
+%     imstart = imagingframestouse(1)/im_freq/60;
 %     plot(compressed_behavior_time_interval, (-1*binary_behavior+median(compressed_imagedleverframes)), 'Color', blue)
 %     plot(compressed_behavior_time_interval, compressed_imagedleverframes, 'k')
 %     xlabel('Time (min)');
@@ -286,7 +312,7 @@ AlignPlot = figure('Position', scsz);
 
 figure(LeverTracePlots.figure);
 h2 = subplot(2,7,Fluor.Session); hold on;
-imstart = imagingframestouse(1)/30.49/60;
+imstart = imagingframestouse(1)/im_freq/60;
 plot(compressed_behavior_time_interval, (-1*binary_behavior+median(compressed_imagedleverframes)), 'Color', blue)
 plot(compressed_behavior_time_interval, compressed_imagedleverframes, 'k')
 xlabel('Time (min)');
@@ -296,8 +322,9 @@ title(['Session ', num2str(Fluor.Session)])
 
 successes = 0;
 
-
-%%% Plot cues, rewards, and punishments
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%% Plot movement with cues, rewards, and punishments
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 % bitcode = parse_behavior_bitcode(Behavior.xsg_data.channels(:,3));
 
@@ -320,17 +347,17 @@ for i = 1:numberofTrials
     end
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     if trialstouse(i)
-        cue(1:2,i) = Behavior.Behavior_Frames{i}.states.cue/30.49/60;
+        cue(1:2,i) = Behavior.Behavior_Frames{i}.states.cue/im_freq/60;
         cue(1:2,i) = cue(1:2,i)-imstart;
 %         bitcode_cue(1:2,i) = (start_trial+(Behavior.DispatcherData.saved_history.ProtocolsSection_parsed_events{i}.states.cue-t0)*1000)
         if ~isempty(Behavior.Behavior_Frames{i}.states.reward)
-            result(1:2,i) = Behavior.Behavior_Frames{i}.states.reward(1)/30.49/60;
+            result(1:2,i) = Behavior.Behavior_Frames{i}.states.reward(1)/im_freq/60;
             result(1:2,i) = result(1:2,i) - imstart;
             outcome(1,i) = 'o';
             plot(h2, result(1,i):result(2,i), -2, '.g')
             successes = successes + 1;
         else
-            result(1:2,i) = Behavior.Behavior_Frames{i}.states.punish(1)/30.49/60;
+            result(1:2,i) = Behavior.Behavior_Frames{i}.states.punish(1)/im_freq/60;
             result(1:2,i) = result(1:2,i)-imstart;
             outcome(1,i) = 'x';
             plot(h2, result(1,i):result(2,i), -2, 'xr', 'Linewidth', 2)
@@ -524,7 +551,7 @@ for i = firsttrial:length(Behavior.Behavior_Frames)
             startreward = Behavior.Behavior_Frames{i}.states.reward(1)-correction;
             startmovement = startcue+find(sign(diff(binary_behavior(startcue:startreward))) == 1, 1,'last'); %%% Find the last positive derivative, indicating the final increase to an active position prior to reward
             endtrial = Behavior.Behavior_Frames{i}.states.state_0(2,1)-correction;
-            endlicking = endcue+round(2*30.49);    %%% Add four seconds for estimating when reward is received ()Estimated from Takaki's paper 
+            endlicking = endcue+round(2*im_freq);    %%% Add four seconds for estimating when reward is received ()Estimated from Takaki's paper 
 
             if endtrial > length(binary_behavior)
                 endtrial = length(binary_behavior);
@@ -638,7 +665,7 @@ for i = firsttrial:length(Behavior.Behavior_Frames)
                 break
             end
 
-            endlicking = startpunish+round(4*30.49); 
+            endlicking = startpunish+round(4*im_freq); 
 
             Trial{i}.trialactivity = overallsignaltouse(:,starttrial:endtrial);
             Trial{i}.trialbinaryactivity = binarized_signaltouse(:,starttrial:endtrial);

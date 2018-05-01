@@ -67,4 +67,6 @@ switch(animal)
         usesessions = 1:14;
     case 'NH044'
         usesessions = 1:14;
+    case 'ZL024'
+        usesessions = 1:14;
 end
