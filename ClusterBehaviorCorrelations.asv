@@ -58,9 +58,9 @@ if isempty(strfind(inputname(1), 'SpineCorrelationTimecourse'))
     corrminimum = 0;
     cuecorrminimum = 0;
     correlatecuewithall = 1;
-    useonlyspinesfromstatreldends = 0;         %%% Use only spines on MOVEMENT-RELATED dendrites (applies to spine analysis, not that of dendrites)
+    useonlyspinesfromstatreldends = 1;         %%% Use only spines on MOVEMENT-RELATED dendrites (applies to spine analysis, not that of dendrites)
         useSTATdends = 1;                      %%% Provides a different contingency option for using only movement-related dendrites for just the "dendritic" portions of the analysis (i.e. not for spines)
-    mindendsize = 10;                           %%% Minimum number of spines on a dendrite to be considered for analysis (probably some sensitivity to length of dendrite)
+    mindendsize = 5;                           %%% Minimum number of spines on a dendrite to be considered for analysis (probably some sensitivity to length of dendrite)
     laplaciantouse = 'Normalized';             %%% Choose 'Normalized' or 'Original'
     
     
@@ -75,6 +75,7 @@ if isempty(strfind(inputname(1), 'SpineCorrelationTimecourse'))
     Choices.LaplacianToUse = laplaciantouse;
     Choices.Spine1_Address = Spine1_address;
     Choices.MovementAddress = Movement_address;
+    
     
     %%% Spine data being used: 
     
@@ -852,19 +853,19 @@ if isempty(strfind(inputname(1), 'SpineCorrelationTimecourse'))
             %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%            
             
             
-            NumCueRelSpines(1,session) = sum(CueSpines)/denominator;
-            NumMovRelSpines(1,session) = sum(MovementSpines)/denominator;
+            NumCueRelSpines(1,session) = sum(CueSpines.*dendcheckC')/denominator;
+            NumMovRelSpines(1,session) = sum(MovementSpines.*dendcheckM')/denominator;
                 for d = 1:length(varargin{i}.SpineDendriteGrouping)
                     FractionofMovRelSpinesPerDendrite{session}(1,d) = sum(MovementSpines(varargin{i}.SpineDendriteGrouping{d}))/length(varargin{i}.SpineDendriteGrouping{d});
                     MovRelSpinesPer10Microns{session}(1,d) = sum(MovementSpines(varargin{i}.SpineDendriteGrouping{d}))/(sum(varargin{i}.DendriteLengthValues{d})/10);
                     FractionofSucRelSpinesPerDendrite{session}(1,d) = sum(SuccessSpines(varargin{i}.SpineDendriteGrouping{d}))/length(varargin{i}.SpineDendriteGrouping{d});
                     SucRelSpinesPer10Microns{session}(1,d) = sum(SuccessSpines(varargin{i}.SpineDendriteGrouping{d}))/(sum(varargin{i}.DendriteLengthValues{d})/10);
                 end
-            NumCueORMovRelSpines(1,session) = sum(CueORMovementSpines)/denominator;
-            NumPreSucRelSpines(1,session) = sum(PreSuccessSpines)/denominator;
-            NumSucRelSpines(1,session) = sum(SuccessSpines)/denominator;
-            NumMovDuringCueRelSpines(1,session) = sum(MovementDuringCueSpines)/denominator;
-            NumRewRelSpines(1,session) = sum(RewardSpines)/denominator;
+            NumCueORMovRelSpines(1,session) = sum(CueORMovementSpines.*dendcheck')/denominator;
+            NumPreSucRelSpines(1,session) = sum(PreSuccessSpines.*dendcheckPS')/denominator;
+            NumSucRelSpines(1,session) = sum(SuccessSpines.*dendcheckS')/denominator;
+            NumMovDuringCueRelSpines(1,session) = sum(MovementDuringCueSpines.*dendcheckMDC')/denominator;
+            NumRewRelSpines(1,session) = sum(RewardSpines.*dendcheckR')/denominator;
             NumCausalMovSpines(1,session) = sum(StatClass{session}.CausalMovementSpines)/denominator;
             
             NumClustSpines(1,session) = length(cluster_ind.*dendcheck(cluster_ind-Spine1_address)')/denominator;
@@ -5059,7 +5060,7 @@ else
     %%%
     
     earlysessions = 1:3;
-    latesessions  = 11:13; 
+    latesessions  = 10:13; 
     
     ConDendDistanceUmbrellaDataChoice = AllDistancesBetweenAllSpines; 
     ConDendCorrelationUmbrellaDataChoice = CorrelationBetweenAllSpinesMovePeriods; 
