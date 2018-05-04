@@ -76,6 +76,13 @@ for i = firsttrial:lasttrial
     end_trial = start_trial+round((Behavior.DispatcherData.saved_history.ProtocolsSection_parsed_events{i}.states.state_0(2,1)-t0)*1000);
     trial_movement{i} = Behavior.lever_force_smooth(start_trial:end_trial);
     trial_activity{i} = Fluor.Processed_dFoF_DendriteSubtracted(1,Behavior.Behavior_Frames{i}.states.state_0(1,2):Behavior.Behavior_Frames{i}.states.state_0(2,1));
+    FramedProcessed_dFoF{i} = 
+    FramedOverallSpineActivity 
+    FramedSynapseOnlyBinarized
+    FramedSynapseOnlyBinarized_DendriteSubtracted
+    FramedCausalBinarized
+    FramedDendrite_dFoF
+    FramedDendrite_Binarized
     if ~mod(Behavior.Behavior_Frames{i}.states.state_0(1,2),1); %%% Test if integer value (any integer value put into 'mod' (e.g. mod(3,1)) returns zero. Any non-integer returns a nonzero. So using a 'not' boolean means the value is an integer)
         trial_frames(i,1:2) = [Behavior.Behavior_Frames{i}.states.state_0(1,2), Behavior.Behavior_Frames{i}.states.state_0(2,1)];
         imagingframestouse = [imagingframestouse,Behavior.Behavior_Frames{i}.states.state_0(1,2):Behavior.Behavior_Frames{i}.states.state_0(2,1)];  %%% Designates the imaging frames to use according to when Dispatcher starts each trials

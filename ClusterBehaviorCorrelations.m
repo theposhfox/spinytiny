@@ -35,9 +35,9 @@ if isempty(strfind(inputname(1), 'SpineCorrelationTimecourse'))
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     
     Cue_address = 1;
-    Movement_address = 2; %%% row 2 is binarized movement, row 3 has a larger window
+    Movement_address = 3; %%% row 2 is binarized movement, row 3 has a larger window
     Presuccess_address = 4; 
-    Success_address = 5;  %%% row 5 is binarized rewarded movements, row 6 has a larger window
+    Success_address = 6;  %%% row 5 is binarized rewarded movements, row 6 has a larger window
     MovementDuringCue_address = 7;
     Reward_address = 8;
     Punishment_address = 9;
