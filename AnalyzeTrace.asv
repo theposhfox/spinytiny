@@ -28,23 +28,20 @@ function [Threshold, DriftBaseline, ProcessedData] = AnalyzeTrace(Data, Options)
     %%% Pad data for protecting edges while estimating baseline
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     
-    fornoise = raw;
     roundnum = 1;
     roundstodo = 50;
-    rawmed = nanmedian(raw);
-    rawspread = nanstd(raw);
     while roundnum<=roundstodo 
-        fornoise(fornoise>rawmed+(rawspread)) = rawmed+(rawspread);      %%% Cap off large and small values to pinch the data towards the true baseline
-        fornoise(fornoise<rawmed-(rawspread)) = rawmed-(rawspread);      %%%
+        fornoise(fornoise>rawmed+(valueslimitfornoise*rawspread)) = rawmed+(valueslimitfornoise*rawspread);      %%% Cap off large and small values to pinch the data towards the true baseline
+        fornoise(fornoise<rawmed-(valueslimitfornoise*rawspread)) = rawmed-(valueslimitfornoise*rawspread);      %%%
             rawspread = nanstd(fornoise);
             rawmed = nanmedian(fornoise);
         roundnum = roundnum+1;
     end
     
     padlength = 2000;
-    pad_start = randi([1,length(fornoise)],1,padlength);
-    pad_end = randi([1,length(fornoise)],1,padlength);
-    padded_data = [fornoise(pad_start), raw, fornoise(pad_end)];
+    pad_start = randi([1,500],1,padlength);
+    pad_end = randi([length(raw)-500,length(raw)],1,padlength);
+    padded_data = [raw(pad_start), raw, raw(pad_end)];
     
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     %%%%%%%%%%% Baseline %%%%%%%%%%%%%%

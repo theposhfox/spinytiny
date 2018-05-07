@@ -1075,10 +1075,13 @@ for a = 1:length(ROIs)
         uimenu(c1, 'Label', 'Add Surround Background', 'Callback', @ModifyROI);
         uimenu(c1, 'Label', 'Remove Surround Background', 'Callback', @ModifyROI);
         if glovar.NewSpineAnalysis
-            uimenu(c1, 'Label', 'Set as eliminated', 'Callback', @CategorizeSpines);
-            uimenu(c1, 'Label', 'Set as active', 'Callback', @CategorizeSpines);
+            c2 = uicontextmenu;
+            uimenu(c2, 'Label', 'Set as eliminated', 'Callback', @CategorizeSpines);
+            uimenu(c2, 'Label', 'Set as active', 'Callback', @CategorizeSpines);
+            glovar.ROI(a) = rectangle('Position', ROIs{a}, 'EdgeColor', [0.2 0.4 0.9], 'Curvature', [1 1],'Tag', ['ROI', num2str(ROInum)], 'ButtonDownFcn', {@DragROI, ROInum, 'HomeWindow'}, 'Linewidth', 1, 'UIContextMenu', c2); % Assaf changed [0.2 0.4 0.9] to the variable color_by_user, that is defined by the user choice of color (lines 681-602) 
+        else
+            glovar.ROI(a) = rectangle('Position', ROIs{a}, 'EdgeColor', [0.2 0.4 0.9], 'Curvature', [1 1],'Tag', ['ROI', num2str(ROInum)], 'ButtonDownFcn', {@DragROI, ROInum, 'HomeWindow'}, 'Linewidth', 1, 'UIContextMenu', c1);
         end
-        glovar.ROI(a) = rectangle('Position', ROIs{a}, 'EdgeColor', [0.2 0.4 0.9], 'Curvature', [1 1],'Tag', ['ROI', num2str(ROInum)], 'ButtonDownFcn', {@DragROI, ROInum, 'HomeWindow'}, 'Linewidth', 1, 'UIContextMenu', c1); % Assaf changed [0.2 0.4 0.9] to the variable color_by_user, that is defined by the user choice of color (lines 681-602) 
         glovar.ROItext(a) = text(ROIs{a}(1)-6, ROIs{a}(2)-4, num2str(a-1), 'color', 'white', 'Tag', ['ROI', num2str(a-1), ' Text'],'ButtonDownFcn', 'DeleteROI', 'Fontsize', 6);
         switch usesurroundBGchoice
             case 'Add to all'
@@ -1134,17 +1137,17 @@ if glovar.NewSpineAnalysis
     targ_folder = save_directory(1:terminus);
     currentfield = glovar.NewSpineAnalysisInfo.CurrentImagingField;
     load([targ_folder, filesep,userspecificpart,'Imaging Field ', num2str(currentfield), ' Spine Registry'])
-    instanceofappearance = find(logical(strcmpi(SpineRegistry.DatesAcquired, gui_CaImageViewer.NewSpineAnalysisInfo.CurrentDate)));
+    instanceofappearance = logical(strcmpi(SpineRegistry.DatesAcquired, gui_CaImageViewer.NewSpineAnalysisInfo.CurrentDate));
     glovar.NewSpineAnalysisInfo.SpineList = ones(length(ROIs)-1,1); %%% Don't forget the first ROI is always the background ROI!
-%     if size(SpineRegistry.Data,2)>=find(instanceofappearance) %% && find(instanceofappearance)~=1 %%% ZL commentm, it is possible need to set another category of spines specifying the "true new spines"
+    if size(SpineRegistry.Data,2)>=find(instanceofappearance) %% && find(instanceofappearance)~=1 %%% ZL commentm, it is possible need to set another category of spines specifying the "true new spines"
         r = find(SpineRegistry.Data(:,instanceofappearance)==0);
         for i = 1:length(r)
             set(findobj(glovar.figure.handles.GreenGraph, 'Type', 'rectangle', 'Tag', ['ROI', num2str(r(i))]), 'FaceColor', [1 0 0])
         end
         glovar.NewSpineAnalysisInfo.SpineList(r) = 0;
-%     else
-%         
-%     end
+    else
+        
+    end
 end
 
 

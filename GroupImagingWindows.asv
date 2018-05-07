@@ -65,15 +65,15 @@ else
     end
     if ~isfield(SpineRegistry, 'DatesAcquired')
         dates = mat2cell(dates,ones(1,length(selectedaxes)), 6);
-        month = cellfun(@(x) x(3:4), dates, 'uni', false);
-        day = cellfun(@(x) x(5:6), dates, 'uni', false);
-        if length(unique(month))>1
-            [monthval, monthind] = sort(month);
-            SpineRegistry.DatesAcquired = dates(monthind);
-        else
-            [dayval, dayind] = sort(day);
-            SpineRegistry.DatesAcquired = dates(dayind);
+        year = cellfun(@(x) x(1:2), dates, 'uni', false);
+        if length(unique(year))>1
+            [yearval, yearind] = sort(year);
         end
+        month = cellfun(@(x) x(3:4), dates, 'uni', false);
+            [monthval, monthind] = sort(month);
+        day = cellfun(@(x) x(5:6), dates, 'uni', false);
+            [dayval, dayind] = sort(day);
+        SpineRegistry.DatesAcquired = flipud(mat2cell(dates,ones(1,length(selectedaxes)), 6));
     end
 end
 

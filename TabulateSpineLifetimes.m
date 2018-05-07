@@ -8,12 +8,16 @@ global gui_CaImageViewer
 experiment = regexp(gui_CaImageViewer.filename, '[A-Z]{2}\d+[_]\d+', 'match');
 experiment = experiment{1};
 animal = experiment(1:5);
+currentuser = get(gui_CaImageViewer.figure.handles.figure1, 'UserData');
+if ~isempty(currentuser)
+    useroption = [currentuser, '_'];
+end
 
 %%% Find spine lifetimes data specific to the current imaging field
 currentimagingfield = gui_CaImageViewer.NewSpineAnalysisInfo.CurrentImagingField;
 terminus = regexp(gui_CaImageViewer.save_directory, animal, 'end');
 targ_folder = gui_CaImageViewer.save_directory(1:terminus);
-load([targ_folder, '\Imaging Field ', num2str(currentimagingfield), ' Spine Registry'])
+load([targ_folder, filesep, useroption,'Imaging Field ', num2str(currentimagingfield), ' Spine Registry'])
 
 %%% Collect and organize data for tabulation
 data = SpineRegistry.Data;

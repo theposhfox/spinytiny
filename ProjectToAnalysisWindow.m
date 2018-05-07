@@ -33,6 +33,7 @@ if length(selectedaxes)==1
     %%%% Set up parameters in an accessible substructure within the main GUI
     gui_CaImageViewer.NewSpineAnalysis = 1;
     gui_CaImageViewer.NewSpineAnalysisInfo.CurrentDate = date;
+    gui_CaImageViewer.MultipleDates = [];
 
     title = get(get(selectedaxes,'XLabel'), 'String');
 
@@ -72,6 +73,7 @@ else
     %%%% Set up parameters in an accessible substructure within the main GUI
     gui_CaImageViewer.NewSpineAnalysis = 1;
     gui_CaImageViewer.NewSpineAnalysisInfo.CurrentDate = date(1,:);
+    gui_CaImageViewer.MultipleDates = sorteddates;
 
     title = get(get(selectedaxes(1),'XLabel'), 'String');
 
