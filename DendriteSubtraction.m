@@ -102,8 +102,12 @@ if strcmpi(Router, 'Initial')
     %             S_baseline = S_baseline(1:dwnsmpfact:end);
     %             spineDataforfit = [S_baseline, S_signal];
 %                   spineDataforfit(spineDataforfit<=File.SpineThreshold(j)) = nan;
-
-            alpha{i}(1:2,counter) = robustfit(dendDataforfit,spineDataforfit);
+            
+            if sum(isnan(spineDataforfit)) == length(spineDataforfit)
+                alpha{i}(1:2,counter) = zeros(2,1);
+            else
+                alpha{i}(1:2,counter) = robustfit(dendDataforfit,spineDataforfit);
+            end
             counter = counter + 1;
         end
     end

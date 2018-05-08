@@ -175,7 +175,13 @@ if gui_CaImageViewer.NewSpineAnalysis
     terminus = regexp(save_directory, animal, 'end');
     targ_folder = save_directory(1:terminus);
     currentfield = gui_CaImageViewer.NewSpineAnalysisInfo.CurrentImagingField;
-    load([targ_folder, filesep,'Imaging Field ', num2str(currentfield), ' Spine Registry'])
+    drawer = get(gui_CaImageViewer.figure.handles.figure1, 'UserData');
+    if ~isempty(drawer)
+        userspecificpart = [drawer,'_'];
+    else
+        userspecificpart = [];
+    end
+    load([targ_folder, filesep,userspecificpart,'Imaging Field ', num2str(currentfield), ' Spine Registry'])
     instanceofappearance = logical(strcmpi(SpineRegistry.DatesAcquired, gui_CaImageViewer.NewSpineAnalysisInfo.CurrentDate));
     SpineList = SpineRegistry.Data(:,instanceofappearance); %%% Note: Although the first ROI is always ROI0 (background), this is excluded (wrt indexing) for the final variables, so a direct translation of spine number is possible here
     nullspines = find(SpineList==0);

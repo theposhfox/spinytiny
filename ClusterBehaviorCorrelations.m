@@ -35,9 +35,9 @@ if isempty(strfind(inputname(1), 'SpineCorrelationTimecourse'))
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     
     Cue_address = 1;
-    Movement_address = 2; %%% row 2 is binarized movement, row 3 has a larger window
+    Movement_address = 3; %%% row 2 is binarized movement, row 3 has a larger window
     Presuccess_address = 4; 
-    Success_address = 5;  %%% row 5 is binarized rewarded movements, row 6 has a larger window
+    Success_address = 6;  %%% row 5 is binarized rewarded movements, row 6 has a larger window
     MovementDuringCue_address = 7;
     Reward_address = 8;
     Punishment_address = 9;
@@ -59,8 +59,8 @@ if isempty(strfind(inputname(1), 'SpineCorrelationTimecourse'))
     cuecorrminimum = 0;
     correlatecuewithall = 1;
     useonlyspinesfromstatreldends = 0;         %%% Use only spines on MOVEMENT-RELATED dendrites (applies to spine analysis, not that of dendrites)
-        useSTATdends = 0;                      %%% Provides a different contingency option for using only movement-related dendrites for just the "dendritic" portions of the analysis (i.e. not for spines)
-    mindendsize = 2;                           %%% Minimum number of spines on a dendrite to be considered for analysis (probably some sensitivity to length of dendrite)
+        useSTATdends = 1;                      %%% Provides a different contingency option for using only movement-related dendrites for just the "dendritic" portions of the analysis (i.e. not for spines)
+    mindendsize = 10;                           %%% Minimum number of spines on a dendrite to be considered for analysis (probably some sensitivity to length of dendrite)
     laplaciantouse = 'Normalized';             %%% Choose 'Normalized' or 'Original'
     
     
@@ -75,7 +75,6 @@ if isempty(strfind(inputname(1), 'SpineCorrelationTimecourse'))
     Choices.LaplacianToUse = laplaciantouse;
     Choices.Spine1_Address = Spine1_address;
     Choices.MovementAddress = Movement_address;
-    
     
     %%% Spine data being used: 
     
@@ -632,13 +631,13 @@ if isempty(strfind(inputname(1), 'SpineCorrelationTimecourse'))
                 dendcheckR = reshape(SpinesonRewardDend{session},1,length(SpinesonRewardDend{session}));
                 dendcheck = nansum([dendcheckC; dendcheckM; dendcheckPS; dendcheckS; dendcheckMDC; dendcheckR]);
                 dendcheck(dendcheck~=0) = 1;
-                dendcheck(dendcheck==0)= nan;
-                dendcheckC(dendcheckC==0) = nan;
-                dendcheckM(dendcheckM==0) = nan;
-                dendcheckPS(dendcheckPS==0) = nan;
-                dendcheckS(dendcheckS==0) = nan;
-                dendcheckMDC(dendcheckMDC==0) = nan;
-                dendcheckR(dendcheckR==0) = nan;
+%                 dendcheck(dendcheck==0)= nan;
+%                 dendcheckC(dendcheckC==0) = nan;
+%                 dendcheckM(dendcheckM==0) = nan;
+%                 dendcheckPS(dendcheckPS==0) = nan;
+%                 dendcheckS(dendcheckS==0) = nan;
+%                 dendcheckMDC(dendcheckMDC==0) = nan;
+%                 dendcheckR(dendcheckR==0) = nan;
             else
                 dendcheck = ones(1,length(varargin{i}.deltaF)); %%% Set this variable to one to allow use of ALL spines on ALL (non just feature-related) dendrites
                 dendcheckC = ones(1,length(varargin{i}.deltaF));
@@ -648,6 +647,15 @@ if isempty(strfind(inputname(1), 'SpineCorrelationTimecourse'))
                 dendcheckMDC = ones(1,length(varargin{i}.deltaF));
                 dendcheckR = ones(1,length(varargin{i}.deltaF));
             end
+            
+                CueSpines = StatClass{session}.DendSub_CueSpines.*dendcheckC';
+                MovementSpines = StatClass{session}.DendSub_MovementSpines.*dendcheckM';
+                MovementDuringCueSpines = StatClass{session}.DendSub_MovementDuringCueSpines.*dendcheckMDC';
+                PreSuccessSpines = StatClass{session}.DendSub_PreSuccessSpines.*dendcheckPS';
+                SuccessSpines = StatClass{session}.DendSub_SuccessSpines.*dendcheckS';
+                RewardSpines = StatClass{session}.DendSub_RewardSpines.*dendcheckR';
+                CueORMovementSpines = StatClass{session}.DendSub_CueORMovementSpines.*dendcheck';
+
             %%
             %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
             %%%%%%%%%% Set up correlation matrices %%%%%%%%%%%
@@ -803,6 +811,7 @@ if isempty(strfind(inputname(1), 'SpineCorrelationTimecourse'))
             %%% Main variables
             %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
             
+            
             ClusteredSpines = ClusteredSpines(~cellfun(@isempty,ClusteredSpines));
             CausalClusteredSpines = CausalClusteredSpines(~cellfun(@isempty,CausalClusteredSpines));
 
@@ -839,7 +848,7 @@ if isempty(strfind(inputname(1), 'SpineCorrelationTimecourse'))
             
             %%
             %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-            %%% Find number of clustered spines in each category
+            %%% Find number of spines in each category
             %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%            
             
             
@@ -858,23 +867,23 @@ if isempty(strfind(inputname(1), 'SpineCorrelationTimecourse'))
             NumRewRelSpines(1,session) = sum(RewardSpines)/denominator;
             NumCausalMovSpines(1,session) = sum(StatClass{session}.CausalMovementSpines)/denominator;
             
-            NumClustSpines(1,session) = length(cluster_ind)/denominator;
-            NumClustCueSpines(1,session) = length(cue_cluster_ind)/denominator;
-            NumClustMovSpines(1,session) = length(mov_cluster_ind)/denominator;
-            NumClustMixSpines(1,session) = length(mix_cluster_ind)/denominator;
-            NumClustPreSucSpines(1,session) = length(presuc_cluster_ind)/denominator;
-            NumClustSucSpines(1,session) = length(suc_cluster_ind)/denominator;
-            NumClustMovDuringCueSpines(1,session) = length(movduringcue_cluster_ind)/denominator;
-            NumClustRewSpines(1,session) = length(rew_cluster_ind)/denominator;
+            NumClustSpines(1,session) = length(cluster_ind.*dendcheck(cluster_ind-Spine1_address)')/denominator;
+            NumClustCueSpines(1,session) = length(cue_cluster_ind.*dendcheckC(cue_cluster_ind-Spine1_address)')/denominator;
+            NumClustMovSpines(1,session) = length(mov_cluster_ind.*dendcheckM(mov_cluster_ind-Spine1_address)')/denominator;
+            NumClustMixSpines(1,session) = length(mix_cluster_ind.*dendcheck(mix_cluster_ind-Spine1_address)')/denominator;
+            NumClustPreSucSpines(1,session) = length(presuc_cluster_ind.*dendcheckPS(presuc_cluster_ind-Spine1_address)')/denominator;
+            NumClustSucSpines(1,session) = length(suc_cluster_ind.*dendcheckS(suc_cluster_ind-Spine1_address)')/denominator;
+            NumClustMovDuringCueSpines(1,session) = length(movduringcue_cluster_ind.*dendcheckMDC(movduringcue_cluster_ind-Spine1_address)')/denominator;
+            NumClustRewSpines(1,session) = length(rew_cluster_ind.*dendcheckR(rew_cluster_ind-Spine1_address)')/denominator;
             
-            NumFarClustSpines(1,session) = length(Farcluster_ind)/denominator;
-            NumFarClustCueSpines(1,session) = length(Farcue_cluster_ind)/denominator;
-            NumFarClustMovSpines(1,session) = length(Farmov_cluster_ind)/denominator;
-            NumFarClustMixSpines(1,session) = length(Farmix_cluster_ind)/denominator;
-            NumFarClustPreSucSpines(1,session) = length(Farpresuc_cluster_ind)/denominator;
-            NumFarClustSucSpines(1,session) = length(Farsuc_cluster_ind)/denominator;
-            NumFarClustMovDuringCueSpines(1,session) = length(Farmovduringcue_cluster_ind)/denominator;
-            NumFarClustRewSpines(1,session) = length(Farrew_cluster_ind)/denominator;
+            NumFarClustSpines(1,session) = length(Farcluster_ind.*dendcheck(Farcluster_ind-Spine1_address)')/denominator;
+            NumFarClustCueSpines(1,session) = length(Farcue_cluster_ind.*dendcheckC(Farcue_cluster_ind-Spine1_address)')/denominator;
+            NumFarClustMovSpines(1,session) = length(Farmov_cluster_ind.*dendcheckM(Farmov_cluster_ind-Spine1_address)')/denominator;
+            NumFarClustMixSpines(1,session) = length(Farmix_cluster_ind.*dendcheck(Farmix_cluster_ind-Spine1_address)')/denominator;
+            NumFarClustPreSucSpines(1,session) = length(Farpresuc_cluster_ind.*dendcheckPS(Farpresuc_cluster_ind-Spine1_address)')/denominator;
+            NumFarClustSucSpines(1,session) = length(Farsuc_cluster_ind.*dendcheck(Farsuc_cluster_ind-Spine1_address)')/denominator;
+            NumFarClustMovDuringCueSpines(1,session) = length(Farmovduringcue_cluster_ind.*dendcheckMDC(Farmovduringcue_cluster_ind-Spine1_address)')/denominator;
+            NumFarClustRewSpines(1,session) = length(Farrew_cluster_ind.*dendcheckR(Farrew_cluster_ind-Spine1_address)')/denominator;
 
             NumCausClustSpines(1,session) = length(Caus_cluster_ind)/denominator;
             NumCausClustCueSpines(1,session) = length(Caus_cue_cluster_ind)/denominator;
@@ -1935,7 +1944,7 @@ if isempty(strfind(inputname(1), 'SpineCorrelationTimecourse'))
             
             for k = 1:varargin{i}.NumberofDendrites
                 if useSTATdends
-                    usethisdend = MovementDends(k); %%% Finds the boolean corresponding to whether this dendrite is movement related or not
+                    usethisdend = StatClass{session}.MovementDends(k); %%% Finds the boolean corresponding to whether this dendrite is movement related or not
                 else
                     usethisdend = 1;
                 end
@@ -2145,23 +2154,24 @@ if isempty(strfind(inputname(1), 'SpineCorrelationTimecourse'))
                
                 
                 if useSTATdends
-                    DendswithClusts = DendswithClusts.*MovementDends(DendswithClusts);
-                        DendswithClusts = DendswithClusts(find(DendswithClusts));
-                    DendsnoClusts = DendsnoClusts.*MovementDends(DendsnoClusts);
-                        DendsnoClusts = DendsnoClusts(find(DendsnoClusts));
-                    DendswithCueClusts = DendswithCueClusts.*CueDends(DendswithCueClusts);
-                        DendswithCueClusts = DendswithCueClusts(find(DendswithCueClusts));
-                    DendswithMovClusts = DendswithMovClusts.*MovementDends(DendswithMovClusts);
-                        DendswithMovClusts = DendswithMovClusts(find(DendswithMovClusts));
-                    DendswithMovDuringCueClusts = DendswithmovDuringCueClusts.*MovementDuringCueDends(DendswithMovDuringCueClusts);
-                        DendswithMovDuringCueClusts = DendswithMovDuringCueClusts(find(DendswithMovDuringCueClusts));
-                    DendswithPreSucClusts = DendswithPreSucClusts.*PreSuccessDends(DenswithPreSuccessClusts)
-                    DendswithSucClusts = DendswithSucClusts.*SuccessDends(DendswithSucClusts);
-                        DendswithSucClusts = DendswithSucClusts(find(DendswithSucClusts));
-                    DendswithRewClusts = DendswithRewClusts.*RewardDends(DendswithRewClusts);
-                        DendswithRewClusts = DendswithRewClusts(find(DendswithRewClusts));
-                    DendsnomovClusts = DendsnomovClusts.*MovementDends(DendsnomovClusts);
-                        DendsnomovClusts = DendsnomovClusts(find(DendsnomovClusts));
+                    DendswithClusts = DendswithClusts.*StatClass{session}.MovementDends(DendswithClusts);
+                        DendswithClusts = DendswithClusts(logical(DendswithClusts));
+                    DendsnoClusts = DendsnoClusts.*StatClass{session}.MovementDends(DendsnoClusts);
+                        DendsnoClusts = DendsnoClusts(logical(DendsnoClusts));
+                    DendswithCueClusts = DendswithCueClusts.*StatClass{session}.CueDends(DendswithCueClusts);
+                        DendswithCueClusts = DendswithCueClusts(logical(DendswithCueClusts));
+                    DendswithMovClusts = DendswithMovClusts.*StatClass{session}.MovementDends(DendswithMovClusts);
+                        DendswithMovClusts = DendswithMovClusts(logical(DendswithMovClusts));
+                    DendswithMovDuringCueClusts = DendswithMovDuringCueClusts.*StatClass{session}.MovementDuringCueDends(DendswithMovDuringCueClusts);
+                        DendswithMovDuringCueClusts = DendswithMovDuringCueClusts(logical(DendswithMovDuringCueClusts));
+                    DendswithPreSucClusts = DendswithPreSucClusts.*StatClass{session}.PreSuccessDends(DendswithPreSucClusts);
+                        DendswithPreSucClusts = DendswithPreSucClusts(logical(DendswithPreSucClusts));
+                    DendswithSucClusts = DendswithSucClusts.*StatClass{session}.SuccessDends(DendswithSucClusts);
+                        DendswithSucClusts = DendswithSucClusts(logical(DendswithSucClusts));
+                    DendswithRewClusts = DendswithRewClusts.*StatClass{session}.RewardDends(DendswithRewClusts);
+                        DendswithRewClusts = DendswithRewClusts(logical(DendswithRewClusts));
+                    DendsnomovClusts = DendsnomovClusts.*StatClass{session}.MovementDends(DendsnomovClusts);
+                        DendsnomovClusts = DendsnomovClusts(logical(DendsnomovClusts));
                     
                     ClustDendFreq(1,session) = nanmean(varargin{i}.Dendritic_Frequency(DendswithClusts));
                     NoClustDendFreq(1,session) = nanmean(varargin{i}.Dendritic_Frequency(DendsnoClusts));
@@ -2191,7 +2201,7 @@ if isempty(strfind(inputname(1), 'SpineCorrelationTimecourse'))
                             temporalvalues(temporalvalues==min(temporalvalues)) = nan;
                             [TemporalFiedlerval, ~] = min(temporalvalues);
                             
-                            if MovementDends(j)
+                            if StatClass{session}.MovementDends(j)
                                 DendClust_Deg{session}(counter,1) = real(Fiedlerval);
                                 DendClust_Deg{session}(counter,2) = real(TemporalFiedlerval);
                                 DendClust_Deg{session}(counter,3) = real(SpatioTemporalFiedler{session}(j));
@@ -2288,9 +2298,9 @@ if isempty(strfind(inputname(1), 'SpineCorrelationTimecourse'))
             %%% correlations of calcium traces alone
             
             if dendexclude
-                [rsp psp] = corrcoef(varargin{i}.SynapseOnlyBinarized');
+                [rsp, ~] = corrcoef(varargin{i}.SynapseOnlyBinarized');
             elseif dendsubtract
-                [rsp psp] = corrcoef(varargin{i}.SynapseOnlyBinarized_DendriteSubtracted');
+                [rsp, ~] = corrcoef(varargin{i}.SynapseOnlyBinarized_DendriteSubtracted');
             end
             
             corrmat = nan(varargin{i}.NumberofSpines+Spine1_address, varargin{i}.NumberofSpines+Spine1_address);
@@ -3780,8 +3790,7 @@ else
     %%%
     %%% Collect Data from input
     %%%
-    
-    
+
     %%%% Initialize variables
     
     LengthofDendrites = cell(1,14);
@@ -3861,9 +3870,7 @@ else
     FourthClosestFunctionallyClusteredMovementRelatedSpine = cell(1,14);
     FourthClosestHighlyCorrelatedMovementRelatedSpine = cell(1,14);
     MovementClusters = cell(length(varargin), 14);
-    
-    
-    
+        
     for i = 1:length(varargin)
         AllClustersCorrwithCue(i,1:14) = varargin{i}.ClustCorrwithCue;
         NonClusteredCorrwithCue(i,1:14) = varargin{i}.NonClusteredCorrwithCue;
@@ -5052,7 +5059,7 @@ else
     %%%
     
     earlysessions = 1:3;
-    latesessions  = 10:13; 
+    latesessions  = 11:13; 
     
     ConDendDistanceUmbrellaDataChoice = AllDistancesBetweenAllSpines; 
     ConDendCorrelationUmbrellaDataChoice = CorrelationBetweenAllSpinesMovePeriods; 

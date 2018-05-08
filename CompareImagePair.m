@@ -30,7 +30,7 @@ if alignchoice
     %[RESULTS, WARP, WARPEDiMAGE] = ECC(IMAGE, TEMPLATE, LEVELS, NOI, TRANSFORM, DELTA_P_INIT)
 
     delta_p_init = zeros(2,3); delta_p_init(1,1) = 1; delta_p_init(2,2) = 1;
-    [results, warpmatrix, shiftedimage] = ecc(mobileimage, centeredimage, 5,25, 'affine', delta_p_init);
+    [results, warpmatrix, shiftedimage] = ecc(mobileimage, centeredimage,5,25, 'affine', delta_p_init);
 
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
    

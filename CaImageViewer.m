@@ -1022,7 +1022,7 @@ if ~found || ForceManual
             uiwait(d)
             choice = get(d, 'UserData');
             delete(d);
-            roifilename = [experiment, '_SavedROIs_DrawnBy', choice];
+            roifilename = roifile{find(~cell2mat(cellfun(@isempty, (cellfun(@(x) strfind(x, choice), roifile, 'uni', false)), 'uni', false)))};     %%% To avoid issues with file naming, use the original file names that were found, finding the one that contains the name chosen
         else
             roifilename = roifile{1}(1:end-4);
         end
@@ -1075,13 +1075,10 @@ for a = 1:length(ROIs)
         uimenu(c1, 'Label', 'Add Surround Background', 'Callback', @ModifyROI);
         uimenu(c1, 'Label', 'Remove Surround Background', 'Callback', @ModifyROI);
         if glovar.NewSpineAnalysis
-            c2 = uicontextmenu;
-            uimenu(c2, 'Label', 'Set as eliminated', 'Callback', @CategorizeSpines);
-            uimenu(c2, 'Label', 'Set as active', 'Callback', @CategorizeSpines);
-            glovar.ROI(a) = rectangle('Position', ROIs{a}, 'EdgeColor', [0.2 0.4 0.9], 'Curvature', [1 1],'Tag', ['ROI', num2str(ROInum)], 'ButtonDownFcn', {@DragROI, ROInum, 'HomeWindow'}, 'Linewidth', 1, 'UIContextMenu', c2); % Assaf changed [0.2 0.4 0.9] to the variable color_by_user, that is defined by the user choice of color (lines 681-602) 
-        else
-            glovar.ROI(a) = rectangle('Position', ROIs{a}, 'EdgeColor', [0.2 0.4 0.9], 'Curvature', [1 1],'Tag', ['ROI', num2str(ROInum)], 'ButtonDownFcn', {@DragROI, ROInum, 'HomeWindow'}, 'Linewidth', 1, 'UIContextMenu', c1);
+            uimenu(c1, 'Label', 'Set as eliminated', 'Callback', @CategorizeSpines);
+            uimenu(c1, 'Label', 'Set as active', 'Callback', @CategorizeSpines);
         end
+        glovar.ROI(a) = rectangle('Position', ROIs{a}, 'EdgeColor', [0.2 0.4 0.9], 'Curvature', [1 1],'Tag', ['ROI', num2str(ROInum)], 'ButtonDownFcn', {@DragROI, ROInum, 'HomeWindow'}, 'Linewidth', 1, 'UIContextMenu', c1); % Assaf changed [0.2 0.4 0.9] to the variable color_by_user, that is defined by the user choice of color (lines 681-602) 
         glovar.ROItext(a) = text(ROIs{a}(1)-6, ROIs{a}(2)-4, num2str(a-1), 'color', 'white', 'Tag', ['ROI', num2str(a-1), ' Text'],'ButtonDownFcn', 'DeleteROI', 'Fontsize', 6);
         switch usesurroundBGchoice
             case 'Add to all'
@@ -1127,21 +1124,27 @@ end
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 if glovar.NewSpineAnalysis
+    drawer = get(gui_CaImageViewer.figure.handles.figure1, 'UserData');
+    if ~isempty(drawer)
+        userspecificpart = [drawer,'_'];
+    else
+        userspecificpart = [];
+    end
     terminus = regexp(save_directory, animal, 'end');
     targ_folder = save_directory(1:terminus);
     currentfield = glovar.NewSpineAnalysisInfo.CurrentImagingField;
-    load([targ_folder, filesep,'Imaging Field ', num2str(currentfield), ' Spine Registry'])
-    instanceofappearance = logical(strcmpi(SpineRegistry.DatesAcquired, gui_CaImageViewer.NewSpineAnalysisInfo.CurrentDate));
+    load([targ_folder, filesep,userspecificpart,'Imaging Field ', num2str(currentfield), ' Spine Registry'])
+    instanceofappearance = find(logical(strcmpi(SpineRegistry.DatesAcquired, gui_CaImageViewer.NewSpineAnalysisInfo.CurrentDate)));
     glovar.NewSpineAnalysisInfo.SpineList = ones(length(ROIs)-1,1); %%% Don't forget the first ROI is always the background ROI!
-    if size(SpineRegistry.Data,2)>=find(instanceofappearance) %% && find(instanceofappearance)~=1 %%% ZL commentm, it is possible need to set another category of spines specifying the "true new spines"
+%     if size(SpineRegistry.Data,2)>=find(instanceofappearance) %% && find(instanceofappearance)~=1 %%% ZL commentm, it is possible need to set another category of spines specifying the "true new spines"
         r = find(SpineRegistry.Data(:,instanceofappearance)==0);
         for i = 1:length(r)
             set(findobj(glovar.figure.handles.GreenGraph, 'Type', 'rectangle', 'Tag', ['ROI', num2str(r(i))]), 'FaceColor', [1 0 0])
         end
         glovar.NewSpineAnalysisInfo.SpineList(r) = 0;
-    else
-        
-    end
+%     else
+%         
+%     end
 end
 
 
@@ -1367,29 +1370,33 @@ if gui_CaImageViewer.NewSpineAnalysis
         prompt = 'What imaging instance (of this field) is this?';
         name = 'Designate imaging instance';
         numlines = 1;
-        defaultanswer = {'1'};
+        ImageNum = get(gui_CaImageViewer.figure.handles.Frame_EditableText, 'String');
+        defaultanswer = {ImageNum};
         
         currentsession = inputdlg(prompt, name, numlines, defaultanswer);
         currentsession = str2num(currentsession{1});
         
         try
-            load(['Imaging Field ', num2str(currentimagingfield), ' Spine Registry'])
+            load([drawer, '_Imaging Field ', num2str(currentimagingfield), ' Spine Registry'])
+            SRfound = 1;
         catch
+            SRfound = 0;
         end
         
-     %%   if currentsession == 1     
-      %%%      SpineRegistry.Data(1:length(a.SpineROIs)-1,currentsession) = gui_CaImageViewer.NewSpineAnalysisInfo.SpineList;
-
-      %%%      a.SpineStatusList = gui_CaImageViewer.NewSpineAnalysisInfo.SpineList;
-
-      %%%      save(['Imaging Field ', num2str(currentimagingfield), ' Spine Registry'], 'SpineRegistry')
-      %%%  else ZL comment: this part causing more issues in saving ROIs for session 1, use with caution
+        if isempty(gui_CaImageViewer.NewSpineAnalysisInfo.SpineList)
+            gui_CaImageViewer.NewSpineAnalysisInfo.SpineList(1:length(a.SpineROIs),currentsession) = ones([1:length(a.SpineROIs)],1);
+        end
+            
+        
+        if currentsession == 1 && ~SRfound
+           SpineRegistry.Data(1:length(a.SpineROIs)-1,currentsession) = gui_CaImageViewer.NewSpineAnalysisInfo.SpineList;
+           a.SpineStatusList = gui_CaImageViewer.NewSpineAnalysisInfo.SpineList;
+        else  %% ZL comment: this part causing more issues in saving ROIs for session 1, use with caution
             SpineRegistry.Data(1:length(gui_CaImageViewer.NewSpineAnalysisInfo.SpineList),currentsession) = gui_CaImageViewer.NewSpineAnalysisInfo.SpineList;
 
             a.SpineStatusList = gui_CaImageViewer.NewSpineAnalysisInfo.SpineList;
-
-            save(['Imaging Field ', num2str(currentimagingfield), ' Spine Registry'], 'SpineRegistry');
-      %%%  end
+        end
+        save([drawer, '_Imaging Field ', num2str(currentimagingfield), ' Spine Registry'], 'SpineRegistry');
 else
     experiment = regexp(gui_CaImageViewer.filename, '[A-Z]{2}\d+[_]\d+', 'match');
 
@@ -1688,9 +1695,11 @@ numsessions = length(exp_folder)-2;
 choice = listdlg('PromptString', 'Which type of projection do you want to use?', 'ListString', {'Average Projection', 'Max Projection'}, 'SelectionMode', 'single');
 
 scrsz = get(0, 'ScreenSize');
-OverSessionsFigure = figure('Position', scrsz, 'Name', 'Multiple Sessions Analysis', 'NumberTitle', 'off');
+OverSessionsFigure = figure('Position', scrsz, 'Name', ['Multiple Sessions Analysis of ', animal{1}], 'NumberTitle', 'off');
 set(OverSessionsFigure, 'UserData', zeros(1,14));
 h1 = waitbar(0, 'Loading images for session 1');
+
+gui_CaImageViewer.NewSpineAnalysis = 1;
 
 for i = 3:length(exp_folder)
     cd(directory)
@@ -2062,14 +2071,14 @@ function ShiftROIsBetweenSessions_DropDown_Callback(hObject, eventdata, handles)
 %%% dreived from motion correction between the two images. If you run
 %%% the "Compare Image Pair" code from the "Multiple Sessions Analysis"
 %%% window, or otherwise run the function ecc on two images, you can get
-%%% this matrix as an output. The "directionality" of the transformation
+%%% this matrix as an output. The "directionality" of the transformationF
 %%% should match; i.e. if you're moving the ROIs from session 2 to match
 %%% session 1, then the transformation matrix should be derived from moving
 %%% the session 2 image to the template of the session 1 image. 
 
 % warpmatrix = [1.0056,-0.0555,76.16581; 0.0575,1.0269,-23.3092];
-warpmatrix = [    0.9908    0.0536  -74.1310;...
-   -0.0555    0.9703   27.0142];
+warpmatrix = [    0.9972    0.0075    9.6439;...
+    0.0092    1.0243   -4.6674];
 
 global gui_CaImageViewer
 

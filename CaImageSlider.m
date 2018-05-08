@@ -9,6 +9,24 @@ twochannels = get(gui_CaImageViewer.figure.handles.TwoChannels_CheckBox, 'Value'
 set(gui_CaImageViewer.figure.handles.MaxProjection_CheckBox, 'Value', 0);
 set(gui_CaImageViewer.figure.handles.AveProjection_CheckBox, 'Value', 0);
 
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+if gui_CaImageViewer.NewSpineAnalysis
+    animal = regexp(gui_CaImageViewer.filename, '[A-Z]{2,3}[0-9]*', 'match');
+    animal = animal{1};
+    experimenter = regexp(gui_CaImageViewer.save_directory, ['People.\w+'], 'match');
+    experimenter = experimenter{1};
+    experimenter = experimenter(strfind(experimenter, '\')+1:end);
+    if ~isempty(gui_CaImageViewer.MultipleDates)
+        dates = gui_CaImageViewer.MultipleDates;
+        gui_CaImageViewer.save_directory = ['Z:\People\',experimenter,'\Data\', animal, '\', dates(ImageNum,:), '\summed\'];
+        mostlikelyfile = fastdir(gui_CaImageViewer.save_directory, 'summed_50.tif');
+        gui_CaImageViewer.filename = mostlikelyfile{1};
+    else
+    end
+end
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     
 if ImageNum > gui_CaImageViewer.imageserieslength

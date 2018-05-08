@@ -1,4 +1,4 @@
-function [analyzed, poly] = SummarizeCaData(User, File, currentsession, showFig)
+function [analyzed, poly] = SummarizeCaData(Experimenter, File, currentsession, showFig)
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%% This function takes ROI information extracted using CaImageViewer and
@@ -10,8 +10,8 @@ function [analyzed, poly] = SummarizeCaData(User, File, currentsession, showFig)
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-if(~exist('User','var'))
-    User = 'Nathan'; % User defaults to 'Nathan' if not defined
+if(~exist('Experimenter','var'))
+    Experimenter = 'Nathan'; % User defaults to 'Nathan' if not defined
 end
 
 if(~exist('File', 'var'))
@@ -25,6 +25,12 @@ end
 
 if(~exist('showFig','var'))
     showFig = 1; % default to show figure
+end
+
+if strcmpi(getenv('computername'), 'Nathan-Lab-PC')
+    Analyzer = 'Nathan';
+else
+    Analyzer = Experimenter;
 end
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -56,16 +62,16 @@ isbeingcalled = length(dbstack)>1;  %%% if the number of programs in 'dbstack' i
 
 
 if isstruct(File)
-    experimenter = File.Filename(1:2);
-    folder = regexp(File.Filename, [experimenter, '000?\d+'], 'match');
+    experimenter_initials = File.Filename(1:2);
+    folder = regexp(File.Filename, [experimenter_initials, '000?\d+'], 'match');
     folder = folder{1};
     Date = regexp(File.Filename, '_\d+_', 'match');
     Date = Date{1};
 %     cd(['Z:\People\Nathan\Data\', folder, Date(2:end-1), '\summed'])
 else
-    experimenter = regexp(File, '[ABCDEFGHIJKLMNOPQRSTUVWXYZ]{2}', 'match');
-    experimenter = experimenter{1};
-    folder = regexp(File, [experimenter, '\d+[^_]'], 'match');
+    experimenter_initials = regexp(File, '[ABCDEFGHIJKLMNOPQRSTUVWXYZ]{2}', 'match');
+    experimenter_initials = experimenter_initials{1};
+    folder = regexp(File, [experimenter_initials, '\d+[^_]'], 'match');
     folder = folder{1};
     Date = regexp(File, '\d{6}', 'match');
     Date = Date{1};
@@ -76,13 +82,14 @@ else
     else
         error('Operating system not recognized as PC or Unix; terminating');
     end
-    targetdir = [filestart, filesep, User, filesep, 'Data', filesep, folder, filesep, Date, filesep, 'summed'];
+    targetdir = [filestart, filesep, Experimenter, filesep, 'Data', filesep, folder, filesep, Date, filesep, 'summed'];
     if isdir(targetdir)
         cd(targetdir)
         files = dir(cd);
         check = 0;
+        
         for i = 1:length(files)
-            if ~isempty(regexp(files(i).name,['_summed_50_Analyzed_By', User])) || ~isempty(regexp(files(i).name,['_summed_50Analyzed_By', User]))
+            if ~isempty(regexp(files(i).name,['_summed_50_Analyzed_By', Analyzer])) || ~isempty(regexp(files(i).name,['_summed_50Analyzed_By', Analyzer]))
                 load(files(i).name)
                 check = 1;
             end
@@ -101,7 +108,7 @@ else
         try
             eval(['File =' folder, '_', Date, '_001_001_summed_50_Analyzed;'])
         catch
-            temp = who(['*', experimenter, '*']);
+            temp = who(['*', experimenter_initials, '*']);
             eval(['File =', temp{1}, ';']);
         end
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -119,7 +126,7 @@ else
         try
             eval(['File =' folder, '_', Date, '_Summary;'])
         catch
-            temp = who(['*', experimenter, '*']);
+            temp = who(['*', experimenter_initials, '*']);
             eval(['File =', temp{1}, ';']);
         end
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -224,8 +231,8 @@ if File.NumberofSpines ==  0 || File.NumberofSpines ~= length(File.deltaF)
     analyzed.NumberofSpines = length(File.deltaF);
 end
 % 
-% SpineNo = randi(File.NumberofSpines,1); %%% Will choose a random spine from the available ones for this file
-SpineNo = 18;  %%% Manually select spine to be considered
+SpineNo = randi(File.NumberofSpines,1); %%% Will choose a random spine from the available ones for this file
+SpineNo = 16;  %%% Manually select spine to be considered
 
 
 DendNum = File.NumberofDendrites;
@@ -322,7 +329,6 @@ Options.ValuesLimitforNoise = spinevalueslimitfornoise;
 Options.BeingAnalyzed = 'Spine';
 
 for i = 1:numberofSpines
-        
     [spine_thresh(i,1), spinedriftbaseline(i,:), processed_dFoF(i,:)] = AnalyzeTrace(spinedatatouse{i}, Options);
 
 end

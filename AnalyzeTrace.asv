@@ -13,11 +13,12 @@ function [Threshold, DriftBaseline, ProcessedData] = AnalyzeTrace(Data, Options)
         Data(isnan(Data)) = 0;
     end
     
+    if i = 1
+    
     if sum(Data) == 0
         Threshold = 1;
         DriftBaseline = zeros(1,length(Data));
         ProcessedData = Data;
-        return
     end
     
     %%% Values at the ends can mess up smoothing; set the first few to the

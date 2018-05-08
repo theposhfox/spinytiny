@@ -82,8 +82,8 @@ for session = 1:ns
         end
     else  %%% This section is for using data that is not aligned to imaging frames
         ch = find(strcmp(File{session}.xsg_data.channel_names,'Trial_number'));
-        bitcode = parse_behavior_bitcode(File{session}.xsg_data.channels(:,ch));
         current_session = used_sessions(session);
+        bitcode = parse_behavior_bitcode(File{session}.xsg_data.channels(:,ch), 10000, current_session);
         trials(session,1) = File{session}.DispatcherData.saved.ProtocolsSection_n_done_trials;
         if isempty(bitcode)
             disp(['Could not extract bitcode information from session ', num2str(current_session)])

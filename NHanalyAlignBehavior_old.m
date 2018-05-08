@@ -1,5 +1,9 @@
 function [Correlations, Classified, Trial] = NHanalyAlignBehavior(varargin)
 
+%%% Inputs: Assumes that you are inputting both calcium trace data (the
+%%% output of *SummarizeCaData*) and behavior data (the output from
+%%% *NHanaly_LeverPressBehavior*)
+
 %%% Note: The data contained in the behavior file is confusing, but is
 %%% organized in the following way:
 %%% All of the lever measurements are given in terms of behavioral frames
