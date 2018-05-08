@@ -22,7 +22,7 @@ function varargout = KomiyamaLabHub(varargin)
 
 % Edit the above text to modify the response to help KomiyamaLabHub
 
-% Last Modified by GUIDE v2.5 16-Dec-2017 07:48:06
+% Last Modified by GUIDE v2.5 07-May-2018 20:02:45
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -67,6 +67,8 @@ set(handles.Timecourse_PushButton, 'Enable', 'off');
 set(handles.Clustering_PushButton, 'Enable', 'off');
 set(handles.BehaviorTimecourse_PushButton, 'Enable', 'off');
 set(handles.AlignActivty_PushButton, 'Enable', 'off');
+set(handles.NewSpineAnalysis_PushButton, 'Enable', 'off');
+
 
 % setappdata(gcf, 'Folder', 'C:\Users\Komiyama\Desktop\ActivitySummary_UsingRawData');
 
@@ -149,21 +151,25 @@ if Activity == 1 && Behavior == 0
     set(handles.Clustering_PushButton, 'Enable', 'on');
     set(handles.BehaviorTimecourse_PushButton, 'Enable', 'off');
     set(handles.AlignActivty_PushButton, 'Enable', 'off');
+    set(handles.NewSpineAnalysis_PushButton, 'Enable', 'off');
 elseif Activity == 0 && Behavior == 1
     set(handles.Timecourse_PushButton, 'Enable', 'off');
     set(handles.Clustering_PushButton, 'Enable', 'off');
     set(handles.BehaviorTimecourse_PushButton, 'Enable', 'on');
     set(handles.AlignActivty_PushButton, 'Enable', 'off');
+    set(handles.NewSpineAnalysis_PushButton, 'Enable', 'off');
 elseif Activity == 1 && Behavior == 1
     set(handles.Timecourse_PushButton, 'Enable', 'off');
     set(handles.Clustering_PushButton, 'Enable', 'on');
     set(handles.BehaviorTimecourse_PushButton, 'Enable', 'off');
     set(handles.AlignActivty_PushButton, 'Enable', 'on');
+    set(handles.NewSpineAnalysis_PushButton, 'Enable', 'on');
 elseif Activity == 0 && Behavior == 0
     set(handles.Timecourse_PushButton, 'Enable', 'off');
     set(handles.Clustering_PushButton, 'Enable', 'off');
     set(handles.BehaviorTimecourse_PushButton, 'Enable', 'off');
     set(handles.AlignActivty_PushButton, 'Enable', 'off');
+    set(handles.NewSpineAnalysis_PushButton, 'Enable', 'off');
 end
 
 
@@ -183,21 +189,25 @@ if Activity == 1 && Behavior == 0
     set(handles.Clustering_PushButton, 'Enable', 'on');
     set(handles.BehaviorTimecourse_PushButton, 'Enable', 'off');
     set(handles.AlignActivty_PushButton, 'Enable', 'off');
+    set(handles.NewSpineAnalysis_PushButton, 'Enable', 'off');
 elseif Activity == 0 && Behavior == 1
     set(handles.Timecourse_PushButton, 'Enable', 'off');
     set(handles.Clustering_PushButton, 'Enable', 'off');
     set(handles.BehaviorTimecourse_PushButton, 'Enable', 'on');   
     set(handles.AlignActivty_PushButton, 'Enable', 'off');
+    set(handles.NewSpineAnalysis_PushButton, 'Enable', 'off');
 elseif Activity == 1 && Behavior == 1
     set(handles.Timecourse_PushButton, 'Enable', 'off');
     set(handles.Clustering_PushButton, 'Enable', 'on');
     set(handles.BehaviorTimecourse_PushButton, 'Enable', 'off');
     set(handles.AlignActivty_PushButton, 'Enable', 'on');
+    set(handles.NewSpineAnalysis_PushButton, 'Enable', 'on');
 elseif Activity == 0 && Behavior == 0
     set(handles.Timecourse_PushButton, 'Enable', 'off');
     set(handles.Clustering_PushButton, 'Enable', 'off');
     set(handles.BehaviorTimecourse_PushButton, 'Enable', 'off');  
     set(handles.AlignActivty_PushButton, 'Enable', 'off');
+    set(handles.NewSpineAnalysis_PushButton, 'Enable', 'off');
 end
 
 
@@ -559,16 +569,11 @@ if length(listpos) ==1
             if currentsession == 9
                 a = 1;
             end
-            found = 0;
             for j = 1:length(Beh_folder)
                 areboth = strncmp(Beh_folder(j).name, Activity(currentsession), 12);    %%% Match the behavior file with the name of the activity file
                 if areboth
                     load(Beh_folder(j).name)
                     Behavior{currentsession} = Beh_folder(j).name(1:end-4);
-                    found = 1;
-                end
-                if found
-                    break
                 end
             end
             if ~isempty(Activity{currentsession}) && ~isempty(Behavior{currentsession})
@@ -850,3 +855,10 @@ function CorrShuff_DropDown_Callback(hObject, eventdata, handles)
 % handles    structure with handles and user data (see GUIDATA)
 
 ShuffleSpines;
+
+
+% --- Executes on button press in NewSpineAnalysis_PushButton.
+function NewSpineAnalysis_PushButton_Callback(hObject, eventdata, handles)
+% hObject    handle to NewSpineAnalysis_PushButton (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
