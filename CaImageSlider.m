@@ -21,6 +21,8 @@ if gui_CaImageViewer.NewSpineAnalysis
     if ~isempty(gui_CaImageViewer.MultipleDates)
         dates = gui_CaImageViewer.MultipleDates;
         gui_CaImageViewer.save_directory = ['Z:\People\',experimenter,'\Data\', animal, '\', dates(ImageNum,:), '\summed\'];
+        mostlikelyfile = fastdir(gui_CaImageViewer.save_directory, 'summed_50.tif');
+        gui_CaImageViewer.filename = mostlikelyfile{1};
     else
     end
 end

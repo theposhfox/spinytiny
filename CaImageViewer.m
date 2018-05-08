@@ -1695,7 +1695,7 @@ numsessions = length(exp_folder)-2;
 choice = listdlg('PromptString', 'Which type of projection do you want to use?', 'ListString', {'Average Projection', 'Max Projection'}, 'SelectionMode', 'single');
 
 scrsz = get(0, 'ScreenSize');
-OverSessionsFigure = figure('Position', scrsz, 'Name', ['Multiple Sessions Analysis of ', animal], 'NumberTitle', 'off');
+OverSessionsFigure = figure('Position', scrsz, 'Name', ['Multiple Sessions Analysis of ', animal{1}], 'NumberTitle', 'off');
 set(OverSessionsFigure, 'UserData', zeros(1,14));
 h1 = waitbar(0, 'Loading images for session 1');
 

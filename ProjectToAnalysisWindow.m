@@ -21,6 +21,9 @@ if length(selectedaxes)==1
 
     date = get(get(selectedaxes, 'Title'), 'String');
     gui_CaImageViewer.save_directory = ['Z:\People\',experimenter,'\Data\', animal, '\', date, '\summed\'];
+    
+    mostlikelyfile = fastdir(gui_CaImageViewer.save_directory, 'summed_50.tif');
+    gui_CaImageViewer.filename = mostlikelyfile{1};
 
     im = get(get(selectedaxes, 'Children'), 'CData');
 
@@ -51,9 +54,11 @@ else
         date(i,1:6) = get(get(selectedaxes(i), 'Title'), 'String');
     end
     [sorteddates, sort_index] = sortrows(date);
-    
    
     gui_CaImageViewer.save_directory = ['Z:\People\',experimenter,'\Data\', animal, '\', sorteddates(1,:), '\summed\'];
+    
+    mostlikelyfile = fastdir(gui_CaImageViewer.save_directory, 'summed_50.tif');
+    gui_CaImageViewer.filename = mostlikelyfile{1};
     
     for i = 1:length(selectedaxes)
         im{i} = get(get(selectedaxes(sort_index(i)), 'Children'), 'CData');
@@ -72,7 +77,7 @@ else
 
     %%%% Set up parameters in an accessible substructure within the main GUI
     gui_CaImageViewer.NewSpineAnalysis = 1;
-    gui_CaImageViewer.NewSpineAnalysisInfo.CurrentDate = date(1,:);
+    gui_CaImageViewer.NewSpineAnalysisInfo.CurrentDate = sorteddates(1,:);
     gui_CaImageViewer.MultipleDates = sorteddates;
 
     title = get(get(selectedaxes(1),'XLabel'), 'String');

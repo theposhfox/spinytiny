@@ -13,12 +13,16 @@ function [Threshold, DriftBaseline, ProcessedData] = AnalyzeTrace(Data, Options)
         Data(isnan(Data)) = 0;
     end
     
+    if i = 1
+    
+    if sum(Data) == 0
+        Threshold = 1;
+        DriftBaseline = zeros(1,length(Data));
+        ProcessedData = Data;
+    end
+    
     %%% Values at the ends can mess up smoothing; set the first few to the
     %%% median of the first 1000 frames
-    
-    if strcmpi(Options.BeingAnalyzed, 'Dendrite')
-        k = 1;
-    end
     
     Data(1:10) = Data(randi([20,100],1,10));
     Data(end-9:end) = Data(randi([length(Data)-100,length(Data)-20],1,10));
@@ -28,20 +32,23 @@ function [Threshold, DriftBaseline, ProcessedData] = AnalyzeTrace(Data, Options)
     %%% Pad data for protecting edges while estimating baseline
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     
+    fornoise = raw;
     roundnum = 1;
     roundstodo = 50;
+    rawmed = nanmedian(raw);
+    rawspread = nanstd(raw);
     while roundnum<=roundstodo 
-        fornoise(fornoise>rawmed+(valueslimitfornoise*rawspread)) = rawmed+(valueslimitfornoise*rawspread);      %%% Cap off large and small values to pinch the data towards the true baseline
-        fornoise(fornoise<rawmed-(valueslimitfornoise*rawspread)) = rawmed-(valueslimitfornoise*rawspread);      %%%
+        fornoise(fornoise>rawmed+(rawspread)) = rawmed+(rawspread);      %%% Cap off large and small values to pinch the data towards the true baseline
+        fornoise(fornoise<rawmed-(rawspread)) = rawmed-(rawspread);      %%%
             rawspread = nanstd(fornoise);
             rawmed = nanmedian(fornoise);
         roundnum = roundnum+1;
     end
     
     padlength = 2000;
-    pad_start = randi([1,500],1,padlength);
-    pad_end = randi([length(raw)-500,length(raw)],1,padlength);
-    padded_data = [raw(pad_start), raw, raw(pad_end)];
+    pad_start = randi([1,length(fornoise)],1,padlength);
+    pad_end = randi([1,length(fornoise)],1,padlength);
+    padded_data = [fornoise(pad_start), raw, fornoise(pad_end)];
     
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     %%%%%%%%%%% Baseline %%%%%%%%%%%%%%

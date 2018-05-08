@@ -13,12 +13,15 @@ function [Threshold, DriftBaseline, ProcessedData] = AnalyzeTrace(Data, Options)
         Data(isnan(Data)) = 0;
     end
     
+    if sum(Data) == 0
+        Threshold = 1;
+        DriftBaseline = zeros(1,length(Data));
+        ProcessedData = Data;
+        return
+    end
+    
     %%% Values at the ends can mess up smoothing; set the first few to the
     %%% median of the first 1000 frames
-    
-    if strcmpi(Options.BeingAnalyzed, 'Dendrite')
-        k = 1;
-    end
     
     Data(1:10) = Data(randi([20,100],1,10));
     Data(end-9:end) = Data(randi([length(Data)-100,length(Data)-20],1,10));
