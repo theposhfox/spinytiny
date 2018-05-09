@@ -18,8 +18,8 @@ for i = 1:length(selectedaxes)
 end
 
 %%%%%%%%%%%%%%%%%%%%%%%
-centeredimage = im{2};
-mobileimage = im{1};
+centeredimage = im{1};
+mobileimage = im{2};
 %%%%%%%%%%%%%%%%%%%%%%%
 
 alignchoice = get(findobj('Tag', 'Alignment_CheckBox'), 'Value');
