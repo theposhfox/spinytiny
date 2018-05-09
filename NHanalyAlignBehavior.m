@@ -227,6 +227,7 @@ for i = firsttrial:lasttrial
         trial_frames(i,1:2) = nan(1,2);
         trialstouse(i,1) = 0;
     end
+    
     figure(LeverTracePlots.figure);
     h2 = subplot(2,7,Fluor.Session); hold on;
     plot(trial_frames(i,1):trial_frames(i,2), (-1*trial_binary_behavior_downsampled{i}+0.5),'Color', blue)
