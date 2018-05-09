@@ -2079,7 +2079,7 @@ function ShiftROIsBetweenSessions_DropDown_Callback(hObject, eventdata, handles)
 %%% the session 2 image to the template of the session 1 image. 
 
 % warpmatrix = [1.0056,-0.0555,76.16581; 0.0575,1.0269,-23.3092];
-warpmatrix = [    0.9820    0.0138   12.7542;...
+warpmatrix = [    0.9820    0.0138   12.7542
    -0.0120    1.0129  -13.5553];
 
 global gui_CaImageViewer
