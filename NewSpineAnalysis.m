@@ -26,7 +26,7 @@ if length(experimentnames) == 1
     for f = 1:NumFields
         FieldChanges{f} = diff(FieldData{f}.Data,1,2);
     end
-
+    
     %%%%%%%%%%%% Load calcium imaging data for the animal
 
     if strcmpi(getenv('computername'), 'Nathan-Lab-PC')
@@ -82,7 +82,66 @@ if length(experimentnames) == 1
     end
 
     %%%%%%%%%%%%
+    %% New spine analysis
+    
+    FractionofMovementRelatedSpinesMaintained = cell(1,NumFields);
+    FractionofMovementRelatedSpinesEliminated = cell(1,NumFields);
+    FractionofNewSpinesThatAreMR = NaN;
+    DistancesBetweenNewSpinesandMovementSpines = cell(1,NumFields);
+    DistancesBetweenNewSpinesandRandomSpines = cell(1,NumFields);
+    DistancesBetweenElimSpinesandMovementSpines = cell(1,NumFields);
+    
+    for f = 1:NumFields
+        FractionofMovementRelatedSpinesMaintained{f} = length(FieldData{f}.StatClass{1}.DendSub_MovementSpLiberal(FieldData{f}.StatClass{2}.DendSub_MovementSpLiberal))/sum(FieldData{1}.StatClass{1}.DendSub_MovementSpLiberal);
+        FractionofMovementRelatedSpinesEliminated{f} = length(find(FieldChanges{f}(FieldData{f}.StatClass{1}.DendSub_MovementSpLiberal)<0))/sum(FieldData{f}.StatClass{1}.DendSub_MovementSpLiberal);
+        AllMovementSpinesOnSession2 = find(FieldData{f}.StatClass{2}.DendSub_MovementSpLiberal);
+        NewSpines = find(FieldChanges{f}>0);
+        if ~isempty(NewSpines)    %%% If there are new spines, find out whether they are close to a nearby movement spine
+            FractionofNewSpinesThatAreMR = FieldData{f}.StatClass{2}.DendSub_MovementSpLiberal(NewSpines)/length(NewSpines);
+            OtherMovementSpinesThatArentNew = setdiff(AllMovementSpinesOnSession2,NewSpines);
+            if sum(FieldData{f}.StatClass{2}.DendSub_MovementSpLiberal) && ~isempty(OtherMovementSpinesThatArentNew)
+                for ns = 1:length(NewSpines)
+                    NewSpinestoMovementSpines = [];
+                    count = 1;
+                    for os = 1:length(OtherMovementSpinesThatArentNew)
+                        [val, ~] = sort([NewSpines(ns),OtherMovementSpinesThatArentNew(os)]);
+                        NewSpinestoMovementSpines(1,count) = FieldData{f}.CalciumData{2}.DistanceHeatMap(val(1),val(2));
+                        ParentDend =  find(~cell2mat(cellfun(@(x) isempty(find(x == NewSpines(ns),1)), FieldData{f}.CalciumData{1}.SpineDendriteGrouping, 'Uni', false)));
+                        randomspinefromsamedend = FieldData{f}.CalciumData{1}.SpineDendriteGrouping{ParentDend}(randi(length(FieldData{f}.CalciumData{1}.SpineDendriteGrouping{ParentDend})));
+                        while randomspinefromsamedend == NewSpines(ns)
+                            randomspinefromsamedend = FieldData{f}.CalciumData{1}.SpineDendriteGrouping{ParentDend}(randi(length(FieldData{f}.CalciumData{1}.SpineDendriteGrouping{ParentDend})));
+                        end
+                        [val, ~] = sort([NewSpines(ns),randomspinefromsamedend]);
+                        NewSpinestoRandomSpines(1,count) = FieldData{f}.CalciumData{2}.DistanceHeatMap(val(1),val(2));
+                        count = count+1;
+                    end
+                    DistancesBetweenNewSpinesandMovementSpines{f}(ns) = nanmin(NewSpinestoMovementSpines);
+                    DistancesBetweenNewSpinesandRandomSpines{f}(ns) = NewSpinestoRandomSpines(randi(length(NewSpinestoRandomSpines)));
+                end
+            end
+        end
+        ElimSpines = find(FieldChanges{f}<0);
+        if ~isempty(ElimSpines)    %%% If there are new spines, find out whether they are close to a nearby movement spine
+            FractionofElimSpinesThatAreMR = FieldData{f}.StatClass{2}.DendSub_MovementSpLiberal(ElimSpines)/length(ElimSpines);
+            OtherMovementSpinesThatArentElim = setdiff(AllMovementSpinesOnSession2,ElimSpines);
+            if sum(FieldData{f}.StatClass{2}.DendSub_MovementSpLiberal) && ~isempty(OtherMovementSpinesThatArentElim)
+                for ns = 1:length(ElimSpines)
+                    count = 1;
+                    ElimSpinestoMovementSpines = [];
+                    for os = 1:length(OtherMovementSpinesThatArentElim)
+                        [val, ~] = sort([ElimSpines(ns),OtherMovementSpinesThatArentElim(os)]);
+                        ElimSpinestoMovementSpines(1,count) = FieldData{f}.CalciumData{2}.DistanceHeatMap(val(1),val(2));
+                        count = count+1;
+                    end
+                    DistancesBetweenElimSpinesandMovementSpines{f}(ns) = nanmin(ElimSpinestoMovementSpines);
+                end
+            end
+        end
+    end
 
+    %%%%%%%%%%%%
+    %%
+    
     for f = 1:NumFields
         IsDendriteUsed{f} = sum([FieldData{f}.StatClass{1}.MovementDends, FieldData{f}.StatClass{2}.MovementDends],2);
         DendriteFunctionChange{f} = diff([FieldData{f}.StatClass{1}.MovementDends, FieldData{f}.StatClass{2}.MovementDends],1,2);
@@ -97,6 +156,7 @@ if length(experimentnames) == 1
     NumberofDynamicDendritesUsedForMovement = 0;
     NumberofAdditionDendritesUsedForMovement = 0;
     NumberofEliminationDendritesUsedForMovement = 0;
+    NumberofAdditionandEliminationDendritesUsedForMovement = 0;
     NumberofStaticDendritesUsedForMovement = 0;
     for f = 1:NumFields
         for d = 1:length(DendriteDynamics{f})
@@ -104,16 +164,23 @@ if length(experimentnames) == 1
                 NumberofDynamicDendrites = NumberofDynamicDendrites+1;
                 if ~isempty(find(DendriteDynamics{f}{d}>0,1))
                     NumberofAdditionDendrites = NumberofAdditionDendrites+1;
+                    if IsDendriteUsed{f}(d)
+                        NumberofAdditionDendritesUsedForMovement = NumberofAdditionDendritesUsedForMovement+1;
+                    end
                 end
                 if ~isempty(find(DendriteDynamics{f}{d}<0,1))
                     NumberofEliminationDendrites = NumberofEliminationDendrites + 1;
+                    if IsDendriteUsed{f}(d)
+                        NumberofEliminationDendritesUsedForMovement = NumberofEliminationDendritesUsedForMovement+1;
+                    end
                 end
                 if ~isempty(find(DendriteDynamics{f}{d}>0,1)) && ~isempty(find(DendriteDynamics{f}{d}<0,1))
                     NumberofAdditionandEliminationDendrites = NumberofAdditionandEliminationDendrites + 1;
+                    if IsDendriteUsed{f}(d)
+                        NumberofAdditionandEliminationDendritesUsedForMovement = NumberofAdditionandEliminationDendritesUsedForMovement+1;
+                    end
                 end
                 if IsDendriteUsed{f}(d)
-                    NumberofAdditionDendritesUsedForMovement = NumberofAdditionDendritesUsedForMovement+1;
-                    NumberofEliminationDendritesUsedForMovement = NumberofEliminationDendritesUsedForMovement+1;
                     NumberofDynamicDendritesUsedForMovement = NumberofDynamicDendritesUsedForMovement+1;
                 end
             elseif ~sum(abs(DendriteDynamics{f}{d}))
@@ -151,11 +218,20 @@ if length(experimentnames) == 1
     a.NumberofDynamicDendritesUsedForMovement = NumberofDynamicDendritesUsedForMovement;
     a.NumberofAdditionDendritesUsedForMovement = NumberofAdditionDendritesUsedForMovement;
     a.NumberofEliminationDendritesUsedForMovement = NumberofEliminationDendritesUsedForMovement;
+    a.NumberofAdditionandEliminationDendritesUsedForMovement = NumberofAdditionandEliminationDendritesUsedForMovement;
     a.NumberofStaticDendritesUsedForMovement = NumberofStaticDendritesUsedForMovement;
     a.FractionofDynamicDendritesUsedForMovement = FractionofDynamicDendritesUsedForMovement;
     a.FractionofAdditionDendritesUsedForMovement = FractionofAdditionDendritesUsedForMovement;
     a.FractionofEliminationDendritesUsedForMovement = FractionofEliminationDendritesUsedForMovement;
     a.FractionofStaticDendritesUsedForMovement = FractionofStaticDendritesUsedForMovement;
+    
+    a.FractionofMovementRelatedSpinesMaintained = FractionofMovementRelatedSpinesMaintained;
+    a.FractionofMovementRelatedSpinesEliminated = FractionofMovementRelatedSpinesEliminated;
+    a.FractionofNewSpinesThatAreMR = FractionofNewSpinesThatAreMR;
+    a.DistancesBetweenNewSpinesandMovementSpines = DistancesBetweenNewSpinesandMovementSpines;
+    a.DistancesBetweenElimSpinesandMovementSpines = DistancesBetweenElimSpinesandMovementSpines;
+    a.DistancesBetweenNewSpinesandRandomSpines = DistancesBetweenNewSpinesandRandomSpines;
+    
 
     eval([experimentnames, '_SpineDynamicsSummary = a'])
     fname = [experimentnames, '_SpineDynamicsSummary'];
@@ -169,6 +245,7 @@ else
         targetfile = [experimentnames{i}, '_SpineDynamicsSummary'];
         load(targetfile)
         eval(['currentdata = ',targetfile])
+        NumFields = length(currentdata.SpineDynamics);
         SpineDynamics{i} = currentdata.SpineDynamics;
         DendriteDynamics{i} =  currentdata.DendriteDynamics;
         FractionofDendritesThatAreDynamic(1,i) = currentdata.FractionofDendritesThatAreDynamic;
@@ -185,11 +262,18 @@ else
         NumberofDynamicDendritesUsedForMovement(1,i) = currentdata.NumberofDynamicDendritesUsedForMovement;
         NumberofAdditionDendritesUsedForMovement(1,i) = currentdata.NumberofAdditionDendritesUsedForMovement;
         NumberofEliminationDendritesUsedForMovement(1,i) = currentdata.NumberofEliminationDendritesUsedForMovement;
+        NumberofAdditionandEliminationDendritesUsedForMovement(1,i) = currentdata.NumberofAdditionandEliminationDendritesUsedForMovement;
         NumberofStaticDendritesUsedForMovement(1,i) = currentdata.NumberofStaticDendritesUsedForMovement;
         FractionofDynamicDendritesUsedForMovement(1,i) = currentdata.FractionofDynamicDendritesUsedForMovement;
-        NumberofAdditionDendritesUsedForMovement(1,i) = currentdata.FractionofAdditionDendritesUsedForMovement;
-        NumberofEliminationDendritesUsedForMovement(1,i) = currentdata.FractionofEliminationDendritesUsedForMovement;
-        NumberofStaticDendritesUsedForMovement(1,i) = currentdata.FractionofStaticDendritesUsedForMovement;
+        FractionofAdditionDendritesUsedForMovement(1,i) = currentdata.FractionofAdditionDendritesUsedForMovement;
+        FractionofEliminationDendritesUsedForMovement(1,i) = currentdata.FractionofEliminationDendritesUsedForMovement;
+        FractionofStaticDendritesUsedForMovement(1,i) = currentdata.FractionofStaticDendritesUsedForMovement;
+        FractionofMovementRelatedSpinesMaintained{i} = cell2mat(currentdata.FractionofMovementRelatedSpinesMaintained);
+        FractionofMovementRelatedSpinesEliminated{i} = cell2mat(currentdata.FractionofMovementRelatedSpinesEliminated);
+        FractionofNewSpinesThatAreMR(1,i) = currentdata.FractionofNewSpinesThatAreMR;
+        DistancesBetweenNewSpinesandMovementSpines{i} = cell2mat(currentdata.DistancesBetweenNewSpinesandMovementSpines);
+        DistancesBetweenElimSpinesandMovementSpines{i} = cell2mat(currentdata.DistancesBetweenElimSpinesandMovementSpines);
+        DistancesBetweenNewSpinesandRandomSpines{i} = cell2mat(currentdata.DistancesBetweenNewSpinesandRandomSpines);
         clear currentdata
     end
     
@@ -233,14 +317,26 @@ else
     figure;
 %     allmat = [nanmean(FractionofDendritesThatAreEverMovementRelated), nanmean(FractionofDynamicDendritesUsedForMovement),nanmean(FractionofAdditionDendritesUsedForMovement),nanmean(FractionofEliminationDendritesUsedForMovement),nanmean(FractionofStaticDendritesUsedForMovement)];
 %     allerror = [nanstd(FractionofDendritesThatAreEverMovementRelated)/sqrt(length(FractionofDendritesThatAreEverMovementRelated)); nanstd(FractionofDynamicDendritesUsedForMovement)/sqrt(length(FractionofDynamicDendritesUsedForMovement)); nanstd(FractionofAdditionDendritesUsedForMovement)/sqrt(length(FractionofAdditionDendritesUsedForMovement));nanstd(FractionofEliminationDendritesUsedForMovement)/sqrt(length(FractionofEliminationDendritesUsedForMovement));nanstd(FractionofStaticDendritesUsedForMovement)/sqrt(length(FractionofStaticDendritesUsedForMovement))];
-    allmat = [nansum(NumberofDendritesThatAreEverMovementRelated)/nansum(NumberofImagedDendrites), nansum(NumberofDynamicDendritesUsedForMovement)/nansum(NumberofImagedDendrites), nansum(NumberofAdditionDendritesUsedForMovement)/nansum(NumberofImagedDendrites), nansum(NumberofEliminationDendritesUsedForMovement)/nansum(NumberofImagedDendrites), nansum(NumberofStaticDendritesUsedForMovement)/nansum(NumberofImagedDendrites)];
+    allmat = [nansum(NumberofDendritesThatAreEverMovementRelated)/nansum(NumberofImagedDendrites), nansum(NumberofAdditionDendritesUsedForMovement)/nansum(NumberofAdditionDendrites), nansum(NumberofEliminationDendritesUsedForMovement)/nansum(NumberofEliminationDendrites),nansum(NumberofAdditionandEliminationDendritesUsedForMovement)/nansum(NumberofAdditionandEliminationDendrites), nansum(NumberofStaticDendritesUsedForMovement)/nansum(NumberofStaticDendrites)];
     bar(allmat, 'FaceColor', blue)
 %     r_errorbar(1:5, allmat, allerror, 'k')
     ylabel({'Fraction of Dendrites'; 'That Are Movement Related'}, 'Fontsize', 12)
-    set(gca, 'XTick', 1:5, 'XTickLabel',{'All Dendrites','A&E','A','E','St'})
+    set(gca, 'XTick', 1:5, 'XTickLabel',{'All Dendrites','A','E','A&E','Static'})
     title('Likelihood of Movement Relatedness')
-    text(1,0.9, ['Total Dendrites = ', num2str(nansum(NumberofImagedDendrites))])
+    text(1,nansum(NumberofDendritesThatAreEverMovementRelated)/nansum(NumberofImagedDendrites)+0.05, [num2str(nansum(NumberofDendritesThatAreEverMovementRelated)), '/', num2str(nansum(NumberofImagedDendrites))])
+%     text(2,nansum(NumberofDynamicDendritesUsedForMovement)/nansum(NumberofDynamicDendrites) + 0.05, [num2str(nansum(NumberofDynamicDendritesUsedForMovement)), '/', num2str(nansum(NumberofDynamicDendrites))])
+    text(2,nansum(NumberofAdditionDendritesUsedForMovement)/nansum(NumberofAdditionDendrites) + 0.05, [num2str(nansum(NumberofAdditionDendritesUsedForMovement)), '/', num2str(nansum(NumberofAdditionDendrites))])
+    text(3,nansum(NumberofEliminationDendritesUsedForMovement)/nansum(NumberofEliminationDendrites) + 0.05, [num2str(nansum(NumberofEliminationDendritesUsedForMovement)), '/', num2str(nansum(NumberofEliminationDendrites))])
+    text(4,nansum(NumberofAdditionandEliminationDendritesUsedForMovement)/nansum(NumberofAdditionandEliminationDendrites) + 0.05, [num2str(nansum(NumberofAdditionandEliminationDendritesUsedForMovement)), '/', num2str(nansum(NumberofAdditionandEliminationDendrites))])
+    text(5,nansum(NumberofStaticDendritesUsedForMovement)/nansum(NumberofStaticDendrites) + 0.05, [num2str(nansum(NumberofStaticDendritesUsedForMovement)), '/', num2str(nansum(NumberofStaticDendrites))])
     ylim([0 1])
-
+    
+    randspines = cell2mat(DistancesBetweenNewSpinesandRandomSpines);
+    newspines = cell2mat(DistancesBetweenNewSpinesandMovementSpines);
+    elimspines = cell2mat(DistancesBetweenElimSpinesandMovementSpines);
+    figure; bar([1:3],[nanmean(randspines),nanmean(newspines),nanmean(elimspines)], 'FaceColor', dred')
+    r_errorbar([1:3], [nanmean(randspines),nanmean(newspines),nanmean(elimspines)], [nanstd(randspines)/sum(~isnan(randspines)), nanstd(newspines)/sum(~isnan(newspines)), nanstd(elimspines)/sum(~isnan(elimspines))], 'k')
+    set(gca, 'XTick', 1:3, 'XTickLabel',{'Random Spines','New Sp-Mov Sp','Elim Sp - Mov Sp'})
+    ylabel('Mean Distance')
 end
 end

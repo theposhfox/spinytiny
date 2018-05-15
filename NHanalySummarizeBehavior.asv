@@ -39,8 +39,7 @@ if ~isempty(File.Behavior_Frames)
     boundary_frames = find(diff([Inf; File.lever_active;Inf])~=0);
     for trialnumber = 1:length(File.Behavior_Frames)
         if trialnumber>maxtrialnum
-            continue
-        end
+            contin
         if ~isempty(File.Behavior_Frames{trialnumber}.states.reward)
             rewards = rewards+1;
             reward_time = round(File.Frame_Times(round(File.Behavior_Frames{trialnumber}.states.reward(1)))*1000);
@@ -90,10 +89,7 @@ else  %%% This section is for using data that is not aligned to imaging frames
     end
 
     bitcode_offset = mode([bitcode.behavior_trial_num]-(1:length(bitcode)));
-    for trialnumber = 1:length(File.DispatcherData.saved_history.ProtocolsSection_parsed_events) %%% For every trial(the first trial often has incorrect information)
-        if trialnumber>maxtrialnum
-            continue
-        end
+    for trialnumber = 2:length(File.DispatcherData.saved_history.ProtocolsSection_parsed_events) %%% For every trial(the first trial often has incorrect information)
         if trialnumber > length(bitcode)
             continue
         end

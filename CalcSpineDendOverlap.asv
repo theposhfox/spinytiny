@@ -2,15 +2,13 @@ function PercentOverlap = CalcSpineDendOverlap(varargin)
 
 
 if isempty(varargin)
-    files = dir('C:\Users\Komiyama\Desktop\ActivitySummary_UsingRawData');
+    files = fastdir('C:\Users\Komiyama\Desktop\ActivitySummary_UsingRawData', '_Summary');
     cd('C:\Users\Komiyama\Desktop\ActivitySummary_UsingRawData');
-
-    firstfileofint = 4;
     
     usefiles = inputdlg('Use how many files? (e.g. 20, half, all)', 'File number selection', 1, {'All'});
     
     if isempty(str2num(usefiles{1}))   %%% Check if the input is text
-        switch usefiles
+        switch usefiles{1}
             case 'All'
                 usefiles = length(files);
             case 'Half'
@@ -19,15 +17,16 @@ if isempty(varargin)
     else
         usefiles = str2num(usefiles{1});
     end
-    evenchoices = firstfileofinterest:2:length(files);
-    randnum = randi(usefiles,1);
+    choices = firstfileofint:2:length(files);
+    randnum = choices(randi(length(choices),usefiles,1));
+    
     
     filelist = {files(randnum).name};
    
 
     for f = 1:length(filelist);
         load(filelist{f});
-        eval(['File = ', filelist{f}(1:end-4)])
+        eval(['File = ', filelist{f}(1:end-4), ';'])
         clear(filelist{f}(1:end-4));
         bound = cell(1,File.NumberofDendrites);
         split = cell(1,File.NumberofDendrites);

@@ -921,13 +921,13 @@ date = experiment(7:end);
 twochannels = get(glovar.figure.handles.TwoChannels_CheckBox, 'Value');
 fname = [];
 
-if ispc
+% if ispc
     save_directory = gui_CaImageViewer.save_directory;
-else
-    nameparts = regexp(gui_CaImageViewer.save_directory, filesep, 'split');
-    linuxstarter = '/usr/local/lab/';
-    save_directory = [linuxstarter, nameparts{2}, filesep, nameparts{3}, filesep, nameparts{4}, filesep, nameparts{5}, filesep, nameparts{6}, filesep, nameparts{7},filesep];
-end
+% else
+%     nameparts = regexp(gui_CaImageViewer.save_directory, filesep, 'split');
+%     linuxstarter = '/usr/local/lab/';
+%     save_directory = [linuxstarter, nameparts{2}, filesep, nameparts{3}, filesep, nameparts{4}, filesep, nameparts{5}, filesep, nameparts{6}, filesep, nameparts{7},filesep];
+% end
 
 try
     cd(save_directory)
@@ -1135,7 +1135,7 @@ if glovar.NewSpineAnalysis
     currentfield = glovar.NewSpineAnalysisInfo.CurrentImagingField;
     load([targ_folder, filesep,userspecificpart,'Imaging Field ', num2str(currentfield), ' Spine Registry'])
     instanceofappearance = find(logical(strcmpi(SpineRegistry.DatesAcquired, gui_CaImageViewer.NewSpineAnalysisInfo.CurrentDate)));
-    glovar.NewSpineAnalysisInfo.SpineList = ones(length(ROIs)-1,1); %%% Don't forget the first ROI is always the background ROI!
+    glovar.NewSpineAnalysisInfo.SpineList = ones(1,length(ROIs)-1); %%% Don't forget the first ROI is always the background ROI!
 %     if size(SpineRegistry.Data,2)>=find(instanceofappearance) %% && find(instanceofappearance)~=1 %%% ZL commentm, it is possible need to set another category of spines specifying the "true new spines"
         if ~isempty(SpineRegistry.Data) && size(SpineRegistry.Data,2)>=instanceofappearance
             r = find(SpineRegistry.Data(:,instanceofappearance)==0);
@@ -1386,16 +1386,15 @@ if gui_CaImageViewer.NewSpineAnalysis
         end
         
         if isempty(gui_CaImageViewer.NewSpineAnalysisInfo.SpineList)
-            gui_CaImageViewer.NewSpineAnalysisInfo.SpineList(1:length(a.SpineROIs),currentsession) = ones([1:length(a.SpineROIs)],1);
+            gui_CaImageViewer.NewSpineAnalysisInfo.SpineList(1:length(a.SpineROIs)-1) = ones(length(a.SpineROIs)-1,1);
         end
-            
-        
+
         if currentsession == 1 && ~SRfound
            SpineRegistry.Data(1:length(a.SpineROIs)-1,currentsession) = gui_CaImageViewer.NewSpineAnalysisInfo.SpineList;
            a.SpineStatusList = gui_CaImageViewer.NewSpineAnalysisInfo.SpineList;
         else  %% ZL comment: this part causing more issues in saving ROIs for session 1, use with caution
             SpineRegistry.Data(1:length(gui_CaImageViewer.NewSpineAnalysisInfo.SpineList),currentsession) = gui_CaImageViewer.NewSpineAnalysisInfo.SpineList;
-
+            gui_CaImageViewer.NewSpineAnalysisInfo.SpineList(SpineRegistry.Data(:,currentsession) == 0) = 0;
             a.SpineStatusList = gui_CaImageViewer.NewSpineAnalysisInfo.SpineList;
         end
         save([drawer, '_Imaging Field ', num2str(currentimagingfield), ' Spine Registry'], 'SpineRegistry');
@@ -2079,10 +2078,11 @@ function ShiftROIsBetweenSessions_DropDown_Callback(hObject, eventdata, handles)
 %%% the session 2 image to the template of the session 1 image. 
 
 % warpmatrix = [1.0056,-0.0555,76.16581; 0.0575,1.0269,-23.3092];
-warpmatrix = [    0.9820    0.0138   12.7542;...
-   -0.0120    1.0129  -13.5553];
 
 global gui_CaImageViewer
+
+warpmatrix = gui_CaImageViewer.NewSpineAnalysisInfo.WarpMatrix
+
 
 ROIs_original = round(cell2mat(cellfun(@(x) x(1:4), get(gui_CaImageViewer.ROI, 'Position'),'uni', false)));
 

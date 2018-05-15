@@ -3838,7 +3838,7 @@ else
         AllDistancesBetweenSameCellDiffBranchMovementSpines = cell(1,14);
         AllDistancesBetweenSameCellDiffBranchSuccessSpines = cell(1,14);
     CorrelationBetweenMovementSpines = cell(1,14);
-        condendweights = nan(length(varargin),14);
+        weights = nan(length(varargin),14);
         MeanCorrelationBetweenMovementSpines = nan(length(varargin),14);
         MeanCorrelationBetweenCloseMovementSpines = nan(length(varargin),14);
         MeanCorrelationBetweenDistantMovementSpines = nan(length(varargin),14);
@@ -4170,7 +4170,7 @@ else
         AllDistancesBetweenMovementSpines(1:14) = cellfun(@(x,y) [x,y], AllDistancesBetweenMovementSpines, varargin{i}.DistanceBetweenMovementSpines, 'Uni', false);
         AllDistancesBetweenSuccessSpines(1:14) = cellfun(@(x,y) [x,y], AllDistancesBetweenSuccessSpines, varargin{i}.DistanceBetweenSuccessSpines, 'Uni', false);
         CorrelationBetweenMovementSpines(1:14) = cellfun(@(x,y) [x,y], CorrelationBetweenMovementSpines, varargin{i}.CorrelationBetweenMovementSpines, 'Uni', false);
-            condendweights(i,1:14) = cell2mat(cellfun(@(x) numel(x), varargin{i}.CorrelationBetweenMovementSpinesMovementPeriods, 'Uni', false));
+            weights(i,1:14) = cell2mat(cellfun(@(x) numel(x), varargin{i}.CorrelationBetweenMovementSpinesMovementPeriods, 'Uni', false));
             MeanCorrelationBetweenMovementSpines(i,1:14) = cell2mat(cellfun(@(x) nanmean(x), varargin{i}.CorrelationBetweenMovementSpinesMovementPeriods, 'Uni', false));
             MeanCorrelationBetweenCloseMovementSpines(i,1:14) = cell2mat(cellfun(@(x,y) nanmean(x(y<10)), varargin{i}.CorrelationBetweenMovementSpinesMovementPeriods,varargin{i}.DistanceBetweenMovementSpines, 'Uni', false));
             MeanCorrelationBetweenDistantMovementSpines(i,1:14) = cell2mat(cellfun(@(x,y) nanmean(x(y>10 & y<50)), varargin{i}.CorrelationBetweenMovementSpinesMovementPeriods,varargin{i}.DistanceBetweenMovementSpines, 'Uni', false));
@@ -4187,7 +4187,6 @@ else
             MeanCorrelationBetweenAlloDendriticMovementSpines(i,1:14) = cell2mat(cellfun(@nanmean, varargin{i}.CorrelationBetweenFarMovementSpines, 'Uni', false));
         AllDistancesBetweenSameCellDiffBranchMovementSpines(1:14) = cellfun(@(x,y) [x,y], AllDistancesBetweenSameCellDiffBranchMovementSpines, varargin{i}.DistanceBetweenBranchMovementSpines, 'Uni', false);
         CorrelationBetweenSameCellDiffBranchMovementSpines(1:14) = cellfun(@(x,y) [x,y], CorrelationBetweenSameCellDiffBranchMovementSpines, varargin{i}.CorrelationBetweenBranchMovementSpines, 'Uni', false);
-            branchweights(i,1:14) = cell2mat(cellfun(@(x) numel(x), varargin{i}.CorrelationBetweenBranchMovementSpines, 'Uni', false));
             MeanCorrelationBetweenSameCellDiffBranchMovementSpines(i,1:14) = cell2mat(cellfun(@nanmean, varargin{i}.CorrelationBetweenBranchMovementSpines, 'Uni', false));
         AllDistancesBetweenSameCellDiffBranchSuccessSpines(1:14) = cellfun(@(x,y) [x,y], AllDistancesBetweenSameCellDiffBranchSuccessSpines, varargin{i}.DistanceBetweenBranchSuccessSpines, 'Uni', false);
         CorrelationBetweenSameCellDiffBranchSuccessSpines(1:14) = cellfun(@(x,y) [x,y], CorrelationBetweenSameCellDiffBranchSuccessSpines, varargin{i}.CorrelationBetweenBranchSuccessSpines, 'Uni', false);
@@ -4229,22 +4228,11 @@ else
         MovementClusters(i,1:14) = varargin{i}.HighlyCorrelatedMovementRelatedSpines;
     end
     
-        totalnums = sum(condendweights,1);
-        totalnums = repmat(totalnums,length(varargin),1);
-        condendweights = condendweights./totalnums;
+        totalnums = sum(weights,1)
     
-        MeanCorrelationBetweenMovementSpines = MeanCorrelationBetweenMovementSpines.*condendweights;
-        MeanCorrelationBetweenCloseMovementSpines = MeanCorrelationBetweenCloseMovementSpines.*condendweights;
-        MeanCorrelationBetweenDistantMovementSpines = MeanCorrelationBetweenDistantMovementSpines.*condendweights;
-        MeanCorrelationBetweenSuccessSpines = MeanCorrelationBetweenSuccessSpines.*condendweights;
-        MeanCorrelationBetweenCloseSuccessSpines = MeanCorrelationBetweenCloseSuccessSpines.*condendweights;
-        MeanCorrelationBetweenDistantSuccessSpines = MeanCorrelationBetweenDistantSuccessSpines.*condendweights;
-        
-        branchnums = sum(branchweights,1);
-        branchnums = repmat(branchnums,length(varargin),1);
-        branchweights = branchweights./branchnums;
-        MeanCorrelationBetweenSameCellDiffBranchMovementSpines = MeanCorrelationBetweenSameCellDiffBranchMovementSpines.*branchweights;
-
+        MeanCorrelationBetweenMovementSpines
+        MeanCorrelationBetweenCloseMovementSpines
+        MeanCorrelationBetweenDistantMovementSpines
     
     %%% Save Organized data for stats %%%
         

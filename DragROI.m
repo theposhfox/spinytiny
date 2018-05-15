@@ -95,7 +95,7 @@ if strcmpi(clicktype, 'alt') %%% This is the terminal call for the "Fine Select"
             uimenu(c, 'Label', 'Set as eliminated', 'Callback', @CategorizeSpines);
             uimenu(c, 'Label', 'Set as active', 'Callback', @CategorizeSpines);
             gui_CaImageViewer.ROI(ROInum+1) = rectangle('Position', adjustedpos, 'EdgeColor', linecolor, 'ButtonDownFcn', {@DragROI, ROInum, 'HomeWindow'}, 'Curvature', [1 1],'Tag', ['ROI', num2str(ROInum)], 'UIContextMenu', c);
-            gui_CaImageViewer.NewSpineAnalysisInfo.SpineList = [gui_CaImageViewer.NewSpineAnalysisInfo.SpineList; 1];
+            gui_CaImageViewer.NewSpineAnalysisInfo.SpineList = [gui_CaImageViewer.NewSpineAnalysisInfo.SpineList, 1];
         else
             c = uicontextmenu;
             uimenu(c, 'Label', 'Add Surround Background', 'Callback', @ModifyROI);

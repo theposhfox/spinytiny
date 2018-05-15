@@ -232,7 +232,7 @@ if File.NumberofSpines ==  0 || File.NumberofSpines ~= length(File.deltaF)
 end
 % 
 SpineNo = randi(File.NumberofSpines,1); %%% Will choose a random spine from the available ones for this file
-SpineNo = 16;  %%% Manually select spine to be considered
+% SpineNo = 5;  %%% Manually select spine to be considered6
 
 
 DendNum = File.NumberofDendrites;
@@ -928,6 +928,9 @@ coactive_percentage = 100*(max(cofires))/numberofSpines;
 
 
 pixpermicron = 4.65;
+if ~isempty(strfind(File.Filename, 'ZL'))
+    File.ZoomValue = 8.5;
+end
 if isfield(File, 'ZoomValue')
     if File.ZoomValue ~= 0
         pixpermicron = (pixpermicron*File.ZoomValue)/12.1;

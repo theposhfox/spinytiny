@@ -431,56 +431,95 @@ function BehaviorTimecourse_PushButton_Callback(hObject, eventdata, handles)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 
+
 listpos = get(handles.AnimalName_ListBox, 'Value');
 list = get(handles.AnimalName_ListBox, 'String');
 h1 = waitbar(0, 'Initializing...');
 user = get(handles.figure1, 'UserData');
+scrsz = get(0, 'ScreenSize');
+
+
 
 if length(listpos) ==1
+    global LeverTracePlots
+    LeverTracePlots.figure = figure('Position', scrsz);
     try
-        folder = dir('C:\Users\Komiyama\Desktop\Behavioral Data\All Summarized Behavior Files list');
-        cd('C:\Users\Komiyama\Desktop\Behavioral Data\All Summarized Behavior Files list');
+        targetdir = 'C:\Users\Komiyama\Desktop\Behavioral Data\All Summarized Behavior Files list';
+        folder = dir(targetdir);
+        cd(targetdir);
     catch
         [fname pname] = uigetfile();
+        targetdir = pname;
         folder = dir(pname(1:end-1));
         cd(pname);
     end
-    filestoanalyze = [];
+    filetoanalyze = [];
     animal = list{listpos};
-    session = get(handles.Session_EditableText, 'String');
+    sessions = str2num(get(handles.Session_EditableText, 'String'));
     sessioncounter = 0;
+    files = fastdir(targetdir, animal);
 %     actual_sessions = [];
-    for i = 1:length(folder)
-        rightanimal = strfind(folder(i).name, [animal, '_']);
-        wrongfile = strfind(folder(i).name, 'Summarized');
-        if ~isempty(rightanimal) && isempty(wrongfile)
-            load(folder(i).name)
-            nameerror = regexp(folder(i).name, '\d'); % if the initials of the user are more than two letters, the save name excludes one; account for this by finding when the first digit character occurs (e.g. position 3 vs. 2 for GLB001 vs. NH001)
-            if nameerror(1) > 2
-%                 filestoanalyze = [filestoanalyze, ',', folder(i).name(2:end-4)];
-                date = regexp(folder(i).name, '\d{6}\w*_Behavior', 'match');
-                wrkspc = who;
-                filestoanalyze = [filestoanalyze, ',', wrkspc{~cellfun(@isempty, regexp(who, date))}];
-            else
-                filestoanalyze = [filestoanalyze, ',', folder(i).name(1:end-4)];
-            end
-            sessioncounter = sessioncounter +1;
-%             actual_sessions = [actual_sessions; folder(i).Session];
+    if length(sessions)~=length(files)
+        disp('Make sure to enter the correct session numbers!');
+        if length(sessions)>length(files)
+            sessions = 1:length(files)
+        else
+            files = files(sessions);
         end
-        waitbar(i/length(folder), h1, 'Looking for files...')
+    end
+    for i = 1:length(files)
+        load(files{i})
+        date = regexp(files{i}, '\d{6}\w*_Behavior', 'match');
+        wrkspc = who;
+        filetoanalyze = wrkspc{~cellfun(@isempty, regexp(who, date))};
+        sessioncounter = sessioncounter +1;
+%             actual_sessions = [actual_sessions; folder(i).Session];
+        LeverTracePlots.CurrentAxes = subplot(2,length(sessions),length(sessions)+sessioncounter); hold on;
+
+        eval(['Behavior = NHanalySummarizeBehavior(', filetoanalyze, ',[', num2str(sessions(i)), ']);']);
+        
+        MovementMat{sessions(i)} = Behavior.MovementMat;
+                
+        Trials(1,sessions(i)) = Behavior.Trials;
+        Rewards(1,sessions(i)) = Behavior.rewards./Behavior.Trials;
+        ReactionTime(1,sessions(i)) = Behavior.AveRxnTime;
+        MovementAverages = Behavior.MovementAve;
+        UsedSessions = sessions;
+        CuetoReward(1,sessions(i)) = Behavior.AveCueToRew;
+          
+        wrkspc = who;
+        clear(wrkspc{~cellfun(@isempty, regexp(who, date))});
+        waitbar(i/length(files), h1, 'Looking for files...')
     end
     close(h1)
-    filestoanalyze = filestoanalyze(2:end);
-    seshcheck = str2num(session);
-    if sessioncounter ~= length(seshcheck)
-        disp('Make sure to enter the correct session numbers!');
-        session = num2str(1:sessioncounter);
-    end
+    
+    subplot(2,length(sessions),1:round(length(sessions)/4))
+    plot(sessions, Rewards,'-k', 'Linewidth', 2)
+    title('Correct Trials')
+    xlabel('Session')
+    ylabel('Rewards')
+    
+    subplot(2,length(sessions),round(length(sessions)/4)+1:round(length(sessions)/2))
+    plot(sessions, ReactionTime, 'k', 'Linewidth', 2); hold on;
+    plot(sessions, CuetoReward, 'r', 'Linewidth',2);
+    title('Reaction Time')
+    xlabel('Session')
+    legend({'Cue to movement', 'Cue to reward'})
 
-%     if length(session)~=length(filestoanalyze)
-%         session = 1:length(filestoanalyze)
-%     end
-    eval(['NHanalySummarizeBehavior(', filestoanalyze, ',[', session, ']);']);
+    [r_lever] = SummarizeLeverPressCorrelations(MovementMat, sessions);
+
+    a.rewards = Rewards;
+    a.ReactionTime = ReactionTime;
+    a.MovementAverages = MovementAverages;
+    a.MovementCorrelation = r_lever;
+    a.UsedSessions = UsedSessions;
+    a.CuetoReward = CuetoReward;
+
+    eval([animal, '_SummarizedBehavior = a']);
+    targetsavedir = 'C:\Users\Komiyama\Desktop\Output Data';
+    cd(targetsavedir);
+    save([animal, '_SummarizedBehavior'], [animal, '_SummarizedBehavior']);
+
 else
     if strcmpi(user, 'Nathan')
         folder = dir('C:\Users\Komiyama\Desktop\Output Data');
@@ -489,7 +528,7 @@ else
         folder = dir('C:\Users\komiyama\Desktop\Giulia\All Behavioral Data');
         cd('C:\Users\komiyama\Desktop\Giulia\All Behavioral Data');
     end
-    filestoanalyze = [];
+    filetoanalyze = [];
     animal = list(listpos);
     for i = 1:length(folder);
         rightanimal = regexp(folder(i).name, animal);
@@ -507,7 +546,7 @@ else
                     successfullyloaded = [];
                     options{n} = [combos(n,1:2), animalnum, '_SummarizedBehavior'];
                     if sum(~cellfun(@isempty, regexp(who,options{n})))
-                        filestoanalyze = [filestoanalyze, ',', wrkspc{~cellfun(@isempty, regexp(who,options{n}))}];
+                        filetoanalyze = [filetoanalyze, ',', wrkspc{~cellfun(@isempty, regexp(who,options{n}))}];
                         successfullyloaded = wrkspc{~cellfun(@isempty, regexp(who,options{n}))};
                     else
                     end
@@ -515,16 +554,16 @@ else
 %                 if isempty(successfullyloaded)
 %                 end
             else
-                filestoanalyze = [filestoanalyze, ',', folder(i).name(1:end-4)];
+                filetoanalyze = [filetoanalyze, ',', folder(i).name(1:end-4)];
             end
 
         end
         waitbar(i/length(folder), h1, 'Looking for files')
     end
     close(h1)
-    startpoint = regexp(filestoanalyze, '\w'); startpoint = startpoint(1);
-    filestoanalyze = filestoanalyze(startpoint:end);
-    eval(['AverageBehavior(', filestoanalyze, ')']);
+    startpoint = regexp(filetoanalyze, '\w'); startpoint = startpoint(1);
+    filetoanalyze = filetoanalyze(startpoint:end);
+    eval(['AverageBehavior(', filetoanalyze, ')']);
 end
 
 

@@ -33,7 +33,7 @@ function [Threshold, DriftBaseline, ProcessedData] = AnalyzeTrace(Data, Options)
     
     fornoise = raw;
     roundnum = 1;
-    roundstodo = 50;
+    roundstodo = 10;
     rawmed = nanmedian(raw);
     rawspread = nanstd(raw);
     while roundnum<=roundstodo 
@@ -59,9 +59,9 @@ function [Threshold, DriftBaseline, ProcessedData] = AnalyzeTrace(Data, Options)
         case 'Spine'
             windowsize = 30;
         case 'Poly'
-            windowsize = 60;
+            windowsize = 30;
         case 'Dendrite'
-            windowsize = 60;
+            windowsize = 30;
     end
     truebaseline = baseline_kde(padded_data',50,windowsize,20);    %%% inputs = downsample ratio, window size, step
     truebaseline = truebaseline(padlength+1:end-padlength);
@@ -148,20 +148,23 @@ function [Threshold, DriftBaseline, ProcessedData] = AnalyzeTrace(Data, Options)
     else
         switch BeingAnalyzed
             case 'Spine';
-                if spread < 0.75
-                    thresh = 0.75;
+                spinethresh = 1;
+                if spread < spinethresh
+                    thresh = spinethresh;
                 else
                     thresh = spread;
                 end
             case 'Poly';
-                if spread < 0.75
-                    thresh = 0.75;
+                dendthresh = 0.75;
+                if spread < dendthresh
+                    thresh = dendthresh;
                 else
                     thresh = spread;
                 end
             case 'Dendrite'
-                if spread < 0.75
-                    thresh = 0.75;
+                dendthresh = 0.75;
+                if spread < dendthresh
+                    thresh = dendthresh;
                 else
                     thresh = spread;
                 end
