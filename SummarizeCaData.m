@@ -231,8 +231,8 @@ if File.NumberofSpines ==  0 || File.NumberofSpines ~= length(File.deltaF)
     analyzed.NumberofSpines = length(File.deltaF);
 end
 % 
-SpineNo = randi(File.NumberofSpines,1); %%% Will choose a random spine from the available ones for this file
-% SpineNo = 5;  %%% Manually select spine to be considered6
+% SpineNo = randi(File.NumberofSpines,1); %%% Will choose a random spine from the available ones for this file
+SpineNo = 96;  %%% Manually select spine to be considered6
 
 
 DendNum = File.NumberofDendrites;
@@ -978,13 +978,9 @@ for i = 1:File.NumberofDendrites
     if length(File.SpineDendriteGrouping{i})>1
         for j = File.SpineDendriteGrouping{i}(1):File.SpineDendriteGrouping{i}(end-1)
             for k = (j+1):File.SpineDendriteGrouping{i}(end)
-            if j>k
-                lower = spine_address{k}.Index;
-                higher = spine_address{j}.Index;
-            else
-                lower = spine_address{j}.Index;
-                higher = spine_address{k}.Index;
-            end
+                [val ind] = sort([spine_address{j}.Index,spine_address{k}.Index]);
+                lower = val(1);
+                higher = val(2);
                 SpineToSpineDistance(j,k) = abs(sum(Mic_Dist{spine_address{j}.Dendrite}(lower:higher))-Mic_Dist{spine_address{j}.Dendrite}(lower));  %%% Find the sum of linear distances from the current point to the nearby spine
             end
         end 

@@ -20,6 +20,8 @@ function [Threshold, DriftBaseline, ProcessedData] = AnalyzeTrace(Data, Options)
         return
     end
     
+    Data(Data<0) = 0;
+    
     %%% Values at the ends can mess up smoothing; set the first few to the
     %%% median of the first 1000 frames
     
@@ -148,7 +150,7 @@ function [Threshold, DriftBaseline, ProcessedData] = AnalyzeTrace(Data, Options)
     else
         switch BeingAnalyzed
             case 'Spine';
-                spinethresh = 1;
+                spinethresh = 0.75;
                 if spread < spinethresh
                     thresh = spinethresh;
                 else

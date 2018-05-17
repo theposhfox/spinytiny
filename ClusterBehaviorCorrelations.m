@@ -5029,10 +5029,13 @@ else
     
     subplot(2,4,3)
     xlim([0 15])
-    a = flex_plot(1:14, cellfun(@(x) x(:,1), DendClusteringDegree, 'uni', false), stattype,black, 2); hold on;
-    b = flex_plot(1:14, cellfun(@(x) x(:,2), DendClusteringDegree, 'uni', false), stattype,red, 2);
-    c = flex_plot(1:14, cellfun(@(x) x(:,3), DendClusteringDegree, 'uni', false), stattype,green, 2);
-    legend([a b c], {'Spatial Fiedler', 'Temporal Fiedler', 'Spatiotemporal Fiedler'});
+    try
+        a = flex_plot(1:14, cellfun(@(x) x(:,1), DendClusteringDegree, 'uni', false), stattype,black, 2); hold on;
+        b = flex_plot(1:14, cellfun(@(x) x(:,2), DendClusteringDegree, 'uni', false), stattype,red, 2);
+        c = flex_plot(1:14, cellfun(@(x) x(:,3), DendClusteringDegree, 'uni', false), stattype,green, 2);
+        legend([a b c], {'Spatial Fiedler', 'Temporal Fiedler', 'Spatiotemporal Fiedler'});
+    catch
+    end
     
     ylabel('Mean Algebraic Connectivity of Dendrites (Clustering)');
     xlabel('Session');
