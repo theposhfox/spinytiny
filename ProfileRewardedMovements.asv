@@ -88,18 +88,15 @@ if successful_mvmt_start+(trialstopwindow-shift) > length(File.lever_force_smoot
     File.lever_force_smooth = [File.lever_force_smooth; endingbuffer];
 end
 File.SuccessfulMovements{rewards} = [nan(shift,1);File.lever_force_smooth(successful_mvmt_start:successful_mvmt_start+(trialstopwindow-shift))];
-if ~isempty(File.lick_data_smooth)
-    File.PostSuccessLicking{rewards} = [nan(shift,1); File.lick_data_smooth(successful_mvmt_start:successful_mvmt_start+5000)];
-else
-    File.PostSuccessLicking{rewards} = [];
-end
-
+File.PostSuccessLicking{rewards} = [nan(shift,1); File.lick_data_smooth(successful_mvmt_start
 trial_length = length(File.SuccessfulMovements{rewards});
 if trial_length == 0
     dbstop
 end
 
+
 rxnTime = find(File.PastThreshRewTrials{rewards}, 1, 'first')/1000; %%% Reaction time in seconds (Starts at cue and ends at motion start) (note that this data is downsampled from ephus' 10,000Hz to 1,000Hz by Andy's code)
+
 
 if isempty(rxnTime)
     rxnTime = 0;

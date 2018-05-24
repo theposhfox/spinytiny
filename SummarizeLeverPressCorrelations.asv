@@ -14,7 +14,7 @@ end
 
 unused_days = setdiff(sessions(1):sessions(end),sessions);
 
-cat_data = nan(3001,total+length(unused_days));
+cat_data = nan(3001,total+unused_days);
 
 counter = sessions(1); %%% Start from the first day that was actually used, leave preceding days blank
 for i = 1:length(sessions);
@@ -32,7 +32,7 @@ r(1:1+size(r,1):end) = NaN; %%% Set the diagonal == NaN;
 
 %%% Find the median of each block of data correlations
 
-r_lever = nan(sessions(end),sessions(end));
+r_lever = nan(ns,ns);
 
 counter1 = 1;
 for currentsession = 1:ns
@@ -42,8 +42,8 @@ for currentsession = 1:ns
         for trialnumber = currentsession:ns
             session_column = sessions(trialnumber);
             temp2 = counter2:counter2+size(MovementMat{session_column},1)-1;
-            r_lever(session_row,session_column) = nanmedian(reshape(r(temp1,temp2),1,numel(r(temp1,temp2)))); 
-            r_lever(session_column,session_row) = nanmedian(reshape(r(temp1,temp2),1,numel(r(temp1,temp2)))); %%% Accounts for the symmetry of heatmaps (only half needs to be calculated, the rest can just be filled in, as done here)
+            r_lever(session_row,session_column) = nanmedian(reshape(r(temp1,temp2)),1,); 
+            r_lever(session_column,session_row) = nanmedian(nanmedian(r(temp1,temp2))); %%% Accounts for the symmetry of heatmaps (only half needs to be calculated, the rest can just be filled in, as done here)
             counter2 = counter2+size(MovementMat{session_column},1);
         end
     counter1 = counter1 + size(MovementMat{session_row},1);
@@ -61,9 +61,8 @@ ylabel('Session')
 xlabel('Session')
 title('Movement correlation over sessions')
 
-scrsz = get(0, 'ScreenSize');
 
-LeverTracePlots.figure2 = figure('Position', scrsz); subplot(2,2,1); plot(diag(r_lever), 'k');
+figure; plot(diag(r_lever), 'k');
 hold on;
 plot(diag(r_lever,1),'Color', [0.6 0.6 0.6])
 ylabel('Correlations')

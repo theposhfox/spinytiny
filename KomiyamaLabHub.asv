@@ -444,15 +444,12 @@ if length(listpos) ==1
     global LeverTracePlots
     LeverTracePlots.figure = figure('Position', scrsz);
     
-        Trials = nan(1,14);
-        Rewards = nan(1,14);
-        MovingAtTrialStartFaults = nan(1,14);
-        ReactionTime = nan(1,14);
+        Trials(1,sessions(i)) = nan(1,14);
+        Rewards(1,sessions(i)) = nan(1,14);
+        MovingAtTrialStartFaults(1,sessions(i)) = nan(1,14);
+        ReactionTime(1,sessions(i)) = nan(1,14);
         MovementAverages = nan(1,14);
-        CuetoReward = nan(1,14);
-        MoveDurationBeforeIgnoredTrials = nan(1,14);
-        NumberofMovementsDuringITI = nan(1,14);
-        FractionITISpentMoving = nan(1,14);
+        CuetoReward(1,sessions(i)) = nan(1,14);
 
     try
         targetdir = 'C:\Users\Komiyama\Desktop\Behavioral Data\All Summarized Behavior Files list';
@@ -500,9 +497,6 @@ if length(listpos) ==1
         MovementAverages = Behavior.MovementAve;
         UsedSessions = sessions;
         CuetoReward(1,sessions(i)) = Behavior.AveCueToRew;
-        MoveDurationBeforeIgnoredTrials(1,sessions(i)) = nanmedian(Behavior.MoveDurationBeforeIgnoredTrials);
-        NumberofMovementsDuringITI(1,sessions(i)) = nanmedian(Behavior.NumberofMovementsDuringITI);
-        FractionITISpentMoving(1,sessions(i)) = nanmedian(Behavior.FractionITISpentMoving);
           
         wrkspc = who;
         clear(wrkspc{~cellfun(@isempty, regexp(who, date))});
@@ -511,32 +505,20 @@ if length(listpos) ==1
     close(h1)
     
     subplot(2,length(sessions),1:round(length(sessions)/4))
-    plot(1:14, Rewards(1:14),'-k', 'Linewidth', 2)
+    plot(sessions, Rewards,'-k', 'Linewidth', 2)
     title('Correct Trials')
     xlabel('Session')
     ylabel('Rewards')
     
     subplot(2,length(sessions),round(length(sessions)/4)+1:round(length(sessions)/2))
-    plot(1:14, ReactionTime(1:14), 'k', 'Linewidth', 2); hold on;
-    plot(1:14, CuetoReward(1:14), 'r', 'Linewidth',2);
+    plot(sessions, ReactionTime, 'k', 'Linewidth', 2); hold on;
+    plot(sessions, CuetoReward, 'r', 'Linewidth',2);
     title('Reaction Time')
     xlabel('Session')
     legend({'Cue to movement', 'Cue to reward'})
 
     [r_lever] = SummarizeLeverPressCorrelations(MovementMat, sessions);
-    
-    subplot(2,2,2); plot(MoveDurationBeforeIgnoredTrials);
-    xlabel('Session')
-    ylabel('Duration of Movement Before Ignored Trials')
-    
-    subplot(2,2,3); plot(NumberofMovementsDuringITI)
-    xlabel('Session')
-    ylabel('Number of Movements During ITI')
-    
-    subplot(2,2,4); plot(FractionITISpentMoving)
-    xlabel('Session')
-    ylabel('Fraction of ITI Spent Moving')
-    
+
     a.rewards = Rewards;
     a.ReactionTime = ReactionTime;
     a.MovingAtTrialStartFaults = MovingAtTrialStartFaults;
@@ -544,10 +526,7 @@ if length(listpos) ==1
     a.MovementCorrelation = r_lever;
     a.UsedSessions = UsedSessions;
     a.CuetoReward = CuetoReward;
-    a.MoveDurationBeforeIgnoredTrials = MoveDurationBeforeIgnoredTrials;
-    a.NumberofMovementsDuringITI = NumberofMovementsDuringITI;
-    a.FractionITISpentMoving =FractionITISpentMoving;
-    
+
     eval([animal, '_SummarizedBehavior = a']);
     targetsavedir = 'C:\Users\Komiyama\Desktop\Output Data';
     cd(targetsavedir);
@@ -638,6 +617,9 @@ if length(listpos) ==1
             eval(['currentsession = ', Act_folder(i).name(1:end-4), '.Session;'])
             Activity{currentsession} = Act_folder(i).name(1:end-4);
             cd('C:\Users\Komiyama\Desktop\Behavioral Data\All Summarized Behavior Files list');
+            if currentsession == 9
+                a = 1;
+            end
             for j = 1:length(Beh_folder)
                 areboth = strncmp(Beh_folder(j).name, Activity(currentsession), 12);    %%% Match the behavior file with the name of the activity file
                 if areboth

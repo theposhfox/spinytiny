@@ -68,9 +68,6 @@ bitcode_offset = [bitcode.behavior_trial_num]-(1:length(bitcode));
 
 if ~isempty(find(abs(diff(bitcode_offset))>1))
     trialerror = find(abs(diff(bitcode_offset))>1)+1;
-    if length(trialerror) > 1
-        trialerror = trialerror(1);
-    end
     if trialerror<20            %%% This assumes that if the jump is early, then something bad happened with the early sessions, and vice-versa.
         firsttrial = trialerror;
     else

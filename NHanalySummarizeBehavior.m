@@ -25,6 +25,7 @@ global LeverTracePlots
 %%% Performance %%% 
 % 
 rewards = 0;
+moveatstartfault = 0;
 % rxnTime = cell(1,length(used_sessions));
 % CuetoRew = cell(1,length(used_sessions));
 % trial_length = cell(1,length(used_sessions));
@@ -32,6 +33,17 @@ rewards = 0;
 figure(LeverTracePlots.figure)
 
 maxtrialnum = 110;
+
+
+if sum(cell2mat(strfind(File.xsg_data.channel_names, 'Lick')))
+    [n,d] = rat(1000/10000);
+    lickdata_resample = resample(File.xsg_data.channels(:,3), n,d);
+    [b,a] = butter(4,(5/500), 'low');
+    File.lick_data_smooth = filtfilt(b,a,lickdata_resample);
+else
+    File.lick_data_smooth = [];
+end
+
 
 if ~isempty(File.Behavior_Frames)
     trials = length(File.Behavior_Frames);
@@ -44,19 +56,33 @@ if ~isempty(File.Behavior_Frames)
         if ~isempty(File.Behavior_Frames{trialnumber}.states.reward)
             rewards = rewards+1;
             reward_time = round(File.Frame_Times(round(File.Behavior_Frames{trialnumber}.states.reward(1)))*1000);
+            result_time(trialnumber) = reward_time;
+            if result_time(trialnumber) == 0
+                result_time(trialnumber) = 1;
+            end
             cue_start = round(File.Frame_Times(round(File.Behavior_Frames{trialnumber}.states.cue(1)))*1000);
             if trialnumber ~= length(File.Behavior_Frames)         %%% The last behavioral trial must be treated differently, since there is no future cue to use as a reference
                 next_cue = round(File.Frame_Times(round(File.Behavior_Frames{trialnumber+1}.states.cue(1)))*1000);
             else
                 next_cue = round(File.Frame_Times(end))*1000;
             end
-            end_trial = next_cue;
+            end_trial(trialnumber) = next_cue;
             File.movement{rewards} = File.lever_force_smooth(cue_start:next_cue);
             File.PastThreshRewTrials{rewards} = File.lever_force_smooth(cue_start:next_cue).*File.lever_active(cue_start:next_cue);  %%% Binarizes lever motion for a particular cue period
 
             %%%%%%%%%%%%%%%%%%%%%%%%%
             %%%%
-            [File,tlength, cs2r, rxntime, fault] = ProfileRewardedMovements(File, boundary_frames,session, trialnumber, rewards,cue_start, reward_time, end_trial);
+            [File,tlength, cs2r, rxntime, fault,IgnoredTrialInfo] = ProfileRewardedMovements(File, boundary_frames,session, trialnumber, rewards,cue_start, result_time, end_trial);
+            if fault == 1
+                moveatstartfault = moveatstartfault+1;
+                movedurationbeforecue(rewards,1) = IgnoredTrialInfo.movedurationbeforecue;
+                NumberofMovementsDuringITI(rewards,1) = IgnoredTrialInfo.numberofmovementssincelasttrial;
+                FractionITISpentMoving(rewards,1) = IgnoredTrialInfo.FractionITISpentMoving;
+            else
+                movedurationbeforecue(rewards,1) = 0;
+                NumberofMovementsDuringITI(rewards,1) = NaN;
+                FractionITISpentMoving(rewards,1) = NaN;
+            end
             if fault
                 continue
             end
@@ -77,6 +103,10 @@ else  %%% This section is for using data that is not aligned to imaging frames
         disp(['Could not extract bitcode information from session ', num2str(session)])
         a.MovementMat = NaN;
         a.MovementAve = NaN;
+        a.MovingAtTrialStartFaults = NaN;
+        a.MoveDurationBeforeIgnoredTrials = NaN;
+        a.NumberofMovementsDuringITI = NaN;
+        a.FractionITISpentMoving = NaN;
         a.rewards = NaN;
         a.AveRxnTime = NaN;
         a.AveCueToRew = NaN;
@@ -103,28 +133,42 @@ else  %%% This section is for using data that is not aligned to imaging frames
         if i_bitcode<=0
             continue
         end
-        start_trial = round(bitcode(i_bitcode).xsg_sec*1000);
+        start_trial(trialnumber) = round(bitcode(i_bitcode).xsg_sec*1000);
         t0 = File.DispatcherData.saved_history.ProtocolsSection_parsed_events{trialnumber}.states.bitcode(1);
-        end_trial = start_trial+round((File.DispatcherData.saved_history.ProtocolsSection_parsed_events{trialnumber}.states.state_0(2,1)-t0)*1000); %%% Subtract the starting point of each trial  (t0) on Dispatcher's terms so as to align it with the start point according to the .xsg data
-
+        end_trial(trialnumber) = start_trial(trialnumber)+round((File.DispatcherData.saved_history.ProtocolsSection_parsed_events{trialnumber}.states.state_0(2,1)-t0)*1000); %%% Subtract the starting point of each trial  (t0) on Dispatcher's terms so as to align it with the start point according to the .xsg data
+       
         if ~isempty(File.DispatcherData.saved_history.ProtocolsSection_parsed_events{trialnumber}.states.reward) %%% If the trial was rewarded
             rewards = rewards+1;
-            reward_time = round(start_trial+(File.DispatcherData.saved_history.ProtocolsSection_parsed_events{trialnumber}.states.reward(1)-t0)*1000);
-            cue_start = round(start_trial+(File.DispatcherData.saved_history.ProtocolsSection_parsed_events{trialnumber}.states.cue(1)-t0)*1000);
+            reward_time = round(start_trial(trialnumber)+(File.DispatcherData.saved_history.ProtocolsSection_parsed_events{trialnumber}.states.reward(1)-t0)*1000);
+            result_time(trialnumber) = reward_time;
+            if result_time(trialnumber) == 0
+                result_time(trialnumber) = 1;
+            end
+            cue_start = round(start_trial(trialnumber)+(File.DispatcherData.saved_history.ProtocolsSection_parsed_events{trialnumber}.states.cue(1)-t0)*1000);
             if cue_start >= length(File.lever_force_smooth) || reward_time >= length(File.lever_force_smooth)
                 continue
             end
 
-            if end_trial>length(File.lever_force_smooth)
-                end_trial = length(File.lever_force_smooth);
+            if end_trial(trialnumber)>length(File.lever_force_smooth)
+                end_trial(trialnumber) = length(File.lever_force_smooth);
             end
 
-            File.movement{rewards} = File.lever_force_smooth(cue_start:end_trial);
-            File.PastThreshRewTrials{rewards} = File.lever_force_smooth(cue_start:end_trial).*File.lever_active(cue_start:end_trial);  %%% Binarizes lever motion for a particular cue period
+            File.movement{rewards} = File.lever_force_smooth(cue_start:end_trial(trialnumber));
+            File.PastThreshRewTrials{rewards} = File.lever_force_smooth(cue_start:end_trial(trialnumber)).*File.lever_active(cue_start:end_trial(trialnumber));  %%% Binarizes lever motion for a particular cue period
 
             %%%%%%%%%%%%%%%%%%%%%%%%%
             %%%%
-            [File,tlength, cs2r, rxntime, fault] = ProfileRewardedMovements(File, boundary_frames,session, trialnumber, rewards,cue_start, reward_time, end_trial);
+            [File,tlength, cs2r, rxntime, fault,IgnoredTrialInfo] = ProfileRewardedMovements(File, boundary_frames,session, trialnumber, rewards,cue_start, result_time, end_trial);
+            if fault == 1
+                moveatstartfault = moveatstartfault+1;
+                movedurationbeforecue(rewards,1) = IgnoredTrialInfo.movedurationbeforecue;
+                NumberofMovementsDuringITI(rewards,1) = IgnoredTrialInfo.numberofmovementssincelasttrial;
+                FractionITISpentMoving(rewards,1) = IgnoredTrialInfo.FractionITISpentMoving;
+            else
+                movedurationbeforecue(rewards,1) = 0;
+                NumberofMovementsDuringITI(rewards,1) = NaN;
+                FractionITISpentMoving(rewards,1) = NaN;
+            end
             if fault
                 continue
             end
@@ -135,6 +179,10 @@ else  %%% This section is for using data that is not aligned to imaging frames
             rxnTime(rewards,1) = rxntime;
             CuetoRew(rewards,1) = cs2r;
         else
+            result_time(trialnumber) = round(start_trial(trialnumber)+(File.DispatcherData.saved_history.ProtocolsSection_parsed_events{trialnumber}.states.punish(1)-t0)*1000);
+            if result_time(trialnumber) == 0
+                result_time(trialnumber) = 1;
+            end
         end
     end
 end
@@ -146,43 +194,54 @@ if ~isempty(trial_length)
 else
     range = nan;
 end
+
+movedurationbeforecue = movedurationbeforecue(logical(movedurationbeforecue))./1000;
+
 axes(LeverTracePlots.CurrentAxes)
+numtrackedmovements = 0;
 for rewardedtrial = 1:rewards 
     try
         if ~isempty(File.SuccessfulMovements{rewardedtrial})
             MovementMat(rewardedtrial,1:range) = File.SuccessfulMovements{rewardedtrial}(1:range);
             MovementMat(MovementMat==0) = nan;
-            plot(MovementMat(rewardedtrial,1:3000), 'k');
+            plot(MovementMat(rewardedtrial,1:range), 'k');
             drawnow;
         else
-            MovementMat(rewardedtrial,1:3001) = nan(1,3001);
+            MovementMat(rewardedtrial,1:range) = nan(1,range);
         end
     catch
-        MovementMat(rewardedtrial,1:3001) = nan(1,3001);
+        MovementMat(rewardedtrial,1:range) = nan(1,range);
         disp(['Movement was not tracked for trial ', num2str(rewardedtrial), ' from session ', num2str(session)])
+    end
+    if sum(~isnan(MovementMat(rewardedtrial,:))) > 100
+        numtrackedmovements = numtrackedmovements+1;
     end
 end
 
 %%%%
-MinMovementNumContingency = sum(~isnan(MovementMat(:,1500))) > 5;
+MinMovementNumContingency = numtrackedmovements > 1;
 %%%%
 
 if rewards ~= 0 && MinMovementNumContingency
-    MovementAve = nanmean(MovementMat(:,1:3000),1);
+    MovementAve = nanmean(MovementMat(:,1:range),1);
     plot(MovementAve(1:3000), 'r', 'Linewidth', 2); drawnow;
     ylim([-2.5 0])
     title(['Session', num2str(session)])
 else
     MovementMat(~isnan(MovementMat)) = nan;
-    MovementAve = nan(1,3000);
+    MovementAve = nan(1,range);
 end
 
 a.MovementMat = MovementMat;
 a.MovementAve = MovementAve;
 a.rewards = rewards;
+a.MovingAtTrialStartFaults = moveatstartfault;
 a.AveRxnTime = AveRxnTime;
 a.AveCueToRew = AveCueToRew;
 a.Trials = trials;
+a.MoveDurationBeforeIgnoredTrials = movedurationbeforecue; 
+a.NumberofMovementsDuringITI = NumberofMovementsDuringITI;
+a.FractionITISpentMoving = FractionITISpentMoving;
 
 % temp = nan(explength,1); 
 % temp(used_sessions) = (rewards./trials).*100;

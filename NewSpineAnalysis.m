@@ -425,6 +425,7 @@ else
     ylabel('Fraction of Dendrites', 'Fontsize', 12)
     set(gca, 'XTick', 1:5, 'XTickLabel', {'All Dends', 'Old MRS', 'New MRS', 'A', 'E'})
     ylim([0 1])
+    title('Predictive Features of Becoming MR')
     
     text(1,FractionofDendsThatBecomeMR+0.05, [num2str(sum(NumberofDendritesThatBecomeMR)), '/', num2str(nansum(NumberofImagedDendrites))])
     text(2,FractionofDendritesThatBecomeMRandHaveMRSpines+0.05, [num2str(nansum(NumberofDendritesThatBecomeMRandHaveMRSpines)), '/', num2str(nansum(NumberofDendritesThatBecomeMR))])
@@ -449,6 +450,7 @@ else
     ylabel('Fraction of Dendrites', 'Fontsize', 12)
     set(gca, 'XTick', 1:5, 'XTickLabel', {'All Dends', 'Old MRS', 'New MRS', 'A', 'E'})
     ylim([0 1])
+    title('Predictive Features of Losing MR')
     
     text(1,FractionofDendsThatLoseMR+0.05, [num2str(sum(NumberofDendritesThatLoseMR)), '/', num2str(nansum(NumberofImagedDendrites))])
     text(2,FractionofDendritesThatLoseMRandHaveMRSpines+0.05, [num2str(nansum(NumberofDendritesThatLoseMRandHaveMRSpines)), '/', num2str(nansum(NumberofDendritesThatLoseMR))])
@@ -458,7 +460,7 @@ else
 
     
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    %%% Figure 7: Characterization of New Spines
+    %%% Figure 5: Characterization of New Spines
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     
     figure; 
@@ -468,7 +470,11 @@ else
     
     text(1,sum(NumberofNewSpinesThatAreMR)/sum(NumberofNewSpines)+0.05, [num2str(sum(NumberofNewSpinesThatAreMR)), '/', num2str(sum(NumberofNewSpines))])
     text(2,sum(NumberofElimSpinesThatWereMR)/sum(NumberofElimSpines)+0.05, [num2str(sum(NumberofElimSpinesThatWereMR)), '/', num2str(sum(NumberofElimSpines))])
-    ylim([0 1])    
+    ylim([0 1])   
+    xlim([0 3])
+    set(gca, 'XTick', [1 2])
+    set(gca, 'XTickLabel', {'New Spines', 'Elim Spines'})
+    ylabel('Fractin of Spines that Become MR')
     
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     %%% Figure 6: Distance Between Dynamic Spines and MR spines
