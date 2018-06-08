@@ -4691,12 +4691,12 @@ else
         b = flex_plot(1:14, MovementSpineFreq, stattype, lgreen, 2);
         c = flex_plot(1:14, ClusterFreq, stattype, lpurple, 2); 
         d = flex_plot(1:14, CausalClusterFreq, stattype, orange, 2); hold on;
-        e = flex_plot(1:14, NonClusteredFreq, stattype, dred, 2);
-        f = flex_plot(1:14, NonClusteredCausalFreq, stattype, gray, 2);
+        c = flex_plot(1:14, NonClusteredFreq, stattype, dred, 2);
+        d = flex_plot(1:14, NonClusteredCausalFreq, stattype, gray, 2);
         ylabel('Event Frequency', 'FontSize', 14)
         xlabel('Session', 'FontSize', 14)
         xlim([0 15])
-    legend([a,b,c,d,e,f], {'All', 'Movemnent','Clustered', 'Causal', 'Nonclustered', 'NonClust Caus'});
+    legend([a,b,c,d], {'Clustered', 'Causal', 'Nonclustered', 'NonClust Caus'});
     subplot(2,3,2)
         a = flex_plot(1:14, ClusteredSpineAmp, stattype, black, 2); hold on;
         b = flex_plot(1:14, CausalClusteredSpineAmp, stattype, bgreen, 2);

@@ -51,6 +51,9 @@ end
 
 r_lever(r_lever == 1) = nan;
 
+if ns<5
+    ns = 5;
+end
 subplot(2,ns, round(ns/2)+2:ns);
 
 imagesc(r_lever);

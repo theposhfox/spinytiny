@@ -26,9 +26,6 @@ global LeverTracePlots
 % 
 rewards = 0;
 moveatstartfault = 0;
-% rxnTime = cell(1,length(used_sessions));
-% CuetoRew = cell(1,length(used_sessions));
-% trial_length = cell(1,length(used_sessions));
 
 figure(LeverTracePlots.figure)
 
@@ -44,6 +41,21 @@ else
     File.lick_data_smooth = [];
 end
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%% Initialize variables 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+used_trial = [];
+rxnTime = [];
+CuetoRew = [];
+trial_length = [];
+movedurationbeforecue = [];
+MovementMat = [];
+NumberofMovementsDuringITIPreIgnoredTrials = [];
+FractionITISpentMovingPreIgnoredTrials = [];
+NumberofMovementsDuringITIPreRewardedTrials = [];
+FractionITISpentMovingPreRewardedTrials = [];
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 if ~isempty(File.Behavior_Frames)
     trials = length(File.Behavior_Frames);
@@ -72,16 +84,20 @@ if ~isempty(File.Behavior_Frames)
 
             %%%%%%%%%%%%%%%%%%%%%%%%%
             %%%%
-            [File,tlength, cs2r, rxntime, fault,IgnoredTrialInfo] = ProfileRewardedMovements(File, boundary_frames,session, trialnumber, rewards,cue_start, result_time, end_trial);
+            [File,UsedTrialInfo, fault,IgnoredTrialInfo] = ProfileRewardedMovements(File, boundary_frames,session, trialnumber, rewards,cue_start, result_time, end_trial);
             if fault == 1
                 moveatstartfault = moveatstartfault+1;
                 movedurationbeforecue(rewards,1) = IgnoredTrialInfo.movedurationbeforecue;
-                NumberofMovementsDuringITI(rewards,1) = IgnoredTrialInfo.numberofmovementssincelasttrial;
-                FractionITISpentMoving(rewards,1) = IgnoredTrialInfo.FractionITISpentMoving;
+                NumberofMovementsDuringITIPreIgnoredTrials(rewards,1) = IgnoredTrialInfo.numberofmovementssincelasttrial;
+                FractionITISpentMovingPreIgnoredTrials(rewards,1) = IgnoredTrialInfo.FractionITISpentMoving;
+                NumberofMovementsDuringITIPreRewardedTrials(rewards,1) = NaN;
+                FractionITISpentMovingPreRewardedTrials(rewards,1) = NaN;
             else
                 movedurationbeforecue(rewards,1) = 0;
-                NumberofMovementsDuringITI(rewards,1) = NaN;
-                FractionITISpentMoving(rewards,1) = NaN;
+                NumberofMovementsDuringITIPreIgnoredTrials(rewards,1) = NaN;
+                FractionITISpentMovingPreIgnoredTrials(rewards,1) = NaN;
+                NumberofMovementsDuringITIPreRewardedTrials(rewards,1) = UsedTrialInfo.numberofmovementssincelasttrial;
+                FractionITISpentMovingPreRewardedTrials(rewards,1) = UsedTrialInfo.FractionITISpentMoving;
             end
             if fault
                 continue
@@ -89,9 +105,9 @@ if ~isempty(File.Behavior_Frames)
             %%%%
             %%%%%%%%%%%%%%%%%%%%%%%%%
 
-            trial_length(rewards,1) = tlength;
-            rxnTime(rewards,1) = rxntime;
-            CuetoRew(rewards,1) = cs2r;
+            trial_length(rewards,1) = UsedTrialInfo.trial_length;
+            rxnTime(rewards,1) = UsedTrialInfo.rxnTime;
+            CuetoRew(rewards,1) = UsedTrialInfo.cs2r;
         else
         end
     end
@@ -105,8 +121,10 @@ else  %%% This section is for using data that is not aligned to imaging frames
         a.MovementAve = NaN;
         a.MovingAtTrialStartFaults = NaN;
         a.MoveDurationBeforeIgnoredTrials = NaN;
-        a.NumberofMovementsDuringITI = NaN;
-        a.FractionITISpentMoving = NaN;
+        a.NumberofMovementsDuringITIPreIgnoredTrials = NaN;
+        a.FractionITISpentMovingPreIgnoredTrials = NaN;
+        a.NumberofMovementsDuringITIPreRewardedTrials = NaN;
+        a.FractionITISpentMovingPreRewardedTrials = NaN;
         a.rewards = NaN;
         a.AveRxnTime = NaN;
         a.AveCueToRew = NaN;
@@ -119,7 +137,7 @@ else  %%% This section is for using data that is not aligned to imaging frames
         boundary_frames = boundary_frames(2:end);
     end
 
-    bitcode_offset = mode([bitcode.behavior_trial_num]-(1:length(bitcode)));
+    bitcode_offset = [bitcode.behavior_trial_num]-(1:length(bitcode));
     for trialnumber = 1:length(File.DispatcherData.saved_history.ProtocolsSection_parsed_events) %%% For every trial(the first trial often has incorrect information)
         if trialnumber>maxtrialnum
             continue
@@ -129,7 +147,14 @@ else  %%% This section is for using data that is not aligned to imaging frames
         end
 %             i_bitcode=find([bitcode.behavior_trial_num]==trialnumber,1);
 %             if(isempty(i_bitcode)) continue; end
-        i_bitcode = trialnumber-bitcode_offset;
+        i_bitcode = trialnumber-abs(bitcode_offset(trialnumber));
+        if i_bitcode<=0
+            continue
+        end
+        if sum(ismember(used_trial, i_bitcode))
+            continue
+        end
+        used_trial = [used_trial; i_bitcode];
         if i_bitcode<=0
             continue
         end
@@ -158,16 +183,20 @@ else  %%% This section is for using data that is not aligned to imaging frames
 
             %%%%%%%%%%%%%%%%%%%%%%%%%
             %%%%
-            [File,tlength, cs2r, rxntime, fault,IgnoredTrialInfo] = ProfileRewardedMovements(File, boundary_frames,session, trialnumber, rewards,cue_start, result_time, end_trial);
+            [File,UsedTrialInfo, fault,IgnoredTrialInfo] = ProfileRewardedMovements(File, boundary_frames,session, trialnumber, rewards,cue_start, result_time, end_trial);
             if fault == 1
                 moveatstartfault = moveatstartfault+1;
                 movedurationbeforecue(rewards,1) = IgnoredTrialInfo.movedurationbeforecue;
-                NumberofMovementsDuringITI(rewards,1) = IgnoredTrialInfo.numberofmovementssincelasttrial;
-                FractionITISpentMoving(rewards,1) = IgnoredTrialInfo.FractionITISpentMoving;
+                NumberofMovementsDuringITIPreIgnoredTrials(rewards,1) = IgnoredTrialInfo.numberofmovementssincelasttrial;
+                FractionITISpentMovingPreIgnoredTrials(rewards,1) = IgnoredTrialInfo.FractionITISpentMoving;
+                NumberofMovementsDuringITIPreRewardedTrials(rewards,1) = NaN;
+                FractionITISpentMovingPreRewardedTrials(rewards,1) = NaN;
             else
                 movedurationbeforecue(rewards,1) = 0;
-                NumberofMovementsDuringITI(rewards,1) = NaN;
-                FractionITISpentMoving(rewards,1) = NaN;
+                NumberofMovementsDuringITIPreIgnoredTrials(rewards,1) = NaN;
+                FractionITISpentMovingPreIgnoredTrials(rewards,1) = NaN;
+                NumberofMovementsDuringITIPreRewardedTrials(rewards,1) = UsedTrialInfo.numberofmovementssincelasttrial;
+                FractionITISpentMovingPreRewardedTrials(rewards,1) = UsedTrialInfo.FractionITISpentMoving;
             end
             if fault
                 continue
@@ -175,9 +204,9 @@ else  %%% This section is for using data that is not aligned to imaging frames
             %%%%
             %%%%%%%%%%%%%%%%%%%%%%%%%
 
-            trial_length(rewards,1) = tlength;
-            rxnTime(rewards,1) = rxntime;
-            CuetoRew(rewards,1) = cs2r;
+            trial_length(rewards,1) = UsedTrialInfo.trial_length;
+            rxnTime(rewards,1) = UsedTrialInfo.rxnTime;
+            CuetoRew(rewards,1) = UsedTrialInfo.cs2r;
         else
             result_time(trialnumber) = round(start_trial(trialnumber)+(File.DispatcherData.saved_history.ProtocolsSection_parsed_events{trialnumber}.states.punish(1)-t0)*1000);
             if result_time(trialnumber) == 0
@@ -192,7 +221,7 @@ trial_length(trial_length == 0) = NaN;
 if ~isempty(trial_length)
     range = min(trial_length);
 else
-    range = nan;
+    range = 3001;
 end
 
 movedurationbeforecue = movedurationbeforecue(logical(movedurationbeforecue))./1000;
@@ -219,7 +248,7 @@ for rewardedtrial = 1:rewards
 end
 
 %%%%
-MinMovementNumContingency = numtrackedmovements > 1;
+MinMovementNumContingency = numtrackedmovements > 5;
 %%%%
 
 if rewards ~= 0 && MinMovementNumContingency
@@ -229,7 +258,11 @@ if rewards ~= 0 && MinMovementNumContingency
     title(['Session', num2str(session)])
 else
     MovementMat(~isnan(MovementMat)) = nan;
-    MovementAve = nan(1,range);
+    if ~isnan(range)
+        MovementAve = nan(1,range);
+    else
+        MovementAve = [];
+    end
 end
 
 a.MovementMat = MovementMat;
@@ -240,128 +273,8 @@ a.AveRxnTime = AveRxnTime;
 a.AveCueToRew = AveCueToRew;
 a.Trials = trials;
 a.MoveDurationBeforeIgnoredTrials = movedurationbeforecue; 
-a.NumberofMovementsDuringITI = NumberofMovementsDuringITI;
-a.FractionITISpentMoving = FractionITISpentMoving;
-
-% temp = nan(explength,1); 
-% temp(used_sessions) = (rewards./trials).*100;
-% temp(temp == 0) = nan;
-% rewards = temp;
-% 
-% subplot(2,ns,1:round(ns/4))
-% plot(1:explength, rewards(1:end,1))
-% rewards;
-% title('Correct Trials')
-% xlabel('Session')
-% ylabel('Rewards')
-% 
-% temp = nan(explength,1); 
-% temp(used_sessions) = AveRxnTime;
-% temp(temp == 0) = nan;
-% AveRxnTime = temp;
-% 
-% temp = nan(explength,1); 
-% temp(used_sessions) = AveCueToRew;
-% temp(temp == 0) = nan;
-% AveCueToRew = temp;
-% 
-% subplot(2,ns,round(ns/4)+1:round(ns/2))
-% plot(1:explength, AveRxnTime, 'k'); hold on;
-% plot(1:explength, AveCueToRew, 'r');
-% title('Reaction Time')
-% xlabel('Session')
-% legend({'Cue to movement', 'Cue to reward'})
-% 
-% subplot(2,ns, round(ns/2)+2:ns);
-% 
-% %%% Concatenate all the movement traces
-% 
-% unused_days = explength-ns;
-% 
-% total = 0;
-% for session = 1:ns
-%     total = total+size(MovementMat{session},1);
-% end
-% 
-% cat_data = nan(3001,total+unused_days);
-% 
-% counter = used_sessions(1); %%% Start from the first day that was actually used, leave preceding days blank
-% for session = 1:ns
-%     session = used_sessions(session);
-%     if size(MovementMat{session},1) && sum(~isnan(MovementMat{session}(:,1500))) > 5
-%         cat_data(:,counter:counter+size(MovementMat{session},1)-1) = MovementMat{session}';
-%         counter = counter + size(MovementMat{session},1);
-%     else
-%         cat_data(:,counter:counter+size(MovementMat{session},1)-1) = nan(counter:counter+size(MovementMat{session},1)-1);
-%     end
-% %     if session < ns
-% %         if isempty(MovementMat{session+1})
-% %             addon = 1;
-% %             for trialnumber = session+2:ns
-% %                 if isempty(MovementMat{trialnumber})
-% %                     addon = addon+1;
-% %                 end
-% %             end
-% %             counter = counter + addon;
-% %         end
-% %     end
-% end
-% 
-% %%% Find the correlation  between individual movements
-% [r, p] = corrcoef(cat_data, 'rows', 'pairwise'); 
-% 
-% % [r_lever p_lever] = corrcoef(MovementAve');
-% 
-% 
-% %%% Find the median of each block of data correlations
-% 
-% r_lever = nan(explength,explength);
-% 
-% counter1 = 1;
-% for session = 1:ns
-%     session_row = used_sessions(session);
-%     temp1 = counter1:counter1+size(MovementMat{session_row},1)-1;
-%     counter2 = counter1; %%% to step down the diagonal, make counter2 start where counter 1 does!
-%         for trialnumber = session:ns
-%             session_column = used_sessions(trialnumber);
-%             temp2 = counter2:counter2+size(MovementMat{session_column},1)-1;
-%             r_lever(session_row,session_column) = nanmedian(nanmean(r(temp1,temp2))); 
-%             r_lever(session_column,session_row) = nanmedian(nanmean(r(temp1,temp2))); %%% Accounts for the symmetry of heatmaps (only half needs to be calculated, the rest can just be filled in, as done here)
-%             counter2 = counter2+size(MovementMat{session_column},1);
-%         end
-%     counter1 = counter1 + size(MovementMat{session_row},1);
-% end
-% 
-% r_lever(r_lever == 1) = nan;
-% 
-% imagesc(r_lever);
-% set(gcf, 'ColorMap', hot)
-% set(gca, 'CLim', [min(min(r_lever)), max(max(r_lever))])
-% colorbar
-% ylabel('Session')
-% xlabel('Session')
-% title('Movement correlation over sessions')
-% 
-% 
-% a.rewards = rewards;
-% a.ReactionTime = AveRxnTime;
-% a.MovementAverages = MovementAve;
-% a.MovementCorrelation = r_lever;
-% a.UsedSessions = used_sessions;
-% a.CuetoReward = AveCueToRew;
-% 
-% try
-%     cd('C:\Users\Komiyama\Desktop\Output Data');
-% catch
-%     cd('C:\Users\komiyama\Desktop\Giulia\All Behavioral Data')
-% end
-% eval([animalname{1}, '_SummarizedBehavior = a']);
-% save([animalname{1}, '_SummarizedBehavior'], [animalname{1}, '_SummarizedBehavior']);
-% 
-% figure; plot(diag(r_lever), 'k');
-% hold on;
-% plot(diag(r_lever,1),'Color', [0.6 0.6 0.6])
-% ylabel('Correlations')
-% xlabel('Session')
-% legend({'Within sessions', 'Across sessions'})
+a.NumberofMovementsDuringITIPreIgnoredTrials = NumberofMovementsDuringITIPreIgnoredTrials;
+a.FractionITISpentMovingPreIgnoredTrials = FractionITISpentMovingPreIgnoredTrials;
+a.NumberofMovementsDuringITIPreRewardedTrials = NumberofMovementsDuringITIPreRewardedTrials;
+a.FractionITISpentMovingPreRewardedTrials = FractionITISpentMovingPreRewardedTrials;
 

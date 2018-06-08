@@ -451,8 +451,10 @@ if length(listpos) ==1
         MovementAverages = nan(1,14);
         CuetoReward = nan(1,14);
         MoveDurationBeforeIgnoredTrials = nan(1,14);
-        NumberofMovementsDuringITI = nan(1,14);
-        FractionITISpentMoving = nan(1,14);
+        NumberofMovementsDuringITIPreIgnoredTrials = nan(1,14);
+        FractionITISpentMovingPreIgnoredTrials = nan(1,14);
+        NumberofMovementsDuringITIPreRewardedTrials = nan(1,14);
+        FractionITISpentMovingPreRewardedTrials = nan(1,14);
 
     try
         targetdir = 'C:\Users\Komiyama\Desktop\Behavioral Data\All Summarized Behavior Files list';
@@ -466,7 +468,17 @@ if length(listpos) ==1
     end
     filetoanalyze = [];
     animal = list{listpos};
-    sessions = str2num(get(handles.Session_EditableText, 'String'));
+    %%%%%
+    useoldsessions = 0;
+    %%%%%
+    if useoldsessions
+        cd('C:\Users\Komiyama\Desktop\Output Data')
+        load([animal, '_SummarizedBehavior'])
+        eval(['sessions =', animal, '_SummarizedBehavior.UsedSessions'])
+        cd(targetdir);
+    else
+        sessions = str2num(get(handles.Session_EditableText, 'String'));
+    end
     sessioncounter = 0;
     files = fastdir(targetdir, animal);
 %     actual_sessions = [];
@@ -501,8 +513,11 @@ if length(listpos) ==1
         UsedSessions = sessions;
         CuetoReward(1,sessions(i)) = Behavior.AveCueToRew;
         MoveDurationBeforeIgnoredTrials(1,sessions(i)) = nanmedian(Behavior.MoveDurationBeforeIgnoredTrials);
-        NumberofMovementsDuringITI(1,sessions(i)) = nanmedian(Behavior.NumberofMovementsDuringITI);
-        FractionITISpentMoving(1,sessions(i)) = nanmedian(Behavior.FractionITISpentMoving);
+        NumberofMovementsDuringITIPreIgnoredTrials(1,sessions(i)) = nanmedian(Behavior.NumberofMovementsDuringITIPreIgnoredTrials);
+        FractionITISpentMovingPreIgnoredTrials(1,sessions(i)) = nanmedian(Behavior.FractionITISpentMovingPreIgnoredTrials);
+        NumberofMovementsDuringITIPreRewardedTrials(1,sessions(i)) = nanmedian(Behavior.NumberofMovementsDuringITIPreRewardedTrials);
+        FractionITISpentMovingPreRewardedTrials(1,sessions(i)) = nanmedian(Behavior.FractionITISpentMovingPreRewardedTrials);
+
           
         wrkspc = who;
         clear(wrkspc{~cellfun(@isempty, regexp(who, date))});
@@ -529,11 +544,13 @@ if length(listpos) ==1
     xlabel('Session')
     ylabel('Duration of Movement Before Ignored Trials')
     
-    subplot(2,2,3); plot(NumberofMovementsDuringITI)
+    subplot(2,2,3); plot(NumberofMovementsDuringITIPreIgnoredTrials, 'r', 'Linewidth', 2)
+    hold on; plot(NumberofMovementsDuringITIPreRewardedTrials, 'b', 'Linewidth', 2)
     xlabel('Session')
     ylabel('Number of Movements During ITI')
     
-    subplot(2,2,4); plot(FractionITISpentMoving)
+    subplot(2,2,4); plot(FractionITISpentMovingPreIgnoredTrials, 'r', 'Linewidth', 2)
+    hold on; plot(FractionITISpentMovingPreRewardedTrials, 'b', 'Linewidth', 2)
     xlabel('Session')
     ylabel('Fraction of ITI Spent Moving')
     
@@ -545,8 +562,10 @@ if length(listpos) ==1
     a.UsedSessions = UsedSessions;
     a.CuetoReward = CuetoReward;
     a.MoveDurationBeforeIgnoredTrials = MoveDurationBeforeIgnoredTrials;
-    a.NumberofMovementsDuringITI = NumberofMovementsDuringITI;
-    a.FractionITISpentMoving =FractionITISpentMoving;
+    a.NumberofMovementsDuringITIPreIgnoredTrials = NumberofMovementsDuringITIPreIgnoredTrials;
+    a.FractionITISpentMovingPreIgnoredTrials =FractionITISpentMovingPreIgnoredTrials;
+    a.NumberofMovementsDuringITIPreRewardedTrials = NumberofMovementsDuringITIPreRewardedTrials;
+    a.FractionITISpentMovingPreRewardedTrials =FractionITISpentMovingPreRewardedTrials;
     
     eval([animal, '_SummarizedBehavior = a']);
     targetsavedir = 'C:\Users\Komiyama\Desktop\Output Data';
@@ -670,7 +689,7 @@ if length(listpos) ==1
     
     save(fnameCorrelations, fnameCorrelations);
     save(fnameStatClass, fnameStatClass);
-    save(fnameTrial, fnameTrial);
+    save(fnameTrial, fnameTrial, '-v7.3');
     toclear = who(['*', animal, '*']);
     for c = 1:length(toclear)
         clear(toclear{c})

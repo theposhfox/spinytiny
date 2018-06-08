@@ -6,7 +6,7 @@ CuetoReward = nan(length(varargin),14);
 MovementCorrelation = nan(14,14,length(varargin));
 MovingAtTrialStartFaults = nan(length(varargin),14);
 MoveDurationBeforeIgnoredTrials = nan(length(varargin),14);
-NumberofMovementsDuringITI = nan(length(varargin),14);
+NumberofMovementsDuringITIPreIgnoredTrials = nan(length(varargin),14);
 FractionITISpentMoving = nan(length(varargin),14);
 
 %%%%%%%%%%%%%%%%%%%%%%
@@ -24,6 +24,15 @@ FractionITISpentMoving = nan(length(varargin),14);
     
 %%%%%%%%%%%%%%%%%%%%%%%
 
+rewards = nan(length(varargin), 14);
+ReactionTime = nan(length(varargin), 14);
+CuetoReward = nan(length(varargin), 14);
+MovingAtTrialStartFaults = nan(length(varargin), 14);
+MoveDurationBeforeIgnoredTrials = nan(length(varargin), 14);
+NumberofMovementsDuringITIPreIgnoredTrials = nan(length(varargin), 14);
+FractionITISpentMovingPreIgnoredTrials = nan(length(varargin), 14);
+NumberofMovementsDuringITIPreRewardedTrials = nan(length(varargin), 14);
+FractionITISpentMovingPreRewardedTrials = nan(length(varargin), 14);
 
 for i = 1:length(varargin)
     rewards(i,varargin{i}.UsedSessions) = varargin{i}.rewards(varargin{i}.UsedSessions);
@@ -32,8 +41,11 @@ for i = 1:length(varargin)
     missingsessions = setdiff([1:14], varargin{i}.UsedSessions);
     MovingAtTrialStartFaults(i,varargin{i}.UsedSessions) = varargin{i}.MovingAtTrialStartFaults(varargin{i}.UsedSessions);
     MoveDurationBeforeIgnoredTrials(i,varargin{i}.UsedSessions) = varargin{i}.MoveDurationBeforeIgnoredTrials(varargin{i}.UsedSessions);
-    NumberofMovementsDuringITI(i,varargin{i}.UsedSessions) = varargin{i}.NumberofMovementsDuringITI(varargin{i}.UsedSessions);
-    FractionITISpentMoving(i,varargin{i}.UsedSessions) = varargin{i}.FractionITISpentMoving(varargin{i}.UsedSessions);
+    NumberofMovementsDuringITIPreIgnoredTrials(i,varargin{i}.UsedSessions) = varargin{i}.NumberofMovementsDuringITIPreIgnoredTrials(varargin{i}.UsedSessions);
+    FractionITISpentMovingPreIgnoredTrials(i,varargin{i}.UsedSessions) = varargin{i}.FractionITISpentMovingPreIgnoredTrials(varargin{i}.UsedSessions);
+    NumberofMovementsDuringITIPreRewardedTrials(i,varargin{i}.UsedSessions) = varargin{i}.NumberofMovementsDuringITIPreRewardedTrials(varargin{i}.UsedSessions);
+    FractionITISpentMovingPreRewardedTrials(i,varargin{i}.UsedSessions) = varargin{i}.FractionITISpentMovingPreRewardedTrials(varargin{i}.UsedSessions);
+
     
     if ~isempty(missingsessions)
         sessionsaccountedfor = [];
@@ -58,8 +70,8 @@ ReactionTime = ReactionTime(:,1:14);
 CuetoReward = CuetoReward(:,1:14);
 MovingAtTrialStartFaults = MovingAtTrialStartFaults(:,1:14);
 MoveDurationBeforeIgnoredTrials = MoveDurationBeforeIgnoredTrials(:,1:14);
-NumberofMovementsDuringITI = NumberofMovementsDuringITI(:,1:14);
-FractionITISpentMoving = FractionITISpentMoving(:,1:14);
+NumberofMovementsDuringITIPreIgnoredTrials = NumberofMovementsDuringITIPreIgnoredTrials(:,1:14);
+FractionITISpentMovingPreIgnoredTrials = FractionITISpentMovingPreIgnoredTrials(:,1:14);
 
 for i = 1:14
     rewardsSEM(1,i) = nanstd(rewards(:,i),0,1)/sqrt(sum(~isnan(rewards(:,i))));
@@ -106,7 +118,7 @@ reactplot = flex_plot(1:14, ReactionTime,'parametric', 'k',4); xlim([0 15]); yla
 hold on; c2rplot = flex_plot(1:14, CuetoReward, 'parametric','r',4);
 legend([reactplot, c2rplot], {'Reaction Time', 'Cue to Reward'});
 set(gca, 'XTick', 1:14, 'YTick', 1:14)
-subplot(6,6,[13:15, 19:21, 25:27, 31:33]); imagesc(nanmedian(MovementCorrelation, 3))
+subplot(6,6,[13:15, 19:21, 25:27, 31:33]); imagesc(nanmean(MovementCorrelation, 3))
 set(gcf, 'ColorMap', hot); colorbar;
 ylabel('Session', 'Fontsize', 14)
 xlabel('Session', 'Fontsize', 14)
@@ -176,13 +188,22 @@ xlabel('Session')
 ylabel('Duration of Movement Before Ignored Trials (s)')
 
 subplot(2,2,3); hold on;
-plot(NumberofMovementsDuringITI', 'Color', [0.7 0.7 0.7])
-flex_plot(1:14, NumberofMovementsDuringITI, stattype, 'k',4)
+plot(NumberofMovementsDuringITIPreIgnoredTrials', 'Color', [0.7 0.7 0.7])
+ignored = flex_plot(1:14, NumberofMovementsDuringITIPreIgnoredTrials, stattype, 'k',4);
+rewarded = flex_plot(1:14, NumberofMovementsDuringITIPreRewardedTrials, stattype, 'g', 4);
 ylabel('Number of Movements During ITI')
 xlabel('Session')
+legend([ignored, rewarded], {'Ignored', 'Rewarded'}, 'Location', 'Northwest')
+pos = get(gca,'Position');
+axes('Position', [pos(1)+0.7*pos(3), pos(2)+0.7*pos(4), 0.25*pos(3), 0.25*pos(4)], 'Fontsize', 6);
+integratedoversessions = nanmean(nansum(NumberofMovementsDuringITIPreIgnoredTrials,2));
+bar(integratedoversessions)
+r_errorbar(1,integratedoversessions, nanstd(nansum(NumberofMovementsDuringITIPreIgnoredTrials,2))/sqrt(size(NumberofMovementsDuringITIPreIgnoredTrials,1)), 'k');
+xlim([0 2])
 
 subplot(2,2,4); hold on;
-plot(FractionITISpentMoving', 'Color', [0.7 0.7 0.7])
-flex_plot(1:14, FractionITISpentMoving, stattype, 'k',4)
+plot(FractionITISpentMovingPreIgnoredTrials', 'Color', [0.7 0.7 0.7])
+flex_plot(1:14, FractionITISpentMovingPreIgnoredTrials, stattype, 'k',4)
+flex_plot(1:14, FractionITISpentMovingPreRewardedTrials, stattype, 'g', 4)
 xlabel('Session')
 ylabel('Fraction of ITI Spent Moving')

@@ -151,7 +151,7 @@ File.Alphas = alpha;
 UseMinAlpha = 1;
 File.UsedMinAlpha = UseMinAlpha;
 
-MinAlpha = 1;
+MinAlpha = 0.25;
 File.MinAlpha = MinAlpha;
 
 for i = 1:DendNum

@@ -231,8 +231,8 @@ if File.NumberofSpines ==  0 || File.NumberofSpines ~= length(File.deltaF)
     analyzed.NumberofSpines = length(File.deltaF);
 end
 % 
-% SpineNo = randi(File.NumberofSpines,1); %%% Will choose a random spine from the available ones for this file
-SpineNo = 96;  %%% Manually select spine to be considered6
+SpineNo = randi(File.NumberofSpines,1); %%% Will choose a random spine from the available ones for this file
+% SpineNo = 20;  %%% Manually select spine to be considered
 
 
 DendNum = File.NumberofDendrites;

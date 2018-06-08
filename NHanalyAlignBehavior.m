@@ -71,14 +71,12 @@ if ~isempty(find(abs(diff(bitcode_offset))>1))
     if length(trialerror) > 1
         trialerror = trialerror(1);
     end
-    if trialerror<20            %%% This assumes that if the jump is early, then something bad happened with the early sessions, and vice-versa.
+    if trialerror<20            %%% This assumes that if the jump is early, then something bad happened with the early sessions, so you can start recording after this point
         firsttrial = trialerror;
     else
         lasttrial = trialerror-1;
     end
 end
-
-
  
 reward = 0;
 punish = 0;
@@ -103,7 +101,7 @@ for i = firsttrial:lasttrial
     if i>length(bitcode_offset)
         continue
     end
-    if bitcode_offset(i) == bitcode(end).behavior_trial_num;    %%% Occasionally, the first trial is accidentally overwritten, and this becomes counted as the last trial. This 
+    if bitcode_offset(i) == bitcode(end).behavior_trial_num;    %%% Occasionally, the first trial is accidentally overwritten, and this becomes counted as the last trial
         continue
     end
     if Behavior.Behavior_Frames{i}.states.state_0(2,1)-Behavior.Behavior_Frames{i}.states.state_0(1,2)<=1;
@@ -151,7 +149,7 @@ for i = firsttrial:lasttrial
         cuemat = zeros(1,length(start_trial:end_trial));
         cuemat(startcue:endcue) = 1;
     trial_binary_cue{i} = cuemat;
-    Trial{i}.trialactivity = Trial_OverallSpineActivity{i}(:,1:end);
+    Trial{i}.trialactivity = Trial_dFoF{i}(:,1:end);
     Trial{i}.trialbinaryactivity = Trial_SynapseOnlyBinarized{i}(:,1:end);
     Trial{i}.trialdendsubactivity = Trial_dFoF_DendriteSubtracted{i}(:,1:end); 
     Trial{i}.trialbinarydendsubactivity = Trial_SynapseOnlyBinarized_DendriteSubtracted{i}(:,1:end);
