@@ -1,4 +1,4 @@
-function CaCalculateROIs_AM(~, eventData)
+function CaCalculateROIs(~, eventData)
 
 global gui_CaImageViewer
 

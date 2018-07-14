@@ -98,10 +98,21 @@ else
             for i = 1:length(files)
                 if ~isempty(regexp(files(i).name, '_summed_50_Analyzed'))
                     load(files(i).name)
+                    check = 1;
                 else
                 end
             end
         else
+        end
+        if ~check
+            disp('Raw data file not found; PULLING FROM PREVIOUS ANALYSIS!!')
+            cd('C:\Users\Komiyama\Desktop\ActivitySummary_UsingRawData')
+            files = dir(cd);
+            for i = 1:length(files)
+                if ~isempty(regexp(files(i).name, [folder, '_', Date])) && ~isempty(regexp(files(i).name,'_Summary')) && isempty(regexp(files(i).name,'Poly'))
+                    load(files(i).name)
+                end
+            end
         end
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
         %%% set "file" data to be used
@@ -117,7 +128,7 @@ else
         cd('C:\Users\Komiyama\Desktop\ActivitySummary_UsingRawData')
         files = dir(cd);
         for i = 1:length(files)
-            if ~isempty(regexp(files(i).name, folder)) && ~isempty(regexp(files(i).name,'_Summary')) && isempty(regexp(files(i).name,'Poly'))
+            if ~isempty(regexp(files(i).name, [folder, '_', Date])) && ~isempty(regexp(files(i).name,'_Summary')) && isempty(regexp(files(i).name,'Poly'))
                 load(files(i).name)
             end
         end
@@ -232,7 +243,7 @@ if File.NumberofSpines ==  0 || File.NumberofSpines ~= length(File.deltaF)
 end
 % 
 SpineNo = randi(File.NumberofSpines,1); %%% Will choose a random spine from the available ones for this file
-% SpineNo = 20;  %%% Manually select spine to be considered
+% SpineNo = 25;  %%% Manually select spine to be considered
 
 
 DendNum = File.NumberofDendrites;
@@ -328,11 +339,18 @@ Options.ValuesLimitforBaseline = spinevalueslimitforbaseline;
 Options.ValuesLimitforNoise = spinevalueslimitfornoise;
 Options.BeingAnalyzed = 'Spine';
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
 for i = 1:numberofSpines
     [spine_thresh(i,1), spinedriftbaseline(i,:), processed_dFoF(i,:)] = AnalyzeTrace(spinedatatouse{i}, Options);
 
 end
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

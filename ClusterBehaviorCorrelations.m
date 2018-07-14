@@ -3424,7 +3424,7 @@ if isempty(strfind(inputname(1), 'SpineCorrelationTimecourse'))
     ConDendCorrelationUmbrellaDataChoice = CorrelationBetweenAllSpines; 
     
     ConDendDistanceStatDataChoice = DistanceBetweenMovementSpines;
-    ConDendCorrelationStatDataChoice = CorrelationBetweenMovementSpinesMovePeriods;
+    ConDendCorrelationStatDataChoice = CorrelationBetweenMovementSpines;
     
 %     AlloDendDistanceUmbrellaDataChoice = AllDistancesBetweenSameCellDiffBranchSpines; 
 %     AlloDendCorrelationUmbrellaDataChoice = CorrelationBetweenSameCellDiffBranchSpines; 
@@ -3879,6 +3879,7 @@ else
         CorrelationBetweenSameCellDiffBranchSuccessSpines = cell(1,14);
         MeanCorrelationBetweenSameCellDiffBranchSuccessSpines = nan(length(varargin),14);
     CorrelationBetweenMovementSpinesMovePeriods = cell(1,14);
+        CorrelationBetweenMovementSpinesAtDistanceBin = cell(1,20);
     CorrelationBetweenMovementSpinesStillPeriods = cell(1,14);
     CorrelationBetweenSuccessSpines = cell(1,14);
         MeanCorrelationBetweenSuccessSpines = nan(length(varargin),14);
@@ -4202,10 +4203,10 @@ else
         AllDistancesBetweenMovementSpines(1:14) = cellfun(@(x,y) [x,y], AllDistancesBetweenMovementSpines, varargin{i}.DistanceBetweenMovementSpines, 'Uni', false);
         AllDistancesBetweenSuccessSpines(1:14) = cellfun(@(x,y) [x,y], AllDistancesBetweenSuccessSpines, varargin{i}.DistanceBetweenSuccessSpines, 'Uni', false);
         CorrelationBetweenMovementSpines(1:14) = cellfun(@(x,y) [x,y], CorrelationBetweenMovementSpines, varargin{i}.CorrelationBetweenMovementSpines, 'Uni', false);
-            condendweights(i,1:14) = cell2mat(cellfun(@(x) numel(x), varargin{i}.CorrelationBetweenMovementSpinesMovementPeriods, 'Uni', false));
-            MeanCorrelationBetweenMovementSpines(i,1:14) = cell2mat(cellfun(@(x) nanmean(x), varargin{i}.CorrelationBetweenMovementSpinesMovementPeriods, 'Uni', false));
-            MeanCorrelationBetweenCloseMovementSpines(i,1:14) = cell2mat(cellfun(@(x,y) nanmean(x(y<10)), varargin{i}.CorrelationBetweenMovementSpinesMovementPeriods,varargin{i}.DistanceBetweenMovementSpines, 'Uni', false));
-            MeanCorrelationBetweenDistantMovementSpines(i,1:14) = cell2mat(cellfun(@(x,y) nanmean(x(y>10 & y<50)), varargin{i}.CorrelationBetweenMovementSpinesMovementPeriods,varargin{i}.DistanceBetweenMovementSpines, 'Uni', false));
+            condendweights(i,1:14) = cell2mat(cellfun(@(x) numel(x), varargin{i}.CorrelationBetweenMovementSpines, 'Uni', false));
+            MeanCorrelationBetweenMovementSpines(i,1:14) = cell2mat(cellfun(@(x) nanmean(x), varargin{i}.CorrelationBetweenMovementSpines, 'Uni', false));
+            MeanCorrelationBetweenCloseMovementSpines(i,1:14) = cell2mat(cellfun(@(x,y) nanmean(x(y<10)), varargin{i}.CorrelationBetweenMovementSpines,varargin{i}.DistanceBetweenMovementSpines, 'Uni', false));
+            MeanCorrelationBetweenDistantMovementSpines(i,1:14) = cell2mat(cellfun(@(x,y) nanmean(x(y>10 & y<50)), varargin{i}.CorrelationBetweenMovementSpines,varargin{i}.DistanceBetweenMovementSpines, 'Uni', false));
         CorrelationBetweenMovementSpinesMovePeriods(1:14) = cellfun(@(x,y) [x,y], CorrelationBetweenMovementSpinesMovePeriods, varargin{i}.CorrelationBetweenMovementSpinesMovementPeriods, 'Uni', false);
         CorrelationBetweenMovementSpinesStillPeriods(1:14) = cellfun(@(x,y) [x,y], CorrelationBetweenMovementSpinesStillPeriods, varargin{i}.CorrelationBetweenMovementSpinesStillPeriods, 'Uni', false);
         CorrelationBetweenSuccessSpines(1:14) = cellfun(@(x,y) [x,y], CorrelationBetweenSuccessSpines, varargin{i}.CorrelationBetweenSuccessSpines, 'Uni', false);
@@ -5134,10 +5135,10 @@ else
     latesessions  = 11:14; 
     
     ConDendDistanceUmbrellaDataChoice = AllDistancesBetweenAllSpines; 
-    ConDendCorrelationUmbrellaDataChoice = CorrelationBetweenAllSpinesMovePeriods; 
+    ConDendCorrelationUmbrellaDataChoice = CorrelationBetweenAllSpines; 
     
     ConDendDistanceStatDataChoice = AllDistancesBetweenMovementSpines;
-    ConDendCorrelationStatDataChoice = CorrelationBetweenMovementSpinesMovePeriods;
+    ConDendCorrelationStatDataChoice = CorrelationBetweenMovementSpines;
     
 %     AlloDendDistanceUmbrellaDataChoice = AllDistancesBetweenSameCellDiffBranchSpines; 
 %     AlloDendCorrelationUmbrellaDataChoice = CorrelationBetweenSameCellDiffBranchSpines; 
@@ -5148,8 +5149,18 @@ else
     AlloDendDistanceStatDataChoice = AllDistancesBetweenSameCellDiffBranchMovementSpines; 
     AlloDendCorrelationStatDataChoice = CorrelationBetweenSameCellDiffBranchMovementSpines; 
 
-%     AlloDendDistanceStatDataChoice = AllDistancesBetweenAlloDendriticMovementSpines;
-%     AlloDendCorrelationStatDataChoice = CorrelationBetweenAllodendriticMovementSpines;
+%     AlloDendDistanceStatDataChoice = AllDistancesBetweenMovementSpines;
+%     AlloDendCorrelationStatDataChoice = CorrelationBetweenMovementSpinesStillPeriods;
+
+    for i = 1:length(varargin)
+        binstep = 5; maxdist = 100;
+        bincount = 1;
+        for b = 1:binstep:maxdist
+            corrdataatbin = cell2mat(cellfun(@(y,x) nanmedian(y(logical(x>=(b-1) & x<(b+binstep)))),varargin{i}.CorrelationBetweenMovementSpines, varargin{i}.DistanceBetweenMovementSpines, 'uni', false));
+            CorrelationBetweenMovementSpinesAtDistanceBin{bincount} = [CorrelationBetweenMovementSpinesAtDistanceBin{bincount}; corrdataatbin];
+            bincount = bincount+1;
+        end
+    end
 
     figure('Position', scrsz)
     currentplot = 1;
@@ -5172,8 +5183,19 @@ else
 %         %%%
 %         plot(xdata(idx==1), ydata(idx==1), '.', 'Color', lgreen); hold on;
 %         plot(xdata(idx==2), ydata(idx==2), '.k')
-        plot(xdata(ydata>=0.5), ydata(ydata>=0.5), '.', 'Color', lgreen); hold on;
-        plot(xdata(ydata<0.5), ydata(ydata<0.5), '.', 'Color', black);
+
+%         plot(xdata(ydata>=0.5), ydata(ydata>=0.5), '.', 'Color', lgreen);
+         hold on;
+%         plot(xdata(ydata<0.5), ydata(ydata<0.5), '.', 'Color', black);
+          for ns = 1:length(varargin)
+            distset = cell2mat(varargin{ns}.DistanceBetweenMovementSpines(earlysessions));
+            corrset = cell2mat(varargin{ns}.CorrelationBetweenMovementSpines(earlysessions));
+            col1 = mod(ns-1, length(rnbo))+1;
+            plot(distset, corrset, '.k', 'Color', rnbo{col1})
+            plot(5, nanmedian(corrset(distset>=0 & distset<5)), 'ok', 'MarkerEdgeColor', rnbo{col1}, 'MarkerFaceColor', rnbo{col1})
+            plot(10, nanmedian(corrset(distset>=5 & distset<10)), 'ok', 'MarkerEdgeColor', rnbo{col1}, 'MarkerFaceColor', rnbo{col1})
+            plot(15, nanmedian(corrset(distset>=10 & distset<15)), 'ok', 'MarkerEdgeColor', rnbo{col1}, 'MarkerFaceColor', rnbo{col1})
+          end
 %         decay = fit(xdata, ydata, 'exp1'); 
 %             fline = flex_plot(decay); 
 %             set(fline, 'Color', 'k')
@@ -5197,9 +5219,10 @@ else
             bincount = bincount+1;
         end
         pos = get(gca,'Position');
-        axes('Position', [pos(1)+0.7*pos(3), pos(2)+0.7*pos(4), 0.35*pos(3), 0.25*pos(4)]);
+        axes('Position', [pos(1)+0.6*pos(3), pos(2)+0.7*pos(4), 0.35*pos(3), 0.25*pos(4)]);
         bar(highcorratbin{currentplot}, 'FaceColor', lgreen, 'EdgeColor', 'k'); hold on;
-        bar(corratbin{currentplot}, 'FaceColor', 'k', 'EdgeColor', gray)
+%         bar(corratbin{currentplot}, 'FaceColor', 'k', 'EdgeColor', gray); hold on;
+        bar(cell2mat(cellfun(@(x) nanmean(nanmean(x(:,earlysessions))), CorrelationBetweenMovementSpinesAtDistanceBin, 'uni', false)), 'FaceColor', 'k', 'EdgeColor', gray); hold on;
         xlim([-1 (maxdist/binstep)+1])
         ylim([0 1])
         
@@ -5232,7 +5255,7 @@ else
             bincount = bincount+1;
         end
         pos = get(gca,'Position');
-        axes('Position', [pos(1)+0.7*pos(3), pos(2)+0.7*pos(4), 0.35*pos(3), 0.25*pos(4)]);
+        axes('Position', [pos(1)+0.6*pos(3), pos(2)+0.7*pos(4), 0.35*pos(3), 0.25*pos(4)]);
         bar(highcorratbin{currentplot}, 'FaceColor', lgreen, 'EdgeColor', 'k'); hold on;
         bar(corratbin{currentplot}, 'FaceColor', 'k', 'EdgeColor', gray)
         xlim([-1 (maxdist/binstep)+1])
@@ -5257,8 +5280,21 @@ else
 %         %%%
 %         plot(xdata(idx==1), ydata(idx==1), '.', 'Color', lgreen); hold on;
 %         plot(xdata(idx==2), ydata(idx==2), '.k')
-        plot(xdata(ydata>=0.5), ydata(ydata>=0.5), '.', 'Color', lgreen); hold on;
-        plot(xdata(ydata<0.5), ydata(ydata<0.5), '.', 'Color', black);
+
+%         plot(xdata(ydata>=0.5), ydata(ydata>=0.5), '.', 'Color', lgreen); 
+            hold on;
+%         plot(xdata(ydata<0.5), ydata(ydata<0.5), '.', 'Color', black);
+
+          for ns = 1:length(varargin)
+            distset = cell2mat(varargin{ns}.DistanceBetweenMovementSpines(latesessions));
+            corrset = cell2mat(varargin{ns}.CorrelationBetweenMovementSpines(latesessions));
+            col1 = mod(ns-1, length(rnbo))+1;
+            plot(distset, corrset, '.k', 'Color', rnbo{col1})
+            plot(5, nanmedian(corrset(distset>=0 & distset<5)), 'ok', 'MarkerEdgeColor', rnbo{col1}, 'MarkerFaceColor', rnbo{col1})
+            plot(10, nanmedian(corrset(distset>=5 & distset<10)), 'ok', 'MarkerEdgeColor', rnbo{col1}, 'MarkerFaceColor', rnbo{col1})
+            plot(15, nanmedian(corrset(distset>=10 & distset<15)), 'ok', 'MarkerEdgeColor', rnbo{col1}, 'MarkerFaceColor', rnbo{col1})
+          end
+          
 %             decay = fit(xdata, ydata, 'exp1'); 
 %             fline = plot(decay); 
 %             set(fline, 'Color', 'k')
@@ -5278,9 +5314,10 @@ else
             bincount = bincount+1;
         end
         pos = get(gca,'Position');
-        axes('Position', [pos(1)+0.7*pos(3), pos(2)+0.7*pos(4), 0.35*pos(3), 0.25*pos(4)]);
+        axes('Position', [pos(1)+0.6*pos(3), pos(2)+0.7*pos(4), 0.35*pos(3), 0.25*pos(4)]);
         bar(highcorratbin{currentplot}, 'FaceColor', lgreen, 'EdgeColor', 'k'); hold on;
-        bar(corratbin{currentplot}, 'FaceColor', 'k', 'EdgeColor', gray)
+%         bar(corratbin{currentplot}, 'FaceColor', 'k', 'EdgeColor', gray);  hold on;
+        bar(cell2mat(cellfun(@(x) nanmean(nanmean(x(:,latesessions))), CorrelationBetweenMovementSpinesAtDistanceBin, 'uni', false)), 'FaceColor', 'k', 'EdgeColor', gray); hold on;
         xlim([-1 (maxdist/binstep)+1])
         ylim([0 1])
         
@@ -5313,7 +5350,7 @@ else
             bincount = bincount+1;
         end
         pos = get(gca,'Position');
-        axes('Position', [pos(1)+0.7*pos(3), pos(2)+0.7*pos(4), 0.35*pos(3), 0.25*pos(4)]);
+        axes('Position', [pos(1)+0.6*pos(3), pos(2)+0.7*pos(4), 0.35*pos(3), 0.25*pos(4)]);
         bar(highcorratbin{currentplot}, 'FaceColor', lgreen, 'EdgeColor', 'k'); hold on;
         bar(corratbin{currentplot}, 'FaceColor', 'k', 'EdgeColor', gray)
         xlim([-1 (maxdist/binstep)+1])
@@ -5360,7 +5397,7 @@ else
             bincount = bincount+1;
         end
         pos = get(gca,'Position');
-        axes('Position', [pos(1)+0.7*pos(3), pos(2)+0.7*pos(4), 0.35*pos(3), 0.25*pos(4)]);
+        axes('Position', [pos(1)+0.6*pos(3), pos(2)+0.7*pos(4), 0.35*pos(3), 0.25*pos(4)]);
         bar(highcorratbin{currentplot}, 'FaceColor', dred, 'EdgeColor', 'k'); hold on;
         bar(corratbin{currentplot}, 'FaceColor', 'k', 'EdgeColor', gray)
         xlim([-1 (maxdist/binstep)+1])
@@ -5395,7 +5432,7 @@ else
             bincount = bincount+1;
         end
         pos = get(gca,'Position');
-        axes('Position', [pos(1)+0.7*pos(3), pos(2)+0.7*pos(4), 0.35*pos(3), 0.25*pos(4)]);
+        axes('Position', [pos(1)+0.6*pos(3), pos(2)+0.7*pos(4), 0.35*pos(3), 0.25*pos(4)]);
         bar(highcorratbin{currentplot}, 'FaceColor', dred, 'EdgeColor', 'k'); hold on;
         bar(corratbin{currentplot}, 'FaceColor', 'k', 'EdgeColor', gray)
         xlim([-1 (maxdist/binstep)+1])
@@ -5441,7 +5478,7 @@ else
             bincount = bincount+1;
         end
         pos = get(gca,'Position');
-        axes('Position', [pos(1)+0.7*pos(3), pos(2)+0.7*pos(4), 0.35*pos(3), 0.25*pos(4)]);
+        axes('Position', [pos(1)+0.6*pos(3), pos(2)+0.7*pos(4), 0.35*pos(3), 0.25*pos(4)]);
         bar(highcorratbin{currentplot}, 'FaceColor', dred, 'EdgeColor', 'k'); hold on;
         bar(corratbin{currentplot}, 'FaceColor', 'k', 'EdgeColor', gray)
         xlim([-1 (maxdist/binstep)+1])
@@ -5478,7 +5515,7 @@ else
             end
         end
         pos = get(gca,'Position');
-        axes('Position', [pos(1)+0.7*pos(3), pos(2)+0.7*pos(4), 0.35*pos(3), 0.25*pos(4)]);
+        axes('Position', [pos(1)+0.6*pos(3), pos(2)+0.7*pos(4), 0.35*pos(3), 0.25*pos(4)]);
         bar(highcorratbin{currentplot}, 'FaceColor', dred, 'EdgeColor', 'k'); hold on;
         bar(corratbin{currentplot}, 'FaceColor', 'k', 'EdgeColor', gray)
         xlim([-1 (maxdist/binstep)+1])

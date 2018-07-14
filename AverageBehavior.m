@@ -97,7 +97,7 @@ for i = 1:length(varargin)
 %     ylim([-0.05 1.05])
     ylabel('Percent Max')
     xlabel('Session')
-    file = regexp(inputname(i), '[ABCDEFGHIJKLMNOPQRSTUVWXYZ]{2,3}0+[A-Z,0-9]*', 'match');
+    file = regexp(inputname(i), '[A-Z]{2,3}0+[A-Z,0-9]*', 'match');
     title(file{1});
     plot(1:14, ones(1,14),'--k')
 end

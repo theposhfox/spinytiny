@@ -1074,10 +1074,10 @@ for a = 1:length(ROIs)
         c1 = uicontextmenu;
         uimenu(c1, 'Label', 'Add Surround Background', 'Callback', @ModifyROI);
         uimenu(c1, 'Label', 'Remove Surround Background', 'Callback', @ModifyROI);
-        if glovar.NewSpineAnalysis
+%         if glovar.NewSpineAnalysis
             uimenu(c1, 'Label', 'Set as eliminated', 'Callback', @CategorizeSpines);
             uimenu(c1, 'Label', 'Set as active', 'Callback', @CategorizeSpines);
-        end
+%         end
         glovar.ROI(a) = rectangle('Position', ROIs{a}, 'EdgeColor', [0.2 0.4 0.9], 'Curvature', [1 1],'Tag', ['ROI', num2str(ROInum)], 'ButtonDownFcn', {@DragROI, ROInum, 'HomeWindow'}, 'Linewidth', 1, 'UIContextMenu', c1); % Assaf changed [0.2 0.4 0.9] to the variable color_by_user, that is defined by the user choice of color (lines 681-602) 
         glovar.ROItext(a) = text(ROIs{a}(1)-6, ROIs{a}(2)-4, num2str(a-1), 'color', 'white', 'Tag', ['ROI', num2str(a-1), ' Text'],'ButtonDownFcn', 'DeleteROI', 'Fontsize', 6);
         switch usesurroundBGchoice
