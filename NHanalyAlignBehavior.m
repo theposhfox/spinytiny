@@ -339,6 +339,7 @@ if length(temp1)>length(b)
     temp1 = temp1(1:length(b));
 end
 wide_succ_window = temp1;
+
 %%%% Correlation Coefficients %%%
 
 [r_Overallspine, p_Overallspine] = corrcoef([binarycue', binary_behavior,wide_window, premovement', successful_behavior,wide_succ_window,movementduringcue', reward_delivery, punishment, OverallSpine_Data', Dend']);
@@ -347,8 +348,8 @@ wide_succ_window = temp1;
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-SpineActMovePeriods = DendSubspinedatatouse'.*repmat(binary_behavior,1,size(DendSubspinedatatouse,1));
-SpineActStillPeriods = DendSubspinedatatouse'.*~repmat(binary_behavior,1,size(DendSubspinedatatouse,1));
+SpineActMovePeriods = spinedatatouse'.*repmat(binary_behavior,1,size(DendSubspinedatatouse,1));
+SpineActStillPeriods = spinedatatouse'.*~repmat(binary_behavior,1,size(DendSubspinedatatouse,1));
 
 [r_mov, ~] = corrcoef(SpineActMovePeriods);
 [r_still, ~] = corrcoef(SpineActStillPeriods);
@@ -398,6 +399,23 @@ Correlations.CausalPValues = p_causal;
 [Classified.CausalMovementSpines, ~, ~] = mv_related_classifi(causal_Data, binary_behavior', 'causal movement');
 [Classified.CausalMovementSpLiberal, ~,~] = mv_related_classifi(causal_Data, wide_window', 'extended causal movement');
 
+%%% Spine Reliability %%%
 
+bound = find(diff([Inf; binary_behavior; Inf])~=0);
+allperiods = mat2cell(binary_behavior, diff(bound));
+moveperiods = allperiods(cell2mat(cellfun(@(x) ~isempty(find(x,1)), allperiods, 'uni', false)));
+movespines = find(Classified.MovementSpines);
+counter = 1;
+MovementSpineReliability = [];
+for i = 1:length(movespines)
+    spineactivity_separated = mat2cell(spinedatatouse(i,:)', diff(bound));
+    spineactivity_moveperiods = spineactivity_separated(cell2mat(cellfun(@(x) ~isempty(find(x,1)), allperiods, 'uni', false)));
+    numberofmovementswithspineactivity = length(find(logical(cell2mat(cellfun(@(x,y) sum((x+y)>1), moveperiods, spineactivity_moveperiods, 'uni', false)))));   %%% Find the number of movements during which there is also activity for this spine
+    MovementSpineReliability(counter, 1) = numberofmovementswithspineactivity/length(moveperiods);
+    counter = counter+1;
+end
+   
+Classified.MovementSpineReliability = MovementSpineReliability;
+ 
 disp(['Done with session ', num2str(Fluor.Session)])
 

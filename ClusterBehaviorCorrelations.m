@@ -207,6 +207,9 @@ if isempty(strfind(inputname(1), 'SpineCorrelationTimecourse'))
     Caus_suc_cluster_freq = nan(1,14);
     Caus_rew_cluster_freq = nan(1,14);
     
+    AllDendFreq = nan(1,14);
+    MoveDendFreq = nan(1,14);
+    NonMoveDendFreq = nan(1,14);
     ClustDendFreq = nan(1,14);
     NoClustDendFreq = nan(1,14);
     CueClustDendFreq = nan(1,14);
@@ -461,6 +464,7 @@ if isempty(strfind(inputname(1), 'SpineCorrelationTimecourse'))
     SpatioTemporalFiedler = cell(1,14);
     SpatioTemporalPartition = cell(1,14);
     SpatioTemporal_FirstEigenvector = cell(1,14);
+    MovementSpineReliability = nan(1,14);
     
     for i = 1:length(StatClass)
         if ~isempty(StatClass{i})
@@ -731,6 +735,9 @@ if isempty(strfind(inputname(1), 'SpineCorrelationTimecourse'))
                 DiffDendSameCellCorrList = [];
             end
             
+            %%
+            
+            MovementSpineReliability(1,session) = nanmean(StatClass{session}.MovementSpineReliability);
             
                 
             %%
@@ -2237,6 +2244,9 @@ if isempty(strfind(inputname(1), 'SpineCorrelationTimecourse'))
                         end
                     end
                 else
+                    AllDendFreq(1,session) = nanmean(varargin{i}.Dendritic_Frequency);
+                    MoveDendFreq(1,session) = nanmean(varargin{i}.Dendritic_Frequency(StatClass{session}.MovementDends));
+                    NonMoveDendFreq(1,session) = nanmean(varargin{i}.Dendritic_Frequency(~StatClass{session}.MovementDends));
                     ClustDendFreq(1,session) = nanmean(varargin{i}.Dendritic_Frequency(DendswithClusts));
                     NoClustDendFreq(1,session) = nanmean(varargin{i}.Dendritic_Frequency(DendsnoClusts));
                     CueClustDendFreq(1,session) = nanmean(varargin{i}.Dendritic_Frequency(DendswithCueClusts));
@@ -2815,7 +2825,7 @@ if isempty(strfind(inputname(1), 'SpineCorrelationTimecourse'))
                                
             %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
             %%% Build an array of information for each dendrite and
-            %%% associated clustering information:
+            %%% its associated clustering information:
             %%% Col 1;       Col 2:       Col 3;       Col 4;       
             %%% Dend #       
             %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -2836,6 +2846,9 @@ if isempty(strfind(inputname(1), 'SpineCorrelationTimecourse'))
                 DendswithClusts = unique(DendswithClusts);
                 DendsnoClusts = unique(DendsnoClusts);               
                 
+                AllDendFreq(1,session) = nanmean(varargin{i}.Dendritic_Frequency);
+                MoveDendFreq(1,session) = nan;
+                NonMoveDendFreq(1,session) = nan;
                 ClustDendFreq(1,session) = nanmean(varargin{i}.Dendritic_Frequency(DendswithClusts));
                 NoClustDendFreq(1,session) = nanmean(varargin{i}.Dendritic_Frequency(DendsnoClusts));
                 CueClustDendFreq(1,session) = nan;
@@ -2856,7 +2869,7 @@ if isempty(strfind(inputname(1), 'SpineCorrelationTimecourse'))
                             L = varargin{i}.LaplacianMatrix{j};
                         end
                         eigenvalues = eig(L);
-                        Fiedlerval = min(eigenvalues(~ismember(eigenvalues,min(eigenvalues)))); %%% Finds the second smallest eigenvalue (the Fiedler value, or measure or algebraic connectivity)
+                        Fiedlerval = min(eigenvalues(~ismember(eigenvalues,min(eigenvalues)))); %%% Finds the second smallest eigenvalue (the Fiedler value, or measure of algebraic connectivity)
 
                         temporalvalues = eig(Temporal_Laplacian{session}{j});
                         temporalvalues(temporalvalues==min(temporalvalues)) = nan;
@@ -3039,13 +3052,18 @@ if isempty(strfind(inputname(1), 'SpineCorrelationTimecourse'))
     ylabel('Amp. of Clustered Spines');
     xlabel('Session')
     
-    subplot(2,3,3); plot(ClustDendFreq, '-o','Color', gray, 'MarkerFaceColor', gray, 'Linewidth', 2); hold on; 
-    plot(NoClustDendFreq, '-o', 'Color', dred, 'MarkerFaceColor', dred, 'Linewidth', 2)
-    plot(CueClustDendFreq, '-o', 'Color', lgreen, 'MarkerFaceColor', lgreen, 'Linewidth', 2);
-    plot(MovClustDendFreq, '-o', 'Color', black, 'MarkerFaceColor', black, 'Linewidth', 2); % plot(NoMovClustDendFreq, '-o', 'Color', lpurple, 'MarkerFaceColor', lpurple, 'Linewidth', 2); 
-    plot(SucClustDendFreq, '-o', 'Color', lblue, 'MarkerFaceColor', lblue, 'Linewidth', 2);
-    plot(RewClustDendFreq, '-o', 'Color', purple, 'MarkerFaceColor', purple, 'Linewidth', 2);
-    legend({'Dends w/ Clusts', 'Dends no Clusts', 'Dends w/ CueClusts', 'Dends w/ MovClusts', 'Dends w/ SucClusts', 'Dends w/ RewClusts'})
+    subplot(2,3,3); 
+    plot(AllDendFreq, '-o', 'Color', gray, 'MarkerFaceColor', gray); hold on
+    plot(MoveDendFreq, '-o', 'Color', black, 'MarkerFaceColor', black)
+    plot(NonMoveDendFreq, '-o', 'Color', red, 'MarkerFaceColor', red)
+%     plot(ClustDendFreq, '-o','Color', gray, 'MarkerFaceColor', gray, 'Linewidth', 2); hold on; 
+%     plot(NoClustDendFreq, '-o', 'Color', dred, 'MarkerFaceColor', dred, 'Linewidth', 2)
+%     plot(CueClustDendFreq, '-o', 'Color', lgreen, 'MarkerFaceColor', lgreen, 'Linewidth', 2);
+%     plot(MovClustDendFreq, '-o', 'Color', black, 'MarkerFaceColor', black, 'Linewidth', 2); % plot(NoMovClustDendFreq, '-o', 'Color', lpurple, 'MarkerFaceColor', lpurple, 'Linewidth', 2); 
+%     plot(SucClustDendFreq, '-o', 'Color', lblue, 'MarkerFaceColor', lblue, 'Linewidth', 2);
+%     plot(RewClustDendFreq, '-o', 'Color', purple, 'MarkerFaceColor', purple, 'Linewidth', 2);
+%     legend({'Dends w/ Clusts', 'Dends no Clusts', 'Dends w/ CueClusts', 'Dends w/ MovClusts', 'Dends w/ SucClusts', 'Dends w/ RewClusts'})
+    legend({'All Dends', 'Move Dends', 'Non mov dends'})
     ylabel('Dendrite Frequency')
     xlabel('Session')
     
@@ -3204,6 +3222,9 @@ if isempty(strfind(inputname(1), 'SpineCorrelationTimecourse'))
     ylabel('Fraction of Spines', 'Fontsize',14)
     title([{'Fraction of (function) spines'},{'that are clustered'}], 'Fontsize', 14)
     legend({'Cue Clust', 'Mov Clust', 'PreSuc Clust', 'Suc Clust', 'MovDuringCue Clust', 'Rew Clust'})
+    
+    subplot(sub1,sub2, 9)
+    plot(MovementSpineReliability, 'ok', 'MarkerFaceColor', 'k')
 
     
     %%
@@ -3570,6 +3591,9 @@ if isempty(strfind(inputname(1), 'SpineCorrelationTimecourse'))
     
 %     a.DendriteswithMovementClusters = DendswithMovClusts;
 %     a.DendriteswithoutMovementClusters = DendsnomovClusts;
+    a.AllDendritesFrequency = AllDendFreq;
+    a.MovementDendritesFrequency = MoveDendFreq;
+    a.NonMovementDendritesFrequency = NonMoveDendFreq;
     a.DendriteswithClustersFrequency = ClustDendFreq;
     a.DendriteswithoutClustersFrequency = NoClustDendFreq;
     a.DendriteswithCueClustersFrequency = CueClustDendFreq;
@@ -3816,6 +3840,8 @@ if isempty(strfind(inputname(1), 'SpineCorrelationTimecourse'))
     a.PercentofMovementDuringCueRelatedDendrites = PercentMovDuringCueRelDends;
     a.PercentofRewardRelatedDendrites = PercentRewRelDends;
     
+    a.MovementSpineReliability = MovementSpineReliability;
+    
     fname = inputname(1);
     fname = fname(1:5);
     fname = [fname, '_SpineCorrelationTimecourse'];
@@ -3914,6 +3940,7 @@ else
     FourthClosestFunctionallyClusteredMovementRelatedSpine = cell(1,14);
     FourthClosestHighlyCorrelatedMovementRelatedSpine = cell(1,14);
     MovementClusters = cell(length(varargin), 14);
+    MovementSpineReliability = nan(1,14);
         
     for i = 1:length(varargin)
         AllClustersCorrwithCue(i,1:14) = varargin{i}.ClustCorrwithCue;
@@ -4050,6 +4077,9 @@ else
         CausalClusteredSuccessSpineAmp(i,1:14) = varargin{i}.CausalClusteredSuccessSpineAmp;
         CausalClusteredRewardSpineAmp(i,1:14) = varargin{i}.CausalClusteredRewardSpineAmp;
         
+        AllDendFreq(i,1:14) = varargin{i}.AllDendritesFrequency;
+        MoveDendFreq(i,1:14) = varargin{i}.MovementDendritesFrequency;
+        NonMoveDendFreq(i,1:14) = varargin{i}.NonMovementDendritesFrequency;
         ClustDendFreq(i,1:14) = varargin{i}.DendriteswithClustersFrequency;
         NonClustDendFreq(i,1:14) = varargin{i}.DendriteswithoutClustersFrequency;
         CueClustDendFreq(i,1:14) = varargin{i}.DendriteswithCueClustersFrequency;
@@ -4080,6 +4110,8 @@ else
         NumCausalMovSpines(i,1:14) = varargin{i}.NumberofCausalMvmntSpines;
         NumCausalSucSpines(i,1:14) = varargin{i}.NumberofCausalSuccessSpines;
         NumCausalCueSpines(i,1:14) = varargin{i}.NumberofCausalCueSpines;
+        
+        MovementSpineReliability(i,1:14) = varargin{i}.MovementSpineReliability;
         
         NumClustSpines(i,1:14) = varargin{i}.NumberofClusteredSpines;
         NumClustCueSpines(i,1:14) = varargin{i}.NumberofClusteredCueSpines;
@@ -4399,6 +4431,9 @@ else
         a.CausalClusteredSuccessSpineAmp = CausalClusteredSuccessSpineAmp;
         a.CausalClusteredRewardSpineAmp = CausalClusteredRewardSpineAmp;
         
+        a.AllDendriteFrequencies = AllDendFreq;
+        a.MovementDendriteFrequencies = MoveDendFreq;
+        a.NonMovementDendriteFrequencies = NonMoveDendFreq;
         a.ClustDendFreq = ClustDendFreq;
         a.NonClustDendFreq =NonClustDendFreq;
         a.MovClustDendFreq = MovClustDendFreq;
@@ -4708,12 +4743,15 @@ else
         xlabel('Session', 'FontSize', 14);
         xlim([0 15])
     subplot(2,3,3)
-        a = flex_plot(1:14, ClustDendFreq, stattype, black, 2); hold on;
-        b = flex_plot(1:14, NonClustDendFreq, stattype, dred, 2); 
+        a = flex_plot(1:14, AllDendFreq, stattype, gray, 2);
+        b = flex_plot(1:14, MoveDendFreq, stattype, black, 2);
+        c = flex_plot(1:14, NonMoveDendFreq, stattype, red, 2);
+        d = flex_plot(1:14, ClustDendFreq, stattype, bgreen, 2); hold on;
+        e = flex_plot(1:14, NonClustDendFreq, stattype, lpurple, 2); 
         ylabel('Event Frequency', 'Fontsize', 14);
         xlabel('Session', 'Fontsize', 14)
         xlim([0 15])
-        legend([a,b], {'Dendrites with Clusters', 'Dendrites w/o Clusters'})
+        legend([a,b,c,d,e], {'All Dends', 'Move Dends','NonMov Dends', 'Dends with Clusts', 'Dends w/o Clusts'})
     subplot(2,3,4); 
         flex_plot(1:14, CueClusterFrequency, stattype, lgreen, 2); hold on;
         flex_plot(1:14, MovementClusterFrequency, stattype, black, 2);
@@ -4753,7 +4791,7 @@ else
 
   
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    %%% Figure 3: Num of Mvmnt-related spines over time, in different
+    %%% Figure 3: Num of task-related spines over time, in different
     %%%           categories
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     
@@ -4875,6 +4913,11 @@ else
         ylabel('Fraction of Function-related Spines', 'Fontsize', 14)
         title([{'Fraction of (function) spines'},{'that are clustered'}], 'Fontsize', 14)
         legend([a b c d f g],{'Cue related','Movement related', 'Pre Success', 'Success related', 'MovDuringCue', 'Reward related'})
+        
+    subplot(sub1,sub2,9)
+        a = flex_plot(1:14, MovementSpineReliability, stattype, 'k', 2);
+        xlabel('Session', 'Fontsize', 14)
+        ylabel('Fraction of movements MRS are active', 'Fontsize', 12)
     
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     %%% Figure 4: Spatial extent of clusters

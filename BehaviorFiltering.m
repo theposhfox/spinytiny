@@ -1,4 +1,4 @@
-myfiles = fastdir(cd, ['ZL\w+SummarizedBehavior'])
+myfiles = fastdir(cd, ['NH\w+SummarizedBehavior']);
 for i = 1:length(myfiles)
 load(myfiles{i})
 eval(['corrdata = ', myfiles{i}(1:end-4), '.MovementCorrelation']);

@@ -360,7 +360,7 @@ elseif Activity == 1 && Behavior == 1
     if length(listpos) == 1
         folder = dir(datafolder);
         cd(datafolder);
-        animal = list{listpos};
+        selection = list{listpos}; animal = regexp(selection, '[\r\f\n]', 'split'); animal = animal{1};
         for i = 1:length(folder)
             ispart = strfind(folder(i).name, animal);
             wrongfile = strfind(folder(i).name, 'Timecourse');
