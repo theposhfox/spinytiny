@@ -14,7 +14,7 @@ if strcmp(clicktype, 'alt')
         oldsurrounds(oldsurrounds==0) = NaN;
     oldspinetext = gui_CaImageViewer.ROItext;
     delete(findobj('Tag', 'ROI confine'));
-    AllROIs = flipud(findobj('Type', 'rectangle', '-and', '-not', {'-regexp', 'Tag', 'Dendrite'}, '-and', '-not', {'-regexp', 'Tag', 'Background'}));         %%% ***** NOTE: this captures the ROIs in reverse order (i.e. top--> bottom is arranged as last-->first
+    AllROIs = flipud(findobj('Type', 'line', '-or', 'rectangle', '-and', '-not', {'-regexp', 'Tag', 'Dendrite'}, '-and', '-not', {'-regexp', 'Tag', 'Background'}));         %%% ***** NOTE: this captures the ROIs in reverse order (i.e. top--> bottom is arranged as last-->first
     AllBackgrounds = nan(1,length(oldsurrounds));
     AllBackgrounds(logical(~isnan(oldsurrounds))) = flipud(findobj('Type', 'rectangle', '-and', {'-regexp', 'Tag', 'Background'}));    
     gui_CaImageViewer.ROI = [];                                                                   %%% Need to restructure the spine data array to account for the deletion

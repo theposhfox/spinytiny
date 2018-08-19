@@ -47,9 +47,9 @@ function [Threshold, DriftBaseline, ProcessedData] = AnalyzeTrace(Data, Options)
 %     end
     
     padlength = round(length(raw)/20);
-    pad_start = randi([1,round(length(fornoise)/50)],1,padlength);
-    pad_end = randi([1,round(length(fornoise)/50)],1,padlength);
-    padded_data = [fornoise(pad_start), raw, fornoise(end-pad_end)];
+    pad_start = randi([1,length(fornoise)/50],1,padlength);
+    pad_end = randi([1,length(fornoise)/50],1,padlength);
+    padded_data = [fornoise(pad_start), raw, fornoise(pad_end)];
     
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     %%%%%%%%%%% Baseline %%%%%%%%%%%%%%
@@ -65,7 +65,7 @@ function [Threshold, DriftBaseline, ProcessedData] = AnalyzeTrace(Data, Options)
         case 'Dendrite'
             windowsize = 10;
     end
-    truebaseline = baseline_kde(padded_data',5,windowsize,5);    %%% inputs = downsample ratio, window size, step
+    truebaseline = baseline_kde(padded_data',20,windowsize,20);    %%% inputs = downsample ratio, window size, step
     truebaseline = truebaseline(padlength+1:end-padlength);
     DriftBaseline = truebaseline;
     

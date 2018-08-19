@@ -29,15 +29,15 @@ elseif ~isempty(regexp(running, 'FluorescenceSuite'));
 end
 
 
-
 if strcmpi(choice, 'Spines')
     
     glovar.NewSpineAnalysisInfo.SpineList = [];
     glovar.Spine_Number = 0;
-    ROIboxes = findobj(program.Children, 'Type', 'Rectangle', '-and', '-not', {'-regexp', 'Tag', 'Dendrite'});
+    ROIboxes = findobj(program.Children, 'Type', 'line', '-or', 'Rectangle', '-and', '-not', {'-regexp', 'Tag', 'Dendrite'});
     Textboxes = findobj(program.Children, 'Type', 'text');
     glovar.ROI = [];
     glovar.BackgroundROI = [];
+    glovar.OtherFeature_ROI = [];
     
     for i = 1:length(ROIboxes)
         delete(ROIboxes(i));
@@ -102,6 +102,7 @@ elseif strcmpi(choice, 'Both')
     glovar.DendritePolyPointNumber = 0;
     glovar.ROI = [];
     glovar.BackgroundROI = [];
+    glovar.OtherFeature_ROI = [];
 end
 
 if ~isempty(regexp(running, 'CaImageViewer'))

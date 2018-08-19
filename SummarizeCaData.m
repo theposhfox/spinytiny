@@ -61,92 +61,96 @@ isbeingcalled = length(dbstack)>1;  %%% if the number of programs in 'dbstack' i
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 
-if isstruct(File)
-    experimenter_initials = File.Filename(1:2);
-    folder = regexp(File.Filename, [experimenter_initials, '000?\d+'], 'match');
-    folder = folder{1};
-    Date = regexp(File.Filename, '_\d+_', 'match');
-    Date = Date{1};
-%     cd(['Z:\People\Nathan\Data\', folder, Date(2:end-1), '\summed'])
-else
-    experimenter_initials = regexp(File, '[ABCDEFGHIJKLMNOPQRSTUVWXYZ]{2}', 'match');
-    experimenter_initials = experimenter_initials{1};
-    folder = regexp(File, [experimenter_initials, '\d+[^_]'], 'match');
-    folder = folder{1};
-    Date = regexp(File, '\d{6}', 'match');
-    Date = Date{1};
-    if ispc
-        filestart = ['Z:', filesep, 'People'];
-    elseif isunix
-        filestart = [filesep,'usr',filesep,'local',filesep,'lab', filesep, 'People'];
-    else
-        error('Operating system not recognized as PC or Unix; terminating');
-    end
-    targetdir = [filestart, filesep, Experimenter, filesep, 'Data', filesep, folder, filesep, Date, filesep, 'summed'];
-    if isdir(targetdir)
-        cd(targetdir)
-        files = dir(cd);
-        check = 0;
-        
-        for i = 1:length(files)
-            if ~isempty(regexp(files(i).name,['_summed_50_Analyzed_By', Analyzer])) || ~isempty(regexp(files(i).name,['_summed_50Analyzed_By', Analyzer]))
-                load(files(i).name)
-                check = 1;
-            end
-        end
-        if ~check   %%% If no files were found using the above criteria
-            for i = 1:length(files)
-                if ~isempty(regexp(files(i).name, '_summed_50_Analyzed'))
-                    load(files(i).name)
-                    check = 1;
-                else
-                end
-            end
-        else
-        end
-        if ~check
-            disp('Raw data file not found; PULLING FROM PREVIOUS ANALYSIS!!')
-            cd('C:\Users\Komiyama\Desktop\ActivitySummary_UsingRawData')
-            files = dir(cd);
-            for i = 1:length(files)
-                if ~isempty(regexp(files(i).name, [folder, '_', Date])) && ~isempty(regexp(files(i).name,'_Summary')) && isempty(regexp(files(i).name,'Poly'))
-                    load(files(i).name)
-                end
-            end
-        end
-        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-        %%% set "file" data to be used
-        try
-            eval(['File =' folder, '_', Date, '_001_001_summed_50_Analyzed;'])
-        catch
-            temp = who(['*', experimenter_initials, '*']);
-            eval(['File =', temp{1}, ';']);
-        end
-        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    else
-        disp('COULD NOT LINK TO TARGET DIRECTORY; PULLING FROM PREVIOUS ANALYSIS!!')
-        cd('C:\Users\Komiyama\Desktop\ActivitySummary_UsingRawData')
-        files = dir(cd);
-        for i = 1:length(files)
-            if ~isempty(regexp(files(i).name, [folder, '_', Date])) && ~isempty(regexp(files(i).name,'_Summary')) && isempty(regexp(files(i).name,'Poly'))
-                load(files(i).name)
-            end
-        end
-        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-        %%% set "file" data to be used
-        try
-            eval(['File =' folder, '_', Date, '_Summary;'])
-        catch
-            temp = who(['*', experimenter_initials, '*']);
-            eval(['File =', temp{1}, ';']);
-        end
-        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    end
-end
+% if isstruct(File)
+%     experimenter_initials = File.Filename(1:2);
+%     folder = regexp(File.Filename, [experimenter_initials, '000?\d+'], 'match');
+%     folder = folder{1};
+%     Date = regexp(File.Filename, '_\d+_', 'match');
+%     Date = Date{1};
+% %     cd(['Z:\People\Nathan\Data\', folder, Date(2:end-1), '\summed'])
+% else
+%     experimenter_initials = regexp(File, '[ABCDEFGHIJKLMNOPQRSTUVWXYZ]{2}', 'match');
+%     experimenter_initials = experimenter_initials{1};
+%     folder = regexp(File, [experimenter_initials, '\d+[^_]'], 'match');
+%     folder = folder{1};
+%     Date = regexp(File, '\d{6}', 'match');
+%     Date = Date{1};
+%     if ispc
+%         filestart = ['Z:', filesep, 'People'];
+%     elseif isunix
+%         filestart = [filesep,'usr',filesep,'local',filesep,'lab', filesep, 'People'];
+%     else
+%         error('Operating system not recognized as PC or Unix; terminating');
+%     end
+%     targetdir = [filestart, filesep, Experimenter, filesep, 'Data', filesep, folder, filesep, Date, filesep, 'summed'];
+%     if isdir(targetdir)
+%         cd(targetdir)
+%         files = dir(cd);
+%         check = 0;
+%         
+%         for i = 1:length(files)
+%             if ~isempty(regexp(files(i).name,['_summed_50_Analyzed_By', Analyzer])) || ~isempty(regexp(files(i).name,['_summed_50Analyzed_By', Analyzer]))
+%                 load(files(i).name)
+%                 check = 1;
+%             end
+%         end
+%         if ~check   %%% If no files were found using the above criteria
+%             for i = 1:length(files)
+%                 if ~isempty(regexp(files(i).name, '_summed_50_Analyzed'))
+%                     load(files(i).name)
+%                     check = 1;
+%                 else
+%                 end
+%             end
+%         else
+%         end
+%         if ~check
+%             disp('Raw data file not found; PULLING FROM PREVIOUS ANALYSIS!!')
+%             cd('C:\Users\Komiyama\Desktop\ActivitySummary_UsingRawData')
+%             files = dir(cd);
+%             for i = 1:length(files)
+%                 if ~isempty(regexp(files(i).name, [folder, '_', Date])) && ~isempty(regexp(files(i).name,'_Summary')) && isempty(regexp(files(i).name,'Poly'))
+%                     load(files(i).name)
+%                 end
+%             end
+%         end
+%         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%         %%% set "file" data to be used
+%         try
+%             eval(['File =' folder, '_', Date, '_001_001_summed_50_Analyzed;'])
+%         catch
+%             temp = who(['*', experimenter_initials, '*']);
+%             eval(['File =', temp{1}, ';']);
+%         end
+%         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%     else
+%         disp('COULD NOT LINK TO TARGET DIRECTORY; PULLING FROM PREVIOUS ANALYSIS!!')
+%         cd('C:\Users\Komiyama\Desktop\ActivitySummary_UsingRawData')
+%         files = dir(cd);
+%         for i = 1:length(files)
+%             if ~isempty(regexp(files(i).name, [folder, '_', Date])) && ~isempty(regexp(files(i).name,'_Summary')) && isempty(regexp(files(i).name,'Poly'))
+%                 load(files(i).name)
+%             end
+%         end
+%         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%         %%% set "file" data to be used
+%         try
+%             eval(['File =' folder, '_', Date, '_Summary;'])
+%         catch
+%             temp = who(['*', experimenter_initials, '*']);
+%             eval(['File =', temp{1}, ';']);
+%         end
+%         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%     end
+% end
+
+cd('E:/Evan')
+targetdir = cd; load(File);
+
+eval(['File = ', File]);
 
 filename = regexp(File.Filename, '.tif', 'split');
 filename = filename{1};
-File.Filename = [folder, '_', Date(3:end), '_001_001_summed_50_Analyzed'];
 
 analyzed = File;
 Scrsz = get(0, 'Screensize');
@@ -162,21 +166,6 @@ Scrsz = get(0, 'Screensize');
 analyzed.UsePreviousPreferences = 0;
 
 foldertouse = 'C:\Users\Komiyama\Desktop\ActivitySummary_UsingRawData';
-
-% if ~a.UsePreviousPreferences
-% 
-%     d = dialog('Position', [(Scrsz(3)/2)-125 Scrsz(4)/2-75 250 150], 'Name', 'Whoa there...');
-%     txt = uicontrol('Parent', d, 'Style', 'text', 'Position', [10 100 230 30], 'String', 'You are about to redo analysis and overwrite all parameters... continue?');
-%     btn1 = uicontrol('Parent', d, 'Style', 'pushbutton', 'Position', [27.5 30 70 25], 'String', 'Accept!', 'Callback', @accept);
-%     btn2 = uicontrol('Parent', d, 'Style', 'pushbutton', 'Position', [142.5 30 70 25], 'String', 'Ner', 'Callback', @reject);
-%     uiwait(d)
-%     choice = getappdata(d,'choice');
-%     delete(d);
-% 
-% a.UsePreviousPreferences = choice;
-% 
-% else
-% end
 
 if analyzed.UsePreviousPreferences
     cd(foldertouse)
@@ -202,15 +191,15 @@ else
     spinethreshmultiplier = 2*ones(1,length(File.dF_over_F));       %%% multiplier to binarize events
     spinevalueslimitforbaseline = 2;                                %%% for capping values to estimate baseline
     spinevalueslimitfornoise = 2;
-    driftbaselinesmoothwindow = 1800;
-    spinebaselinesmoothwindow = 450;
-    spinesmoothwindow = 30;
+    driftbaselinesmoothwindow = 10;
+    spinebaselinesmoothwindow = 10;
+    spinesmoothwindow = 5;
     polythreshmultiplier = 2*ones(1,length(File.Poly_Fluorescence_Measurement));
     Dendthreshmultiplier = 2*ones(1,File.NumberofDendrites);
     DendSubthreshmultiplier = ones(1,length(File.dF_over_F));
     Dendvalueslimitforbaseline = 2;
     Dendvalueslimitfornoise = spinevalueslimitfornoise;
-    dendbaselinesmoothwindow = 60;
+    dendbaselinesmoothwindow = 10;
     dendsmoothwindow = spinesmoothwindow;
     alphaminimum = 0.5;
 
@@ -280,33 +269,7 @@ elseif spinetraceoption ==4
 end
 
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%% Search for spines that were not
-%%% properly analyzed (this is now
-%%% mostly obsolete)
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-% if length(File.dF_over_F) ~= length(File.MeanEventAmp)
-%     spinesnotanalyzed = length(File.dF_over_F) - length(File.MeanEventAmp);
-%     if spinesnotanalyzed>1
-%         disp(['More than one spine was not properly analyzed for the file ', File.Filename(1:10), '; Check analysis'])
-%     else
-%         pickup = length(File.MeanEventAmp)+spinesnotanalyzed;
-%         old_alpha = robustfit(File.Dendrite_dFoF(File.NumberofDendrites,:),File.dF_over_F{pickup});
-%         File.Alphas{File.NumberofDendrites}(1:2,pickup) = old_alpha;
-%         deltaF_subtracted = File.dF_over_F{pickup}-(old_alpha(1)+old_alpha(2)*File.Dendrite_dFoF(File.NumberofDendrites,:));
-%         analyzed.Alphas = File.Alphas;
-%         analyzed.SynapticEvents{pickup} = deltaF_subtracted;
-%         File.SynapticEvents{pickup} = deltaF_subtracted;
-%         File.SpineDendriteGrouping{end} = [File.SpineDendriteGrouping{end},pickup];
-%         analyzed.SpineDendriteGrouping{end} = [File.SpineDendriteGrouping{end},pickup];
-%     end  
-% end
-
-
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % %% Describe the basic shape of each calcium trace

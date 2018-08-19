@@ -700,6 +700,7 @@ if BackgroundROI == 0 && SpineROI == 0 && OtherFeatureROI == 0 && Dendrite_PolyL
 end
 
 
+
 function RedUpperLUT_EditableText_Callback(hObject, eventdata, handles)
 % hObject    handle to RedUpperLUT_EditableText (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
