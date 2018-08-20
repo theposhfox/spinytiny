@@ -1293,7 +1293,7 @@ end
 
 filename(strfind(filename, ' ')) = '_';
 
-if isstrprop(filename(1), 'digit')      %%% The first character of a save name cannot be a digit, so insert a common placeholder if it is
+if isstrprop(filename(1), 'digit')      %%% The first character of a save name cannot be a digit, so insert a placeholder if 
     filename = ['Evan_', filename];
 end
 
@@ -1361,7 +1361,7 @@ if showFig
     end
 end
 
-disp([filename,' analysis complete'])
+disp([folder, '_', Date, ' (session ', num2str(analyzed.Session),')',' analysis complete'])
 
 % spatialfit = robustfit(SpineToSpineDistance, SpineToSpineCorrelation);
 % fitcurve = spatialfit(2)*([0:0.1:max(SpineToSpineDistance)])+spatialfit(1);
