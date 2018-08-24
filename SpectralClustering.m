@@ -24,14 +24,18 @@ for j = 1:DendNum
     if j == DendNum && lastspine ~= length(inputData.dF_over_F)
         lastspine = length(inputData.dF_over_F);
     end
-    if Choices.UseStatDends
-        if ~StatClass{session}.MovementDendrites(j)
-            Spatial_Deg{j} = nan(length(firstspine:lastspine),1);
-            Spatiotemporal_Deg{j} = nan(length(firstspine:lastspine),1);
-            Temporal_Deg{j} = nan(length(firstspine:lastspine),1);
-            continue
-        end
-    end
+%     if Choices.UseStatDends
+%         if isempty(StatClass{session})
+%             SpectralData = [];
+%             return
+%         end
+%         if ~StatClass{session}.MovementDendrites(j)
+%             Spatial_Deg{j} = nan(length(firstspine:lastspine),1);
+%             Spatiotemporal_Deg{j} = nan(length(firstspine:lastspine),1);
+%             Temporal_Deg{j} = nan(length(firstspine:lastspine),1);
+%             continue
+%         end
+%     end
     if firstspine ~= lastspine
         fullDist = full(triu(inputData.DistanceHeatMap));
         ad = fullDist(firstspine:lastspine, firstspine:lastspine);

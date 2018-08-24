@@ -55,6 +55,8 @@ else
                     load(files(i).name);
                     eval(['current_session = ', mouse, '_', date, '_Summary.Session;'])
                     SummarizeCaData(usersearch,[mouse, '_', date], current_session, 0);
+%                     File = eval(files(i).name(1:end-4));
+%                     SummarizeCaData(usersearch,File, current_session, 0);
                     clear(files(i).name(1:end-4))
                     close all
                 end

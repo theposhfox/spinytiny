@@ -1,4 +1,4 @@
-function [analyzed, poly] = SummarizeCaData(User, File, currentsession, showFig)
+function [analyzed, poly] = SummarizeCaData(Experimenter, File, currentsession, showFig)
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%% This function takes ROI information extracted using CaImageViewer and
@@ -10,8 +10,8 @@ function [analyzed, poly] = SummarizeCaData(User, File, currentsession, showFig)
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-if(~exist('User','var'))
-    User = 'Nathan'; % User defaults to 'Nathan' if not defined
+if(~exist('Experimenter','var'))
+    Experimenter = 'Nathan'; % User defaults to 'Nathan' if not defined
 end
 
 if(~exist('File', 'var'))
@@ -25,6 +25,12 @@ end
 
 if(~exist('showFig','var'))
     showFig = 1; % default to show figure
+end
+
+if strcmpi(getenv('computername'), 'Nathan-Lab-PC')
+    Analyzer = 'Nathan';
+else
+    Analyzer = Experimenter;
 end
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -56,33 +62,34 @@ isbeingcalled = length(dbstack)>1;  %%% if the number of programs in 'dbstack' i
 
 
 if isstruct(File)
-    experimenter = File.Filename(1:2);
-    folder = regexp(File.Filename, [experimenter, '000?\d+'], 'match');
+    experimenter_initials = File.Filename(1:2);
+    folder = regexp(File.Filename, [experimenter_initials, '000?\d+'], 'match');
     folder = folder{1};
     Date = regexp(File.Filename, '_\d+_', 'match');
     Date = Date{1};
-    cd(['Z:\People\Nathan\Data\', folder, '\16', Date(2:end-1), '\summed'])
+%     cd(['Z:\People\Nathan\Data\', folder, Date(2:end-1), '\summed'])
 else
-    experimenter = regexp(File, '[ABCDEFGHIJKLMNOPQRSTUVWXYZ]{2}', 'match');
-    experimenter = experimenter{1};
-    folder = regexp(File, [experimenter, '\d+[^_]'], 'match');
+    experimenter_initials = regexp(File, '[ABCDEFGHIJKLMNOPQRSTUVWXYZ]{2}', 'match');
+    experimenter_initials = experimenter_initials{1};
+    folder = regexp(File, [experimenter_initials, '\d+[^_]'], 'match');
     folder = folder{1};
     Date = regexp(File, '\d{6}', 'match');
     Date = Date{1};
     if ispc
         filestart = ['Z:', filesep, 'People'];
     elseif isunix
-        filestart = ['\usr\local\lab', filesep, 'People'];
+        filestart = [filesep,'usr',filesep,'local',filesep,'lab', filesep, 'People'];
     else
         error('Operating system not recognized as PC or Unix; terminating');
     end
-    targetdir = [filestart, filesep, 'Nathan', filesep, 'Data', filesep, folder, filesep, Date, filesep, 'summed'];
+    targetdir = [filestart, filesep, Experimenter, filesep, 'Data', filesep, folder, filesep, Date, filesep, 'summed'];
     if isdir(targetdir)
         cd(targetdir)
         files = dir(cd);
         check = 0;
+        
         for i = 1:length(files)
-            if ~isempty(regexp(files(i).name,['_summed_50_Analyzed_By', User])) || ~isempty(regexp(files(i).name,['_summed_50Analyzed_By', User]))
+            if ~isempty(regexp(files(i).name,['_summed_50_Analyzed_By', Analyzer])) || ~isempty(regexp(files(i).name,['_summed_50Analyzed_By', Analyzer]))
                 load(files(i).name)
                 check = 1;
             end
@@ -91,17 +98,28 @@ else
             for i = 1:length(files)
                 if ~isempty(regexp(files(i).name, '_summed_50_Analyzed'))
                     load(files(i).name)
+                    check = 1;
                 else
                 end
             end
         else
+        end
+        if ~check
+            disp('Raw data file not found; PULLING FROM PREVIOUS ANALYSIS!!')
+            cd('C:\Users\Komiyama\Desktop\ActivitySummary_UsingRawData')
+            files = dir(cd);
+            for i = 1:length(files)
+                if ~isempty(regexp(files(i).name, [folder, '_', Date])) && ~isempty(regexp(files(i).name,'_Summary')) && isempty(regexp(files(i).name,'Poly'))
+                    load(files(i).name)
+                end
+            end
         end
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
         %%% set "file" data to be used
         try
             eval(['File =' folder, '_', Date, '_001_001_summed_50_Analyzed;'])
         catch
-            temp = who(['*', experimenter, '*']);
+            temp = who(['*', experimenter_initials, '*']);
             eval(['File =', temp{1}, ';']);
         end
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -110,7 +128,7 @@ else
         cd('C:\Users\Komiyama\Desktop\ActivitySummary_UsingRawData')
         files = dir(cd);
         for i = 1:length(files)
-            if ~isempty(regexp(files(i).name, folder)) && ~isempty(regexp(files(i).name,'_Summary')) && isempty(regexp(files(i).name,'Poly'))
+            if ~isempty(regexp(files(i).name, [folder, '_', Date])) && ~isempty(regexp(files(i).name,'_Summary')) && isempty(regexp(files(i).name,'Poly'))
                 load(files(i).name)
             end
         end
@@ -119,7 +137,7 @@ else
         try
             eval(['File =' folder, '_', Date, '_Summary;'])
         catch
-            temp = who(['*', experimenter, '*']);
+            temp = who(['*', experimenter_initials, '*']);
             eval(['File =', temp{1}, ';']);
         end
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -182,18 +200,18 @@ if analyzed.UsePreviousPreferences
 %     SpectralLengthConstant = 10;
 else
     spinethreshmultiplier = 2*ones(1,length(File.dF_over_F));       %%% multiplier to binarize events
-    spinevalueslimitforbaseline = 3;                                %%% for capping values to estimate baseline
+    spinevalueslimitforbaseline = 2;                                %%% for capping values to estimate baseline
     spinevalueslimitfornoise = 2;
     driftbaselinesmoothwindow = 1800;
     spinebaselinesmoothwindow = 450;
-    spinesmoothwindow = 15;
+    spinesmoothwindow = 30;
     polythreshmultiplier = 2*ones(1,length(File.Poly_Fluorescence_Measurement));
     Dendthreshmultiplier = 2*ones(1,File.NumberofDendrites);
     DendSubthreshmultiplier = ones(1,length(File.dF_over_F));
     Dendvalueslimitforbaseline = 2;
-    Dendvalueslimitfornoise = 2;
+    Dendvalueslimitfornoise = spinevalueslimitfornoise;
     dendbaselinesmoothwindow = 60;
-    dendsmoothwindow = 15;
+    dendsmoothwindow = spinesmoothwindow;
     alphaminimum = 0.5;
 
     polypercentrequirement = 0.75;
@@ -225,7 +243,7 @@ if File.NumberofSpines ==  0 || File.NumberofSpines ~= length(File.deltaF)
 end
 % 
 SpineNo = randi(File.NumberofSpines,1); %%% Will choose a random spine from the available ones for this file
-% SpineNo = 19;  %%% Manually select spine to be considered
+% SpineNo = 25;  %%% Manually select spine to be considered
 
 
 DendNum = File.NumberofDendrites;
@@ -321,12 +339,18 @@ Options.ValuesLimitforBaseline = spinevalueslimitforbaseline;
 Options.ValuesLimitforNoise = spinevalueslimitfornoise;
 Options.BeingAnalyzed = 'Spine';
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
 for i = 1:numberofSpines
-        
     [spine_thresh(i,1), spinedriftbaseline(i,:), processed_dFoF(i,:)] = AnalyzeTrace(spinedatatouse{i}, Options);
 
 end
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -536,7 +560,7 @@ for i = 1:DendNum
             temp(isnan(temp)) = 0;
         end
         
-        temp(1:10) = 0; temp(end-10) = 0;
+        temp(1:10) = temp(randi([20,100],1,10)); temp(end-9:end) = temp(randi([length(temp)-100,length(temp)-20],1,10));
         File.Poly_Fluorescence_Measurement{j} = temp;
         poly.Poly_Fluorescence_Measurement{j} = temp;
         
@@ -922,6 +946,9 @@ coactive_percentage = 100*(max(cofires))/numberofSpines;
 
 
 pixpermicron = 4.65;
+if ~isempty(strfind(File.Filename, 'ZL'))
+    File.ZoomValue = 8.5;
+end
 if isfield(File, 'ZoomValue')
     if File.ZoomValue ~= 0
         pixpermicron = (pixpermicron*File.ZoomValue)/12.1;
@@ -969,13 +996,9 @@ for i = 1:File.NumberofDendrites
     if length(File.SpineDendriteGrouping{i})>1
         for j = File.SpineDendriteGrouping{i}(1):File.SpineDendriteGrouping{i}(end-1)
             for k = (j+1):File.SpineDendriteGrouping{i}(end)
-            if j>k
-                lower = spine_address{k}.Index;
-                higher = spine_address{j}.Index;
-            else
-                lower = spine_address{j}.Index;
-                higher = spine_address{k}.Index;
-            end
+                [val ind] = sort([spine_address{j}.Index,spine_address{k}.Index]);
+                lower = val(1);
+                higher = val(2);
                 SpineToSpineDistance(j,k) = abs(sum(Mic_Dist{spine_address{j}.Dendrite}(lower:higher))-Mic_Dist{spine_address{j}.Dendrite}(lower));  %%% Find the sum of linear distances from the current point to the nearby spine
             end
         end 
@@ -1415,6 +1438,28 @@ if showFig == 1
         title('Events Causing APs')
         ylim([-0.05 1])
 else
+end
+
+
+if showFig
+    windowwidth = Scrsz(3)/2;
+    windowheight = Scrsz(4)/2;
+    figure('Position', [(Scrsz(3)/2)-windowwidth/2, (Scrsz(4)/2)-windowheight/2, windowwidth, windowheight])
+    for i = 1:numberofSpines;
+        subplot(ceil(sqrt(numberofSpines)),ceil(sqrt(numberofSpines)),i); hold on;
+        parentdend = find(~cell2mat(cellfun(@(x) isempty(find(x == i,1)), File.SpineDendriteGrouping, 'Uni', false)));
+        plot(processed_Dendrite(parentdend,:), processed_dFoF(i,:), 'ok')
+        x = 0:ceil(max(processed_Dendrite(parentdend,:)));
+        spineparsedaddress = cell2mat(cellfun(@(x) (find(x == i,1)), File.SpineDendriteGrouping, 'Uni', false));
+        ycalc1 = analyzed.Alphas{parentdend}(2,spineparsedaddress)*x;
+        justslope = plot(x,ycalc1, 'r');
+        x2 = [ones(length(x),1),x'];
+        ycalc2 = x2*analyzed.Alphas{parentdend}(:,spineparsedaddress);
+        slopeandint = plot(x,ycalc2,'b');
+        if i == numberofSpines
+            legend([justslope,slopeandint], {'Slope only', 'Slope with int'})
+        end
+    end
 end
 
 disp([folder, '_', Date, ' (session ', num2str(analyzed.Session),')',' analysis complete'])

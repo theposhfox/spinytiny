@@ -42,7 +42,7 @@ if strcmp(clicktype, 'alt')
 
         %%% Repeat the same for associated background ROIs
         
-        if ~isempty(oldsurrounds)
+        if length(oldsurrounds) >1
             gui_CaImageViewer.BackgroundROI(1:ROI_num) = oldsurrounds(1:ROI_num);                  %%% captures all the spines from the first to the one before the one being deleted
             gui_CaImageViewer.BackgroundROI(ROI_num+1:length(oldspines)-1) = oldsurrounds((ROI_num+2):length(oldsurrounds)); %%% captures all the spines after the one being deleted and shifts it to fill the place of the one being deleted
             try
