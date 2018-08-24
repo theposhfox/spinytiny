@@ -22,7 +22,7 @@ function varargout = CaImageViewer(varargin)
 
 % Edit the above text to modify the response to help CaImageViewer
 
-% Last Modified by GUIDE v2.5 28-Mar-2018 14:16:41
+% Last Modified by GUIDE v2.5 13-Aug-2018 13:07:20
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -59,25 +59,31 @@ handles.output = hObject;
 
 gui_CaImageViewer.figure.handles = handles;
 
-Users = {'Nathan', 'Zhongmin', 'Giulia', 'Mingyuan', 'Assaf'}; % Assaf was added as a user.
 
-Scrsz = get(0, 'Screensize');
-    dialogboxwidth = 315;
-    dialogboxheight = 150;
-    d = dialog('Position', [(Scrsz(3)/2)-dialogboxwidth/2 Scrsz(4)/2-dialogboxheight/2 dialogboxwidth dialogboxheight ], 'Name', 'User');
-    txt = uicontrol('Parent', d, 'Style', 'text', 'Position', [15 100 270 30], 'String', 'Select User:');
-    
-    btn1 = uicontrol('Parent', d, 'Style', 'pushbutton', 'Position', [15 30 50 25], 'String', Users{1}, 'Callback', @DlgChoice);
-    btn2 = uicontrol('Parent', d, 'Style', 'pushbutton', 'Position', [65.5 30 70 25], 'String', Users{2}, 'Callback', @DlgChoice);
-    btn3 = uicontrol('Parent', d, 'Style', 'pushbutton', 'Position', [136 30 50 25], 'String', Users{3}, 'Callback', @DlgChoice);
-    btn4 = uicontrol('Parent', d, 'Style', 'pushbutton', 'Position', [186.5 30 70 25], 'String', Users{4}, 'Callback', @DlgChoice);
-    btn5 = uicontrol('Parent', d, 'Style', 'pushbutton', 'Position', [257 30 50 25], 'String', Users{5}, 'Callback', @DlgChoice);
-    
-    uiwait(d)
-    choice = get(d, 'UserData');
-    set(gui_CaImageViewer.figure.handles.figure1, 'UserData', choice);
-    delete(d);
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%% Set up user data; uncomment the first section to make selectable 
 
+% Users = {'Nathan', 'Evan'}; 
+% 
+% Scrsz = get(0, 'Screensize');
+%     dialogboxwidth = 315;
+%     dialogboxheight = 150;
+%     d = dialog('Position', [(Scrsz(3)/2)-dialogboxwidth/2 Scrsz(4)/2-dialogboxheight/2 dialogboxwidth dialogboxheight ], 'Name', 'User');
+%     txt = uicontrol('Parent', d, 'Style', 'text', 'Position', [15 100 270 30], 'String', 'Select User:');
+%     btn1 = uicontrol('Parent', d, 'Style', 'pushbutton', 'Position', [(dialogboxwidth/2)-(50*length(Users)/2) 30 50 25], 'String', Users{1}, 'Callback', @DlgChoice);
+%     btn2 = uicontrol('Parent', d, 'Style', 'pushbutton', 'Position', [(dialogboxwidth/2)+(50*(length(Users)-1)/2) 30 50 25], 'String', Users{2}, 'Callback', @DlgChoice);
+%     
+%     uiwait(d)
+%     choice = get(d, 'UserData');
+%     set(gui_CaImageViewer.figure.handles.figure1, 'UserData', choice);
+%     delete(d);
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%% Otherwise, make user a static selection for each initialization
+
+set(gui_CaImageViewer.figure.handles.figure1, 'UserData', 'Evan')
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 % Update handles structure
 guidata(hObject, handles);
@@ -129,6 +135,7 @@ gui_CaImageViewer.PolyROI = [];
 gui_CaImageViewer.PolyLinePos = [];
 gui_CaImageViewer.PolyLineVertices = [];
 gui_CaImageViewer.Spine_Number = 0;
+gui_CaImageViewer.Other_ROIs = 0;
 gui_CaImageViewer.Dendrite_Number = 0;
 gui_CaImageViewer.DendritePolyPointNumber = [];
 gui_CaImageViewer.SpineDendriteGrouping = [];
@@ -181,7 +188,6 @@ function LoadFile_Callback(hObject, eventdata, handles)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 
-
 global gui_CaImageViewer
 
 %%% Get file information %%%
@@ -209,15 +215,9 @@ end
 
 fname = [pathname, filename];
 
-load_type = listdlg('PromptString', 'Analyze compressed image (fast), or full series (slow)? (note that only compressed image will be displayed)', 'SelectionMode', 'single','ListString', {'Compressed', 'Full'});
-
 timecourse_image_number = [];
 
-if load_type == 1
-    gui_CaImageViewer.Load_Type = 'Compressed';
-elseif load_type == 2
-    gui_CaImageViewer.Load_Type = 'Full';
-end
+gui_CaImageViewer.Load_Type = 'Full';
 
 % fname = fname;
 CaImage_File_info = imfinfo(fname);
@@ -249,23 +249,14 @@ if twochannels
     [Rfilename, Rpathname] = uigetfile('.tif', 'Select image file for the red channel');
     Rfname = [Rpathname, Rfilename];
     RTifLink = Tiff(Rfname, 'r');
-    if load_type == 1 %%% if loading compressed 
-        for i = 1:timecourse_image_number
-            TifLink.setDirectory(i);
-            gui_CaImageViewer.GCaMP_Image{1,Green_Frame} = TifLink.read();
-            Green_Frame = Green_Frame+1;
-            waitbar(Green_Frame/timecourse_image_number,h,['Loading Image ', num2str(Green_Frame)]);
-        end
-    elseif load_type == 2 %%% if loading full
-        for i = 1:timecourse_image_number
-            TifLink.setDirectory(i);
-            gui_CaImageViewer.GCaMP_Image{1,Green_Frame} = TifLink.read();
-            Green_Frame = Green_Frame+1;
-            waitbar(Green_Frame/timecourse_image_number,h,['Loading Image ', num2str(Green_Frame)]);
-            RTifLink.setDirectory(i);
-            gui_CaImageViewer.Red_Image{1,Red_Frame} = RTifLink.read();
-            Red_Frame = Red_Frame+1;
-        end
+    for i = 1:timecourse_image_number
+        TifLink.setDirectory(i);
+        gui_CaImageViewer.GCaMP_Image{1,Green_Frame} = TifLink.read();
+        Green_Frame = Green_Frame+1;
+        waitbar(Green_Frame/timecourse_image_number,h,['Loading Image ', num2str(Green_Frame)]);
+        RTifLink.setDirectory(i);
+        gui_CaImageViewer.Red_Image{1,Red_Frame} = RTifLink.read();
+        Red_Frame = Red_Frame+1;
     end
         set(handles.RedGraph, 'Visible', 'on')
         set(handles.Channel2_StaticText, 'Visible', 'on')
@@ -280,20 +271,11 @@ if twochannels
         set(handles.GreenGraph, 'Position', [Green_loc(1), Red_loc(2), Red_loc(3), Red_loc(4)]);      %%% If an image using only 1 channel is already loaded, the "green" graph overlays the red, but the size of the original axes is maintained in the "red" graph.
         set(handles.RedGraph, 'Position', [Red_loc(1), Red_loc(2),  Red_loc(3), Red_loc(4)]);
 else
-    if load_type == 1 %%% if loading compressed 
-        for i = 1:timecourse_image_number
-            TifLink.setDirectory(i);
-            gui_CaImageViewer.GCaMP_Image{1,Green_Frame} = TifLink.read();
-            Green_Frame = Green_Frame+1;
-            waitbar(Green_Frame/timecourse_image_number,h,['Loading Image ', num2str(Green_Frame)]);
-        end
-    elseif load_type == 2 %%% if loading full
-        for i = 1:timecourse_image_number
-            TifLink.setDirectory(i);
-            gui_CaImageViewer.GCaMP_Image{1,Green_Frame} = TifLink.read();
-            Green_Frame = Green_Frame+1;
-            waitbar(Green_Frame/timecourse_image_number,h,['Loading Image ', num2str(Green_Frame)]);
-        end
+    for i = 1:timecourse_image_number
+        TifLink.setDirectory(i);
+        gui_CaImageViewer.GCaMP_Image{1,Green_Frame} = TifLink.read();
+        Green_Frame = Green_Frame+1;
+        waitbar(Green_Frame/timecourse_image_number,h,['Loading Image ', num2str(Green_Frame)]);
     end
     if ~gui_CaImageViewer.LoadedFile || Green_loc(3) == Red_loc(3)
         set(handles.RedGraph, 'Visible', 'off')
@@ -330,13 +312,6 @@ set(handles.ImageSlider_Slider, 'Max', imageserieslength);
 set(handles.ImageSlider_Slider, 'SliderStep', [(1/(imageserieslength-1)) (32/(imageserieslength-1))]);  %%% The Slider Step values indicate the minor and major transitions, which should be represented by the desired transition as the numerator and the length of the series as the denominator
 set(handles.Frame_EditableText, 'String', 1);
 set(handles.SmoothingFactor_EditableText, 'String', '1');
-
-% 
-% Smoothing = str2num(get(handles.SmoothingFactor_EditableText, 'String'));
-% 
-% if Smoothing ~= 1
-%     Smoother(hObject, eventdata, ch1image,ch2image, CommandSource)
-% end
 
 set(gui_CaImageViewer.figure.handles.output, 'WindowButtonDownFcn', [])
 
@@ -449,28 +424,10 @@ function ImageSlider_Slider_Callback(hObject, eventdata, handles)
 %        get(hObject,'Min') and get(hObject,'Max') to determine range of slider
 
 global gui_CaImageViewer
-
-% if isempty(eventdata)
     
-    ImageNum = str2num(get(gui_CaImageViewer.figure.handles.Frame_EditableText, 'String'));
-    CaImageSlider(ImageNum);
+ImageNum = str2num(get(gui_CaImageViewer.figure.handles.Frame_EditableText, 'String'));
+CaImageSlider(ImageNum);
 
-% else
-%     if isempty(strfind(eventdata.Key, 'arrow'))
-%        return
-%     else
-%         if strcmpi(eventdata.Key, 'rightarrow')
-%             ImageNum = str2num(get(gui_CaImageViewer.figure.handles.Frame_EditableText, 'String'))+1;
-%             CaImageSlider(ImageNum);
-%         elseif strcmpi(eventdata.Key, 'leftarrow')
-%             ImageNum = str2num(get(gui_CaImageViewer.figure.handles.Frame_EditableText, 'String'))-1;
-%                 if ImageNum < 1
-%                     ImageNum = 1;
-%                 end
-%             CaImageSlider(ImageNum);
-%         end
-%     end
-% end
 
 
 % --- Executes during object creation, after setting all properties.
@@ -626,18 +583,18 @@ global gui_CaImageViewer
 
 BackgroundROI = get(gui_CaImageViewer.figure.handles.BackgroundROI_ToggleButton, 'Value');
 SpineROI = get(gui_CaImageViewer.figure.handles.SpineROI_ToggleButton, 'Value');
-NearbySpineROI = get(gui_CaImageViewer.figure.handles.NearbySpine_ToggleButton, 'Value');
+OtherFeatureROI = get(gui_CaImageViewer.figure.handles.OtherFeature_ToggleButton, 'Value');
 Dendrite_PolyLines = get(gui_CaImageViewer.figure.handles.DendritePolyLines_ToggleButton, 'Value');
 Router = 'Background';
 
 if BackgroundROI == 1
     set(handles.SpineROI_ToggleButton, 'Value', 0);
-    set(handles.NearbySpine_ToggleButton, 'Value', 0);
+    set(handles.OtherFeature_ToggleButton, 'Value', 0);
     set(handles.DendritePolyLines_ToggleButton, 'Value', 0);
     set(gui_CaImageViewer.figure.handles.output, 'WindowButtonDownFcn', {@DrawROI, 0, Router});
 end
 
-if BackgroundROI == 0 && SpineROI == 0 && NearbySpineROI == 0 && Dendrite_PolyLines == 0
+if BackgroundROI == 0 && SpineROI == 0 && OtherFeatureROI == 0 && Dendrite_PolyLines == 0
     set(gui_CaImageViewer.figure.handles.output, 'WindowButtonDownFcn', []);
 end
 
@@ -654,31 +611,21 @@ global gui_CaImageViewer
 
 BackgroundROI = get(gui_CaImageViewer.figure.handles.BackgroundROI_ToggleButton, 'Value');
 SpineROI = get(gui_CaImageViewer.figure.handles.SpineROI_ToggleButton, 'Value');
-NearbySpineROI = get(gui_CaImageViewer.figure.handles.NearbySpine_ToggleButton, 'Value');
+OtherFeatureROI = get(gui_CaImageViewer.figure.handles.OtherFeature_ToggleButton, 'Value');
 Dendrite_PolyLines = get(gui_CaImageViewer.figure.handles.DendritePolyLines_ToggleButton, 'Value');
 ROInum = gui_CaImageViewer.Spine_Number + 1;
-
-% if ~isempty(gui_CaImageViewer.ROI)
-%     for i = 1:ROInum-1
-%         set(gui_CaImageViewer.ROI(i), 'ButtonDownFcn', [])
-%     end
-% else
-%     ClearROIs
-%     set(gui_CaImageViewer.figure.handles.SpineROI_ToggleButton, 'Value', 0)
-%     error('Make sure to draw the background ROI first...')
-% end
 
 Router = 'Spine';
 
 if SpineROI == 1
     set(handles.BackgroundROI_ToggleButton, 'Value', 0);
-    set(handles.NearbySpine_ToggleButton, 'Value', 0);
+    set(handles.OtherFeature_ToggleButton, 'Value', 0);
     set(handles.DendritePolyLines_ToggleButton, 'Value', 0);
     set(gui_CaImageViewer.figure.handles.output, 'WindowButtonDownFcn', {@DrawROI, ROInum, Router})
     set(gui_CaImageViewer.figure.handles.InsertSpine_ToggleButton, 'Enable', 'on')
 end
 
-if BackgroundROI == 0 && SpineROI == 0 && NearbySpineROI == 0 && Dendrite_PolyLines == 0
+if BackgroundROI == 0 && SpineROI == 0 && OtherFeatureROI == 0 && Dendrite_PolyLines == 0
     set(gui_CaImageViewer.figure.handles.output, 'WindowButtonDownFcn', []);
 end
 
@@ -689,34 +636,34 @@ function ClearROIS_PushButton_Callback(hObject, eventdata, handles)
 % handles    structure with handles and user data (see GUIDATA)
 
 
-ClearROIs
+ClearROIs('Query')
 
 
-% --- Executes on button press in NearbySpine_ToggleButton.
-function NearbySpine_ToggleButton_Callback(hObject, eventdata, handles)
-% hObject    handle to NearbySpine_ToggleButton (see GCBO)
+% --- Executes on button press in OtherFeature_ToggleButton.
+function OtherFeature_ToggleButton_Callback(hObject, eventdata, handles)
+% hObject    handle to OtherFeature_ToggleButton (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 
-% Hint: get(hObject,'Value') returns toggle state of NearbySpine_ToggleButton
+% Hint: get(hObject,'Value') returns toggle state of OtherFeature_ToggleButton
 
 global gui_CaImageViewer;
 
 BackgroundROI = get(gui_CaImageViewer.figure.handles.BackgroundROI_ToggleButton, 'Value');
 SpineROI = get(gui_CaImageViewer.figure.handles.SpineROI_ToggleButton, 'Value');
-NearbySpineROI = get(gui_CaImageViewer.figure.handles.NearbySpine_ToggleButton, 'Value');
+OtherFeatureROI = get(gui_CaImageViewer.figure.handles.OtherFeature_ToggleButton, 'Value');
 Dendrite_PolyLines = get(gui_CaImageViewer.figure.handles.DendritePolyLines_ToggleButton, 'Value');
 ROInum = gui_CaImageViewer.Spine_Number + 1;
-Router = 'Nearby';
+Router = 'Other';
 
-if NearbySpineROI == 1
+if OtherFeatureROI == 1
     set(handles.BackgroundROI_ToggleButton, 'Value', 0);
     set(handles.SpineROI_ToggleButton, 'Value', 0);
     set(handles.DendritePolyLines_ToggleButton, 'Value', 0);
     set(gui_CaImageViewer.figure.handles.output, 'WindowButtonDownFcn', {@DrawROI, ROInum, Router})
 end
 
-if BackgroundROI == 0 && SpineROI == 0 && NearbySpineROI == 0 && Dendrite_PolyLines == 0
+if BackgroundROI == 0 && SpineROI == 0 && OtherFeatureROI == 0 && Dendrite_PolyLines == 0
     set(gui_CaImageViewer.figure.handles.output, 'WindowButtonDownFcn', []);
 end
 
@@ -730,17 +677,16 @@ function DendritePolyLines_ToggleButton_Callback(hObject, eventdata, handles)
 
 global gui_CaImageViewer;
 
-
 BackgroundROI = get(gui_CaImageViewer.figure.handles.BackgroundROI_ToggleButton, 'Value');
 SpineROI = get(gui_CaImageViewer.figure.handles.SpineROI_ToggleButton, 'Value');
-NearbySpineROI = get(gui_CaImageViewer.figure.handles.NearbySpine_ToggleButton, 'Value');
+OtherFeatureROI = get(gui_CaImageViewer.figure.handles.OtherFeature_ToggleButton, 'Value');
 Dendrite_PolyLines = get(gui_CaImageViewer.figure.handles.DendritePolyLines_ToggleButton, 'Value');
 CurrentDendNum = gui_CaImageViewer.Dendrite_Number+1;
 
 if Dendrite_PolyLines == 1
     set(handles.BackgroundROI_ToggleButton, 'Value', 0);
     set(handles.SpineROI_ToggleButton, 'Value', 0);
-    set(handles.NearbySpine_ToggleButton, 'Value', 0);
+    set(handles.OtherFeature_ToggleButton, 'Value', 0);
         DendriteNum = inputdlg({'Dendrite number:'}, 'Input', 1, {num2str(CurrentDendNum)});
         if isempty(DendriteNum)
             return
@@ -749,10 +695,9 @@ if Dendrite_PolyLines == 1
     set(gui_CaImageViewer.figure.handles.output, 'WindowButtonDownFcn', {@DrawPolyLines, DendriteNum});
 end
 
-if BackgroundROI == 0 && SpineROI == 0 && NearbySpineROI == 0 && Dendrite_PolyLines == 0
+if BackgroundROI == 0 && SpineROI == 0 && OtherFeatureROI == 0 && Dendrite_PolyLines == 0
     set(gui_CaImageViewer.figure.handles.output, 'WindowButtonDownFcn', []);
 end
-
 
 
 function RedUpperLUT_EditableText_Callback(hObject, eventdata, handles)
@@ -921,13 +866,13 @@ date = experiment(7:end);
 twochannels = get(glovar.figure.handles.TwoChannels_CheckBox, 'Value');
 fname = [];
 
-if ispc
+% if ispc
     save_directory = gui_CaImageViewer.save_directory;
-else
-    nameparts = regexp(gui_CaImageViewer.save_directory, filesep, 'split');
-    linuxstarter = '/usr/local/lab/';
-    save_directory = [linuxstarter, nameparts{2}, filesep, nameparts{3}, filesep, nameparts{4}, filesep, nameparts{5}, filesep, nameparts{6}, filesep, nameparts{7},filesep];
-end
+% else
+%     nameparts = regexp(gui_CaImageViewer.save_directory, filesep, 'split');
+%     linuxstarter = '/usr/local/lab/';
+%     save_directory = [linuxstarter, nameparts{2}, filesep, nameparts{3}, filesep, nameparts{4}, filesep, nameparts{5}, filesep, nameparts{6}, filesep, nameparts{7},filesep];
+% end
 
 try
     cd(save_directory)
@@ -941,81 +886,100 @@ end
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 Scrsz = get(0, 'Screensize');
+User = get(gui_CaImageViewer.figure.handles.figure1, 'UserData');
 
-try
-    count = 1;
-    roifile = [];
-    if gui_CaImageViewer.NewSpineAnalysis
-        for i = 1:length(folder)
-            match = regexp(folder(i).name, 'NewSpineAnalysisROIs');
-            if ~isempty(match)
-                roifile{count} = folder(i).name;
-                count = count+1;
-            end
-        end
-    else
-        for i = 1:length(folder)
-            match = regexp(folder(i).name, [experiment, '_SavedROIs']);
-            if ~isempty(match)
-                roifile{count} = folder(i).name;
-                count = count+1;
-            end
+count = 1;
+roifile = [];
+found = 0;
+
+ForceManual = 1;
+
+if gui_CaImageViewer.NewSpineAnalysis
+    for i = 1:length(folder)
+        match = regexp(folder(i).name, 'NewSpineAnalysisROIs');
+        if ~isempty(match)
+            roifile{count} = folder(i).name;
+            count = count+1;
+            found = 1;
         end
     end
-
-    if length(roifile)>1
-        for i = 1:length(roifile)
-            temp = regexp(roifile{i}, 'DrawnBy', 'split');
-            if length(temp)>1           
-                useroption{i} = temp{2}(1:end-4);
-            else
-                useroption{i} = 'undefined';    %%% If the file doesn't contain the "DrawnBy" tag, then it will only return 1 answer, and therefore was made prior to qualifying the file according to username
-            end
-        end
-        d = dialog('Position', [(Scrsz(3)/2)-125 Scrsz(4)/2-75 250 150], 'Name', 'Found multiple ROI files...');
-        txt = uicontrol('Parent', d, 'Style', 'text', 'Position', [10 100 230 30], 'String', 'Load ROIs drawn by whom?');
-        for j = 1:length(roifile)
-            uicontrol('Parent', d, 'Style', 'pushbutton', 'Position', [30+((j-1)*55) 30 50 25], 'String', useroption{j}, 'Callback', @DlgChoice)
-        end
-        uiwait(d)
-        choice = get(d, 'UserData');
-        delete(d);
-        roifilename = [experiment, '_SavedROIs_DrawnBy', choice];
-    else
-        roifilename = roifile{1}(1:end-4);
-    end
-        load(roifilename)
-        savedFile = roifilename;
-        disp('Successfully pulled ROIs from saved ROI file')
-catch
-    try
-        load(roifilename)
-        savedFile = roifilename;
-        disp('Successfully pulled ROIs from saved ROI file')
-    catch
-        if ispc
-            cd(['Z:\People\Nathan\Data\', animal])
-        else
-            cd(['/usr/local/lab/People/Nathan/Data/', animal])
-        end
-        try
-            load([file, '_Analyzed'])
-            savedFile = [file, '_Analyzed'];
-            disp('Couldn''t find designated ROI file, but could pull ROIs from analyzed file')
-        catch
-            try
-                [fname pname] = uigetfile();
-                file = fname(1:end-4);
-                savedFile = file;
-                cd(pname)
-                load(file)
-            catch
-                disp('This file has not yet been analyzed, so no ROIs are saved...')
-                return
-            end
+else
+    for i = 1:length(folder)
+        match = regexp(folder(i).name, [experiment, '_SavedROIs_DrawnBy', User]);
+        if ~isempty(match)
+            roifile{count} = folder(i).name;
+            count = count+1;
+            found = 1;
         end
     end
 end
+
+if ~found || ForceManual
+    boxwidth = 250;
+    d = dialog('Position', [(Scrsz(3)/2)-125 Scrsz(4)/2-75 boxwidth 150], 'Name', 'No user-specific ROI file');
+    txt = uicontrol('Parent', d, 'Style', 'text', 'Position', [10 100 230 30], 'String', 'No user-specific ROI file... manually select or automatically find one?');
+    buttonwidth = 50;
+    uicontrol('Parent', d, 'Style', 'pushbutton', 'Position', [boxwidth/2-buttonwidth-10 30 buttonwidth 25], 'String', 'Manual', 'Callback', @DlgChoice)
+    uicontrol('Parent', d, 'Style', 'pushbutton', 'Position', [boxwidth/2+10 30 buttonwidth 25], 'String', 'Auto', 'Callback', @DlgChoice)
+    uiwait(d)
+    choice = get(d,'UserData');
+    delete(d);
+    if strcmpi(choice, 'Manual')
+        [roifilename, roipath] = uigetfile();
+        if isnumeric(roifilename) && isnumeric(roipath)
+            return
+        end
+        cd(roipath)
+    elseif strcmpi(choice, 'Auto')
+        count = 1;
+        roifile = [];
+        if gui_CaImageViewer.NewSpineAnalysis
+            for i = 1:length(folder)
+                match = regexp(folder(i).name, 'NewSpineAnalysisROIs');
+                if ~isempty(match)
+                    roifile{count} = folder(i).name;
+                    count = count+1;
+                end
+            end
+        else
+            for i = 1:length(folder)
+                match = regexp(folder(i).name, [experiment, '_SavedROIs']);
+                if ~isempty(match)
+                    roifile{count} = folder(i).name;
+                    count = count+1;
+                end
+            end
+        end
+        if length(roifile)>1
+            for i = 1:length(roifile)
+                temp = regexp(roifile{i}, 'DrawnBy', 'split');
+                if length(temp)>1           
+                    useroption{i} = temp{2}(1:end-4);
+                else
+                    useroption{i} = 'undefined';    %%% If the file doesn't contain the "DrawnBy" tag, then it will only return 1 answer, and therefore was made prior to qualifying the file according to username
+                end
+            end
+            d = dialog('Position', [(Scrsz(3)/2)-125 Scrsz(4)/2-75 250 150], 'Name', 'Found multiple ROI files...');
+            txt = uicontrol('Parent', d, 'Style', 'text', 'Position', [10 100 230 30], 'String', 'Load ROIs drawn by whom?');
+            for j = 1:length(roifile)
+                uicontrol('Parent', d, 'Style', 'pushbutton', 'Position', [30+((j-1)*55) 30 50 25], 'String', useroption{j}, 'Callback', @DlgChoice)
+            end
+            uiwait(d)
+            choice = get(d, 'UserData');
+            delete(d);
+            roifilename = roifile{find(~cell2mat(cellfun(@isempty, (cellfun(@(x) strfind(x, choice), roifile, 'uni', false)), 'uni', false)))};     %%% To avoid issues with file naming, use the original file names that were found, finding the one that contains the name chosen
+        else
+            roifilename = roifile{1}(1:end-4);
+        end
+    end
+else
+    roifilename = roifile{1}(1:end-4);
+end
+
+load(roifilename)
+savedFile = roifilename;
+disp('Successfully pulled ROIs from saved ROI file')
+cd(gui_CaImageViewer.save_directory)
 
 try
     eval(['savedFile =', savedFile]);
@@ -1055,14 +1019,11 @@ for a = 1:length(ROIs)
         c1 = uicontextmenu;
         uimenu(c1, 'Label', 'Add Surround Background', 'Callback', @ModifyROI);
         uimenu(c1, 'Label', 'Remove Surround Background', 'Callback', @ModifyROI);
-        if glovar.NewSpineAnalysis
-            c2 = uicontextmenu;
-            uimenu(c2, 'Label', 'Set as eliminated', 'Callback', @CategorizeSpines);
-            uimenu(c2, 'Label', 'Set as active', 'Callback', @CategorizeSpines);
-            glovar.ROI(a) = rectangle('Position', ROIs{a}, 'EdgeColor', [0.2 0.4 0.9], 'Curvature', [1 1],'Tag', ['ROI', num2str(ROInum)], 'ButtonDownFcn', {@DragROI, ROInum, 'HomeWindow'}, 'Linewidth', 1, 'UIContextMenu', c2); % Assaf changed [0.2 0.4 0.9] to the variable color_by_user, that is defined by the user choice of color (lines 681-602) 
-        else
-            glovar.ROI(a) = rectangle('Position', ROIs{a}, 'EdgeColor', [0.2 0.4 0.9], 'Curvature', [1 1],'Tag', ['ROI', num2str(ROInum)], 'ButtonDownFcn', {@DragROI, ROInum, 'HomeWindow'}, 'Linewidth', 1, 'UIContextMenu', c1);
-        end
+%         if glovar.NewSpineAnalysis
+            uimenu(c1, 'Label', 'Set as eliminated', 'Callback', @CategorizeSpines);
+            uimenu(c1, 'Label', 'Set as active', 'Callback', @CategorizeSpines);
+%         end
+        glovar.ROI(a) = rectangle('Position', ROIs{a}, 'EdgeColor', [0.2 0.4 0.9], 'Curvature', [1 1],'Tag', ['ROI', num2str(ROInum)], 'ButtonDownFcn', {@DragROI, ROInum, 'HomeWindow'}, 'Linewidth', 1, 'UIContextMenu', c1); % Assaf changed [0.2 0.4 0.9] to the variable color_by_user, that is defined by the user choice of color (lines 681-602) 
         glovar.ROItext(a) = text(ROIs{a}(1)-6, ROIs{a}(2)-4, num2str(a-1), 'color', 'white', 'Tag', ['ROI', num2str(a-1), ' Text'],'ButtonDownFcn', 'DeleteROI', 'Fontsize', 6);
         switch usesurroundBGchoice
             case 'Add to all'
@@ -1108,21 +1069,29 @@ end
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 if glovar.NewSpineAnalysis
+    drawer = get(gui_CaImageViewer.figure.handles.figure1, 'UserData');
+    if ~isempty(drawer)
+        userspecificpart = [drawer,'_'];
+    else
+        userspecificpart = [];
+    end
     terminus = regexp(save_directory, animal, 'end');
     targ_folder = save_directory(1:terminus);
     currentfield = glovar.NewSpineAnalysisInfo.CurrentImagingField;
-    load([targ_folder, filesep,'Imaging Field ', num2str(currentfield), ' Spine Registry'])
-    instanceofappearance = logical(strcmpi(SpineRegistry.DatesAcquired, gui_CaImageViewer.NewSpineAnalysisInfo.CurrentDate));
-    glovar.NewSpineAnalysisInfo.SpineList = ones(length(ROIs)-1,1); %%% Don't forget the first ROI is always the background ROI!
-    if size(SpineRegistry.Data,2)>=find(instanceofappearance) %% && find(instanceofappearance)~=1 %%% ZL commentm, it is possible need to set another category of spines specifying the "true new spines"
-        r = find(SpineRegistry.Data(:,instanceofappearance)==0);
-        for i = 1:length(r)
-            set(findobj(glovar.figure.handles.GreenGraph, 'Type', 'rectangle', 'Tag', ['ROI', num2str(r(i))]), 'FaceColor', [1 0 0])
+    load([targ_folder, filesep,userspecificpart,'Imaging Field ', num2str(currentfield), ' Spine Registry'])
+    instanceofappearance = find(logical(strcmpi(SpineRegistry.DatesAcquired, gui_CaImageViewer.NewSpineAnalysisInfo.CurrentDate)));
+    glovar.NewSpineAnalysisInfo.SpineList = ones(1,length(ROIs)-1); %%% Don't forget the first ROI is always the background ROI!
+%     if size(SpineRegistry.Data,2)>=find(instanceofappearance) %% && find(instanceofappearance)~=1 %%% ZL commentm, it is possible need to set another category of spines specifying the "true new spines"
+        if ~isempty(SpineRegistry.Data) && size(SpineRegistry.Data,2)>=instanceofappearance
+            r = find(SpineRegistry.Data(:,instanceofappearance)==0);
+            for i = 1:length(r)
+                set(findobj(glovar.figure.handles.GreenGraph, 'Type', 'rectangle', 'Tag', ['ROI', num2str(r(i))]), 'FaceColor', [1 0 0])
+            end
+            glovar.NewSpineAnalysisInfo.SpineList(r) = 0;
         end
-        glovar.NewSpineAnalysisInfo.SpineList(r) = 0;
-    else
-        
-    end
+%     else
+%         
+%     end
 end
 
 
@@ -1278,7 +1247,7 @@ for i = 1:length(a.SpineROIs)
 end
 
 for i = 1:length(a.BackgroundROIs)
-    if ~isnan(a.BackgroundROIs(i))
+    if ~isnan(a.BackgroundROIs(i)) && a.BackgroundROIs(i)
         a.BackgroundROIPosition{i} = get(a.BackgroundROIs(i), 'Position');
     else
         a.BackgroundROIPosition{i} = [];
@@ -1348,29 +1317,32 @@ if gui_CaImageViewer.NewSpineAnalysis
         prompt = 'What imaging instance (of this field) is this?';
         name = 'Designate imaging instance';
         numlines = 1;
-        defaultanswer = {'1'};
+        ImageNum = get(gui_CaImageViewer.figure.handles.Frame_EditableText, 'String');
+        defaultanswer = {ImageNum};
         
         currentsession = inputdlg(prompt, name, numlines, defaultanswer);
         currentsession = str2num(currentsession{1});
         
         try
-            load(['Imaging Field ', num2str(currentimagingfield), ' Spine Registry'])
+            load([drawer, '_Imaging Field ', num2str(currentimagingfield), ' Spine Registry'])
+            SRfound = 1;
         catch
+            SRfound = 0;
         end
         
-     %%   if currentsession == 1     
-      %%%      SpineRegistry.Data(1:length(a.SpineROIs)-1,currentsession) = gui_CaImageViewer.NewSpineAnalysisInfo.SpineList;
+        if isempty(gui_CaImageViewer.NewSpineAnalysisInfo.SpineList)
+            gui_CaImageViewer.NewSpineAnalysisInfo.SpineList(1:length(a.SpineROIs)-1) = ones(length(a.SpineROIs)-1,1);
+        end
 
-      %%%      a.SpineStatusList = gui_CaImageViewer.NewSpineAnalysisInfo.SpineList;
-
-      %%%      save(['Imaging Field ', num2str(currentimagingfield), ' Spine Registry'], 'SpineRegistry')
-      %%%  else ZL comment: this part causing more issues in saving ROIs for session 1, use with caution
+        if currentsession == 1 && ~SRfound
+           SpineRegistry.Data(1:length(a.SpineROIs)-1,currentsession) = gui_CaImageViewer.NewSpineAnalysisInfo.SpineList;
+           a.SpineStatusList = gui_CaImageViewer.NewSpineAnalysisInfo.SpineList;
+        else  %% ZL comment: this part causing more issues in saving ROIs for session 1, use with caution
             SpineRegistry.Data(1:length(gui_CaImageViewer.NewSpineAnalysisInfo.SpineList),currentsession) = gui_CaImageViewer.NewSpineAnalysisInfo.SpineList;
-
+            gui_CaImageViewer.NewSpineAnalysisInfo.SpineList(SpineRegistry.Data(:,currentsession) == 0) = 0;
             a.SpineStatusList = gui_CaImageViewer.NewSpineAnalysisInfo.SpineList;
-
-            save(['Imaging Field ', num2str(currentimagingfield), ' Spine Registry'], 'SpineRegistry');
-      %%%  end
+        end
+        save([drawer, '_Imaging Field ', num2str(currentimagingfield), ' Spine Registry'], 'SpineRegistry');
 else
     experiment = regexp(gui_CaImageViewer.filename, '[A-Z]{2}\d+[_]\d+', 'match');
 
@@ -1669,9 +1641,11 @@ numsessions = length(exp_folder)-2;
 choice = listdlg('PromptString', 'Which type of projection do you want to use?', 'ListString', {'Average Projection', 'Max Projection'}, 'SelectionMode', 'single');
 
 scrsz = get(0, 'ScreenSize');
-OverSessionsFigure = figure('Position', scrsz, 'Name', 'Multiple Sessions Analysis', 'NumberTitle', 'off');
+OverSessionsFigure = figure('Position', scrsz, 'Name', ['Multiple Sessions Analysis of ', animal{1}], 'NumberTitle', 'off');
 set(OverSessionsFigure, 'UserData', zeros(1,14));
 h1 = waitbar(0, 'Loading images for session 1');
+
+gui_CaImageViewer.NewSpineAnalysis = 1;
 
 for i = 3:length(exp_folder)
     cd(directory)
@@ -2033,3 +2007,47 @@ function Raw_DropDown_Callback(hObject, eventdata, handles)
 % handles    structure with handles and user data (see GUIDATA)
 
 
+% --------------------------------------------------------------------
+function ShiftROIsBetweenSessions_DropDown_Callback(hObject, eventdata, handles)
+% hObject    handle to ShiftROIsBetweenSessions_DropDown (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+%%% To use this code, you need a 2x3 matrix, the "warp matrix", that is
+%%% dreived from motion correction between the two images. If you run
+%%% the "Compare Image Pair" code from the "Multiple Sessions Analysis"
+%%% window, or otherwise run the function ecc on two images, you can get
+%%% this matrix as an output. The "directionality" of the transformationF
+%%% should match; i.e. if you're moving the ROIs from session 2 to match
+%%% session 1, then the transformation matrix should be derived from moving
+%%% the session 2 image to the template of the session 1 image. 
+
+% warpmatrix = [1.0056,-0.0555,76.16581; 0.0575,1.0269,-23.3092];
+
+global gui_CaImageViewer
+
+warpmatrix = gui_CaImageViewer.NewSpineAnalysisInfo.WarpMatrix
+
+
+ROIs_original = round(cell2mat(cellfun(@(x) x(1:4), get(gui_CaImageViewer.ROI, 'Position'),'uni', false)));
+
+ClearROIs('AssumeAll')
+
+imsize = size(gui_CaImageViewer.ch1image,1);
+c1 = uicontextmenu;
+
+uimenu(c1, 'Label', 'Add Surround Background', 'Callback', @ModifyROI);
+uimenu(c1, 'Label', 'Remove Surround Background', 'Callback', @ModifyROI);
+uimenu(c1, 'Label', 'Set as eliminated', 'Callback', @CategorizeSpines);
+uimenu(c1, 'Label', 'Set as active', 'Callback', @CategorizeSpines);
+
+for i = 1:length(ROIs_original)
+    tempim = zeros(imsize,imsize);
+    tempim(ROIs_original(i,1), ROIs_original(i,2)) = 1;
+    transpos = spatial_interp(double(tempim'), warpmatrix, 'linear', 'affine', [1:imsize], [1:imsize]);
+    stats = regionprops(logical(transpos));
+    newpos(i,1:2) = stats.Centroid;
+    ROInum = i-1;
+    gui_CaImageViewer.ROI(i) = rectangle('Position', [round(newpos(i,1)),round(newpos(i,2)),ROIs_original(i,3), ROIs_original(i,4)], 'EdgeColor', [0.2 0.4 0.9], 'Curvature', [1 1],'Tag', ['ROI', num2str(ROInum)], 'ButtonDownFcn', {@DragROI, ROInum, 'HomeWindow'}, 'Linewidth', 1, 'UIContextMenu', c1);
+    gui_CaImageViewer.ROItext(i) = text(round(newpos(i,1))-6, round(newpos(i,2))-4, num2str(i-1), 'color', 'white', 'Tag', ['ROI', num2str(ROInum), ' Text'],'ButtonDownFcn', 'DeleteROI', 'Fontsize', 6);
+end

@@ -80,6 +80,7 @@ cd(['C:\Users\Komiyama\Desktop\ActivitySummary_UsingRawData'])
 %%% Perform fitting
 %%%%%%%%%%%%%%%%%%%
 
+useoldAlphas = 1;
 
 if strcmpi(Router, 'Initial')
     Dthresh = File.DendriteThreshold;
@@ -87,8 +88,8 @@ if strcmpi(Router, 'Initial')
         counter = 1;
 %         dendDataforfit = File.Processed_Dendrite_dFoF(i,:);
 %         dendDataforfit(dendDataforfit<=Dthresh(i)) = nan;
-        dendDataforfit = File.Processed_Dendrite_dFoF;
-
+        dendDataforfit = File.Processed_Dendrite_dFoF(i,:);
+        dendDataforfit(dendDataforfit<=0) = nan;
 
         for j = File.SpineDendriteGrouping{i}(1):File.SpineDendriteGrouping{i}(end)
             spineDataforfit = File.Processed_dFoF(j,:);
@@ -100,31 +101,27 @@ if strcmpi(Router, 'Initial')
     %             S_signal = spineDataforfit(floored(i,:)~=0);
     %             S_baseline = S_baseline(1:dwnsmpfact:end);
     %             spineDataforfit = [S_baseline, S_signal];
-                  spineDataforfit(spineDataforfit<=File.SpineThreshold(j)) = nan;
-
-            try
-                alpha{i}(1:2,counter) = robustfit(dendDataforfit,spineDataforfit);
-            catch
-                dendDataforfit = File.Processed_Dendrite_dFoF(i,:);
-                dendDataforfit(dendDataforfit<=0) = nan;
-                spineDataforfit = File.Processed_dFoF(j,:);
-                spineDataforfit(spineDataforfit<=0) = nan;
+%                   spineDataforfit(spineDataforfit<=File.SpineThreshold(j)) = nan;
+            
+            if sum(isnan(spineDataforfit)) == length(spineDataforfit)
+                alpha{i}(1:2,counter) = zeros(2,1);
+            else
                 alpha{i}(1:2,counter) = robustfit(dendDataforfit,spineDataforfit);
             end
             counter = counter + 1;
         end
     end
 else
-    if isfield(File, 'Alphas')
+    if useoldAlphas && isfield(File, 'Alphas')
         alpha = File.Alphas;
     else
         Dthresh = File.DendriteThreshold;
         for i = 1:DendNum
             counter = 1;
-            dendDataforfit = File.Processed_Dendrite_dFoF(i,:);
-            dendDataforfit(dendDataforfit<=Dthresh(i)) = nan;
-%             dendDataforfit = File.Compiled_Dendrite_Fluorescence_Measurement;
-
+    %         dendDataforfit = File.Processed_Dendrite_dFoF(i,:);
+    %         dendDataforfit(dendDataforfit<=Dthresh(i)) = nan;
+            dendDataforfit = File.Processed_Dendrite_dFoF;
+            dendDataforfit(dendDataforfit<=0) = nan;
 
             for j = File.SpineDendriteGrouping{i}(1):File.SpineDendriteGrouping{i}(end)
                 spineDataforfit = File.Processed_dFoF(j,:);
@@ -136,17 +133,9 @@ else
         %             S_signal = spineDataforfit(floored(i,:)~=0);
         %             S_baseline = S_baseline(1:dwnsmpfact:end);
         %             spineDataforfit = [S_baseline, S_signal];
-                      spineDataforfit(spineDataforfit<=File.SpineThreshold(j)) = nan;
+    %                   spineDataforfit(spineDataforfit<=File.SpineThreshold(j)) = nan;
 
-                try
-                    alpha{i}(1:2,counter) = robustfit(dendDataforfit,spineDataforfit);
-                catch
-                    dendDataforfit = File.Processed_Dendrite_dFoF(i,:);
-                    dendDataforfit(dendDataforfit<=0) = nan;
-                    spineDataforfit = File.Processed_dFoF(j,:);
-                    spineDataforfit(spineDataforfit<=0) = nan;
-                    alpha{i}(1:2,counter) = robustfit(dendDataforfit,spineDataforfit);
-                end
+                alpha{i}(1:2,counter) = robustfit(dendDataforfit,spineDataforfit);
                 counter = counter + 1;
             end
         end
@@ -162,7 +151,7 @@ File.Alphas = alpha;
 UseMinAlpha = 1;
 File.UsedMinAlpha = UseMinAlpha;
 
-MinAlpha = 0.5;
+MinAlpha = 0.25;
 File.MinAlpha = MinAlpha;
 
 for i = 1:DendNum
@@ -171,12 +160,15 @@ for i = 1:DendNum
         for j = File.SpineDendriteGrouping{i}(1):File.SpineDendriteGrouping{i}(end)
             if alpha{i}(2,counter) < MinAlpha
                 alphatouse = MinAlpha;
+                betatouse = alpha{i}(1,counter);
             else
                 alphatouse = alpha{i}(2,counter);
+                betatouse = alpha{i}(1,counter);
             end
             denddatatouse = File.Processed_Dendrite_dFoF(i,:); denddatatouse(denddatatouse<0) = 0;
-            File.Processed_dFoF_DendriteSubtracted(j,:) = File.Processed_dFoF(j,:)-(alphatouse*denddatatouse);   %%% Subtract all individual points   
-            File.Processed_dFoF_DendriteSubtracted(j,File.Processed_dFoF_DendriteSubtracted(j,:)<0) = 0;
+            signaltosubtract = betatouse+alphatouse*denddatatouse;
+            File.Processed_dFoF_DendriteSubtracted(j,:) = File.Processed_dFoF(j,:)-(signaltosubtract);   %%% Subtract all individual points  
+            File.Processed_dFoF_DendriteSubtracted(j,File.Processed_dFoF_DendriteSubtracted(j,:)<=0)=0;
             counter = counter+1;
         end
     else
@@ -184,21 +176,16 @@ for i = 1:DendNum
             if alpha{i}(2,counter) == 0
                 disp(['Spine ', num2str(j), ' was not fit properly'])
             end
-            if alpha{i}(2,counter)>0.01  %%%%%%%%%%%%%%%%%%%%%%%%% Changed 12/9 !!!!!!!!!!!!!!!!!!!!!!!!!!!
-                File.Processed_dFoF_DendriteSubtracted(j,:) = File.Processed_dFoF(j,:)-(alpha{i}(2,counter)*File.Processed_Dendrite_dFoF(i,:));   %%% Subtracted all individual points   
-    %             processed_dFoF_Dendsubtracted(j,:) = processed_dFoF(j,:)-(alpha{i}(2,counter)*floored_Dend(i,:));%.*Dglobal(i,:);           %%% Use Dglobal to only subtract times when the ENTIRE dendrite is active
-                File.Processed_dFoF_DendriteSubtracted(j,File.Processed_dFoF_DendriteSubtracted(j,:)<0) = 0;
-            else
-    %             processed_dFoF_Dendsubtracted(j,:) = processed_dFoF(j,:)-processed_Dendrite(i,:);
-    %             alpha{i}(2,counter) = 1;
-    %             processed_dFoF_Dendsubtracted(j,:) = processed_dFoF(j,:)-(floored_Dend(i,:));%.*Dglobal(i,:));
-                File.Processed_dFoF_DendriteSubtracted(j,:) = zeros(1,length(File.Processed_dFoF(j,:)));
-                File.Processed_dFoF_DendriteSubtracted(j,File.Processed_dFoF_DendriteSubtracted(j,:)<0) = 0;
-            end
+            alphatouse = alpha{i}(2,counter);
+            betatouse = alpha{i}(1,counter);
+            denddatatouse = File.Processed_Dendrite_dFoF(i,:); denddatatouse(denddatatouse<0) = 0;
+            signaltosubtract = betatouse+alphatouse*denddatatouse;
+            File.Processed_dFoF_DendriteSubtracted(j,:) = File.Processed_dFoF(j,:)-(signaltosubtract);   %%% Subtract all individual points  %             processed_dFoF_Dendsubtracted(j,:) = processed_dFoF(j,:)-(alpha{i}(2,counter)*floored_Dend(i,:));%.*Dglobal(i,:);           %%% Use Dglobal to only subtract times when the ENTIRE dendrite is active
             counter = counter + 1;
         end
     end
 end
+
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -209,8 +196,15 @@ floored_Dsubtracted = nan(numberofSpines,length(File.Processed_dFoF_DendriteSubt
 
 for i = 1:numberofSpines
     temp = File.Processed_dFoF_DendriteSubtracted(i,:);
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    %%%%%%%%%%%%%%%% Define Threshold %%%%%%%%%%%%%%%%%
     
+%     if File.SpineThreshold(i,1)<0.75;
+%         File.SpineThreshold(i,1) = 0.75;
+%     else
+%     end
     temp(temp<File.SpineThreshold(i,1)) = 0;
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     
     floored_Dsubtracted(i,:) = temp;
     tamp = temp;
@@ -231,7 +225,7 @@ end
 square_Ds = [];
 
 for i = 1:numberofSpines
-    temp = floored_Dsubtracted(i,:);   %%% This value will eventually be used to define "synapse only" events, which only requires knowledge of when spines are above a threshold (e.g. spikes riding on top of activity need not be considered)
+    temp = floored_Dsubtracted(i,:);   
     temp(temp~=0)= 1;
     square_Ds(i,:) = temp;
     temp = [];
@@ -284,7 +278,7 @@ if strcmp(Router, 'Redo')
         plot(File.Dendrite_Binarized(DendriteChoice, :)/2-2, 'm', 'Linewidth', 2)
         plot(File.Processed_dFoF_DendriteSubtracted(SpineNo,:), 'Color', [0.6 0.6 0.6], 'Linewidth', 2)
         plot(File.SynapseOnlyBinarized_DendriteSubtracted(SpineNo, :)/2, 'g', 'Linewidth', 2)
-        title(['Processed data using calc alpha of ', num2str(alpha{DendriteChoice}(2,SpineNo)), ' and a min alpha of ', num2str(MinAlpha)])
+        title(['Processed data using calc alpha of ', num2str(alpha{DendriteChoice}(2,find(File.SpineDendriteGrouping{DendriteChoice}==SpineNo))), ' and a min alpha of ', num2str(MinAlpha)])
         linkaxes([h1,h2], 'x')
 
         legend({'Processed Spine Trace', 'Processed Dend Trace', 'Binarized Spine', 'Binarized Dend', 'Dend-subtracted spine trace', 'Binarized dend-sub'})
@@ -295,11 +289,11 @@ if strcmp(Router, 'Redo')
         folder = folder{1};
         % Date = regexp(File.Filename, '\d{6}', 'match');
         % Date = Date{1};
-
-        savefile = [folder, '_' Date, '_Summary'];
-        eval([savefile, '= File;']);
-
-        save(savefile, savefile)
+% 
+%         savefile = [folder, '_' Date, '_Summary'];
+%         eval([savefile, '= File;']);
+% 
+%         save(savefile, savefile)
 
 else
 end

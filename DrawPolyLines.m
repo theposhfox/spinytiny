@@ -17,11 +17,17 @@ User = get(glovar.figure.handles.figure1, 'UserData');
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 cmap = glovar.CurrentCMap;
 
-if strcmpi(cmap, 'Jet') || strcmpi(cmap, 'Fire') || strcmpi(cmap, 'Hot')
-    linecolor = 'c';
-else
+if strcmpi(cmap, 'RGB')
+    linecolor = 'b';
+    cmap = [zeros(length([0:0.01:1]),1),[0:0.01:1]', zeros(length([0:0.01:1]),1)];
+elseif strcmpi(cmap, 'Jet')
+    linecolor = 'w';
+elseif strcmpi(cmap, 'Hot')
     linecolor = 'r';
+elseif strcmpi(cmap, 'Fire')
+    linecolor = 'g'; %when this linecolor changed, the linecolor of zoomin window changed, ZL  comment
 end
+
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%% Delete old lines and ROIs %%%%%%

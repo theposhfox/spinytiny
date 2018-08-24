@@ -14,7 +14,7 @@ if strcmp(clicktype, 'alt')
         oldsurrounds(oldsurrounds==0) = NaN;
     oldspinetext = gui_CaImageViewer.ROItext;
     delete(findobj('Tag', 'ROI confine'));
-    AllROIs = flipud(findobj('Type', 'rectangle', '-and', '-not', {'-regexp', 'Tag', 'Dendrite'}, '-and', '-not', {'-regexp', 'Tag', 'Background'}));         %%% ***** NOTE: this captures the ROIs in reverse order (i.e. top--> bottom is arranged as last-->first
+    AllROIs = flipud(findobj('Type', 'line', '-or', 'rectangle', '-and', '-not', {'-regexp', 'Tag', 'Dendrite'}, '-and', '-not', {'-regexp', 'Tag', 'Background'}));         %%% ***** NOTE: this captures the ROIs in reverse order (i.e. top--> bottom is arranged as last-->first
     AllBackgrounds = nan(1,length(oldsurrounds));
     AllBackgrounds(logical(~isnan(oldsurrounds))) = flipud(findobj('Type', 'rectangle', '-and', {'-regexp', 'Tag', 'Background'}));    
     gui_CaImageViewer.ROI = [];                                                                   %%% Need to restructure the spine data array to account for the deletion
@@ -42,7 +42,7 @@ if strcmp(clicktype, 'alt')
 
         %%% Repeat the same for associated background ROIs
         
-        if ~isempty(oldsurrounds)
+        if length(oldsurrounds) >1
             gui_CaImageViewer.BackgroundROI(1:ROI_num) = oldsurrounds(1:ROI_num);                  %%% captures all the spines from the first to the one before the one being deleted
             gui_CaImageViewer.BackgroundROI(ROI_num+1:length(oldspines)-1) = oldsurrounds((ROI_num+2):length(oldsurrounds)); %%% captures all the spines after the one being deleted and shifts it to fill the place of the one being deleted
             try

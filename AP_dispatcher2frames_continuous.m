@@ -56,15 +56,24 @@ for curr_trial_indx = 1:size(curr_trial_list,1);
     if curr_trial > length(bhv) || curr_trial < 1
         continue
     end
-    
-    imaged_trials(curr_trial) = true;
-    
+        
     % the start time is the rise of the first bitcode
     curr_bhv_start = bhv{curr_trial}.states.bitcode(1);
     curr_xsg_bhv_offset = curr_bhv_start - curr_trial_list(curr_trial_indx,1);
     % apply the offset to all numbers within the trial
     % Find all fields in overall structure of trial
     curr_fieldnames = fieldnames(bhv_frames{curr_trial});
+    
+    %%% Determine which trials were imaged
+    beh_window = bhv_frames{curr_trial}.states.state_0-curr_xsg_bhv_offset; %%% Start-time to stop-time of behavioral trial (in seconds)
+    imagedframes = round(frame_times(find(frame_times>beh_window(1,2) & frame_times<beh_window(2,1)))*xsg_sample_rate); %%% Get the frame_times within the current behavioral trial window
+    frametracewindow = frame_trace(imagedframes);   %%% Extract the voltage signals indicating whether imaging frames were capture during this window
+    % plot(imagedframes, frame_trace(imagedframes), 'r')
+    if sum(frametracewindow)
+        imaged_trials(curr_trial) = 1;
+    else
+        imaged_trials(curr_trial) = 0;
+    end
     
     for curr_field = 1:length(curr_fieldnames)
         % a) get subfields

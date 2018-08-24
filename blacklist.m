@@ -67,4 +67,41 @@ switch(animal)
         usesessions = 1:14;
     case 'NH044'
         usesessions = 1:14;
+    case 'NH051'
+        usesessions = 1:14;
+    case 'NH052'
+        usesessions = 1:14;
+    case 'NH053'
+        usesessions = 1:14;
+    case 'NH054'
+        usesessions = 1:14;
+    case 'NH055'
+        usesessions = 1:14;
+    case 'ZL024'
+        usesessions = 1:14;
+    case 'ZL025'
+        usesessions = 1:14;
+    case 'ZL026'
+        usesessions = 1:14;
+    case 'ZL027'
+        usesessions = 1:14;
+    case 'ZL028'
+        usesessions = 1:14;
+    case 'ZL029'
+        usesessions = 1:14;
+    case 'ZL030'
+        usesessions = 1:14;
+    case 'ZL031'
+        usesessions = 1:14;
+    case 'ZL032'
+        usesessions = 1:14;
+    case 'ZL033'
+        usesessions = 1:14;
+    case 'ZL034'
+        usesessions = 1:14;
+    case 'ZL035'
+        usesessions = 1:14;
+    case 'ZL036'
+        usesessions = 1:14;
+        
 end

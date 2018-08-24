@@ -1,18 +1,23 @@
-function ClearROIs(hObject, eventdata)
+function ClearROIs(Assumption, hObject, eventdata)
 
 program = get(gcf);
 
 running = program.FileName;
 
-Scrsz = get(0, 'Screensize');
-d = dialog('Position', [(Scrsz(3)/2)-125 Scrsz(4)/2-75 250 150], 'Name', 'Clear what?');
-txt = uicontrol('Parent', d, 'Style', 'text', 'Position', [10 100 230 30], 'String', 'Which ROIs do you want to clear?');
-btn1 = uicontrol('Parent', d, 'Style', 'pushbutton', 'Position', [35 30 50 25], 'String', 'Spines', 'Callback', @ClearWhat);
-btn2 = uicontrol('Parent', d, 'Style', 'pushbutton', 'Position', [85.5 30 70 25], 'String', 'Dendrites', 'Callback', @ClearWhat);
-btn3 = uicontrol('Parent', d, 'Style', 'pushbutton', 'Position', [156 30 50 25], 'String', 'Both', 'Callback', @ClearWhat);
-uiwait(d)
-choice = get(d, 'UserData');
-delete(d);
+
+if strcmpi(Assumption, 'AssumeAll')
+    choice = 'Both';
+else
+    Scrsz = get(0, 'Screensize');
+    d = dialog('Position', [(Scrsz(3)/2)-125 Scrsz(4)/2-75 250 150], 'Name', 'Clear what?');
+    txt = uicontrol('Parent', d, 'Style', 'text', 'Position', [10 100 230 30], 'String', 'Which ROIs do you want to clear?');
+    btn1 = uicontrol('Parent', d, 'Style', 'pushbutton', 'Position', [35 30 50 25], 'String', 'Spines', 'Callback', @ClearWhat);
+    btn2 = uicontrol('Parent', d, 'Style', 'pushbutton', 'Position', [85.5 30 70 25], 'String', 'Dendrites', 'Callback', @ClearWhat);
+    btn3 = uicontrol('Parent', d, 'Style', 'pushbutton', 'Position', [156 30 50 25], 'String', 'Both', 'Callback', @ClearWhat);
+    uiwait(d)
+    choice = get(d, 'UserData');
+    delete(d);
+end
 
 
 if ~isempty(regexp(running, 'CaImageViewer'))
@@ -24,15 +29,15 @@ elseif ~isempty(regexp(running, 'FluorescenceSuite'));
 end
 
 
-
 if strcmpi(choice, 'Spines')
     
     glovar.NewSpineAnalysisInfo.SpineList = [];
     glovar.Spine_Number = 0;
-    ROIboxes = findobj(program.Children, 'Type', 'Rectangle', '-and', '-not', {'-regexp', 'Tag', 'Dendrite'});
+    ROIboxes = findobj(program.Children, 'Type', 'line', '-or', 'Rectangle', '-and', '-not', {'-regexp', 'Tag', 'Dendrite'});
     Textboxes = findobj(program.Children, 'Type', 'text');
     glovar.ROI = [];
     glovar.BackgroundROI = [];
+    glovar.OtherFeature_ROI = [];
     
     for i = 1:length(ROIboxes)
         delete(ROIboxes(i));
@@ -97,6 +102,7 @@ elseif strcmpi(choice, 'Both')
     glovar.DendritePolyPointNumber = 0;
     glovar.ROI = [];
     glovar.BackgroundROI = [];
+    glovar.OtherFeature_ROI = [];
 end
 
 if ~isempty(regexp(running, 'CaImageViewer'))

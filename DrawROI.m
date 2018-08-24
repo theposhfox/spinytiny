@@ -145,6 +145,17 @@ elseif strcmpi(Router, 'FineSelect') && ROInum ~=0
         glovar.ROIredtext(ROInum+1) = text(Fl_ROI(1), Fl_ROI(2), num2str(ROInum), 'color', 'white', 'Tag', ['ROIred', num2str(ROInum), ' Text'],'ButtonDownFcn', 'Ca_deleteROI');
     else
     end
+elseif strcmpi(Router, 'Other')      
+    set(glovar.figure.handles.OtherFeature_ToggleButton, 'Value', 0)
+    set(glovar.figure.handles.output, 'WindowButtonDownFcn', [])
+    oROI = impoly(axes1);
+    selectedPos = getPosition(oROI);
+    glovar.ROI(ROInum+1) = NaN;
+    glovar.OtherFeature_ROIpos{ROInum+1} = selectedPos;
+    selectedPos = [selectedPos; selectedPos(1,:)];
+    delete(oROI)
+    glovar.OtherFeature_ROI = line(selectedPos(:,1), selectedPos(:,2), 'Tag', ['ROI', num2str(ROInum)]);
+    glovar.ROItext(ROInum+1) = text(selectedPos(1,1)-2, selectedPos(1,2)-2, num2str(ROInum), 'color', 'white', 'Tag', ['ROI', num2str(ROInum), ' Text'], 'ButtonDownFcn', @DeleteROI, 'FontSize', textsize);
 end
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -238,8 +249,8 @@ elseif strcmpi(Router, 'Spine')
     
     global sideline
     
-elseif strcmpi(Router, 'Nearby')
-    set(glovar.figure.handles.NearbySpine_ToggleButton, 'Value', 0)
+elseif strcmpi(Router, 'Other')
+    
 elseif strcmpi(Router, 'FineSelect')
     
 end

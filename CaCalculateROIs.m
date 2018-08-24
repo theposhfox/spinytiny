@@ -1,4 +1,4 @@
-function CaCalculateROIs_AM(~, eventData)
+function CaCalculateROIs(~, eventData)
 
 global gui_CaImageViewer
 
@@ -35,18 +35,31 @@ end
 %%% Determine if ROIs have been drawn, and exist in the appropriate format
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% 
 
+
+
 if isfield (gui_CaImageViewer, 'ROI')
+    existing_ROI = cell(1,length(gui_CaImageViewer.ROI));
     if ~isempty(gui_CaImageViewer.ROI)
         for i = 1:length(gui_CaImageViewer.ROI)
             if ishandle(gui_CaImageViewer.ROI(i))
-                existing_ROI{i} = get(gui_CaImageViewer.ROI(i));
+                if ~isnan(gui_CaImageViewer.ROI(i))
+                    existing_ROI{i} = get(gui_CaImageViewer.ROI(i));
+                else
+                    existing_ROI{i} = 'other';
+                end
             else
-                existing_ROI{i} = [];
+                if isnan(gui_CaImageViewer.ROI(i))
+                    existing_ROI{i} = 'other';
+                else
+                    existing_ROI{i} = [];
+                end
             end
         end
-    else existing_ROI = [];
+    else
+        existing_ROI = [];
     end
-else existing_ROI = [];
+else
+    existing_ROI = [];
 end
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -62,55 +75,41 @@ ext = strfind(fname, '_summed_50.tif');
 if ~isempty(ext)
     fname = fname(1:ext-1);
 end
-summed = strfind(pathname, 'summed');
-if ~isempty(summed)
-    pname = pathname(1:end-7);
-else % Added for when the ROI is drawn on raw movies. Aki 171012
-    pname = pathname;  
+
+CaImage_File_info = imfinfo(fname);
+D = dir(pathname);
+if isempty(D)
+    if strcmp(pathname(end), filesep)
+        newpname = pathname(1:end-1);
+    end
+    D = dir(newpname);
 end
 
-if strcmpi(load_type, 'Compressed')
-    fname = fname;
-    CaImage_File_info = imfinfo(fname);
-    timecourse_image_number = numel(CaImage_File_info);
-    steps = 5;
-elseif strcmpi(load_type, 'Full')
-    if ~isempty(strfind(fname, 'SC'))
-        a = regexp(fname, ['\w+00[0]*\d+_\d+'], 'match');
-        parsefile = a{1}(1:end-4);
-        animal = regexp(fname, 'SC\d+', 'match');
-        animal = animal{1};
-        date = regexp(filename, '\d{4}', 'match');
-        date = ['16', date{1}];
-        altname = [animal, '_', date, '_', '001_001_summed_50'];
-        fname = [pname, parsefile];
-        CaImage_File_info = imfinfo([fname,'_001_corrected.tif']);   
-    else
-        a = regexp(fname, '\w+00[0]*\d+_\d+', 'match');
-        parsefile = a{1}(1:end-4);
-        animal = regexp(fname, '[A-Z]{2,3}0*[0-9]*', 'match');
-        animal = animal{1};
-        fname = [pname,parsefile];
-        CaImage_File_info = imfinfo([fname,'_001_corrected.tif']);
-    end
-    
-    D = dir(pname);
-    if isempty(D)
-        if strcmp(pname(end), filesep)
-            newpname = pname(1:end-1);
-        end
-        D = dir(newpname);
-    end
-
-    timecourse_image_number = 0;
-    for i = 1:length(D)
-        if ~isempty(strfind(D(i).name, 'corrected.tif'))
-            timecourse_image_number = timecourse_image_number + 1;
-        else
-        end
-    end
-    steps = timecourse_image_number*length(CaImage_File_info);
+timecourse_image_number = 1;
+acquisition_step = [];
+frame_bin_count = [];
+%%% If there are multiple image files comprising a time course, the
+%%% following can be uncommented and used to recognize similar file name
+%%% patterns
+% for i = 1:length(D)
+%     pattern = 'corrected.tif';    %%% Pattern to be recognized (should be
+%                                   %%% common to all the file names of 1
+%                                   %%% set)
+%     if ~isempty(strfind(D(i).name, 'corrected.tif'))
+%         timecourse_image_number = timecourse_image_number + 1;
+%         feat_step = regexp(D(i).name, '_');
+%         acquisition_step = [acquisition_step; D(i).name(feat_step(2)+1:feat_step(3)-1)];
+%         frame_bin_count = [frame_bin_count; D(i).name(feat_step(3)+1:feat_step(4)-1)];
+%     else
+%     end
+% end
+if timecourse_image_number > 1
+    multifile = 1;
+else
+    multifile = 0;
 end
+steps = timecourse_image_number*length(CaImage_File_info);
+
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%% If more than one dendrite is analyzed, break up spines accordingly %%%
@@ -160,6 +159,7 @@ x_c = cell(1,length(existing_ROI));
 y_c = cell(1,length(existing_ROI));
 x1 = cell(1,length(existing_ROI));
 y1 = cell(1,length(existing_ROI));
+ROImask = cell(1,length(existing_ROI));
 ROIreg = cell(1,length(existing_ROI));
 
 %%% PolyROIs
@@ -180,7 +180,13 @@ if gui_CaImageViewer.NewSpineAnalysis
     terminus = regexp(save_directory, animal, 'end');
     targ_folder = save_directory(1:terminus);
     currentfield = gui_CaImageViewer.NewSpineAnalysisInfo.CurrentImagingField;
-    load([targ_folder, filesep,'Imaging Field ', num2str(currentfield), ' Spine Registry'])
+    drawer = get(gui_CaImageViewer.figure.handles.figure1, 'UserData');
+    if ~isempty(drawer)
+        userspecificpart = [drawer,'_'];
+    else
+        userspecificpart = [];
+    end
+    load([targ_folder, filesep,userspecificpart,'Imaging Field ', num2str(currentfield), ' Spine Registry'])
     instanceofappearance = logical(strcmpi(SpineRegistry.DatesAcquired, gui_CaImageViewer.NewSpineAnalysisInfo.CurrentDate));
     SpineList = SpineRegistry.Data(:,instanceofappearance); %%% Note: Although the first ROI is always ROI0 (background), this is excluded (wrt indexing) for the final variables, so a direct translation of spine number is possible here
     nullspines = find(SpineList==0);
@@ -211,7 +217,6 @@ Poly_Fluorescence_Measurement= cell(length(gui_CaImageViewer.PolyROI),1);
 
 waitbar(1/steps, wb, 'Creating ROI masks...');
 
-
 if ~isempty(existing_ROI)
     
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -219,17 +224,24 @@ if ~isempty(existing_ROI)
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     
     for i = 1:length(existing_ROI)
-        ROI_stamp{i} = get(gui_CaImageViewer.ROI(i), 'Position');    %%%%% Same as ROI_pos, but used this for consistency between programs...
-        ROI_pos{i} = ROI_stamp{i};                                   %%%%% Returns coordinate position of ROI with format [x y w h]
-        x_r{i} = ROI_pos{i}(3)/2;                                    %%%%% x radius being w/2
-        y_r{i} = ROI_pos{i}(4)/2;                                    %%%%% y radius being y/2
-        x_c{i} = ROI_pos{i}(1)+ROI_pos{i}(3)/2;                      %%%%% x center being the x coordinate (bottom left corner) + the radius of the ROI (finds the center)
-        y_c{i} = ROI_pos{i}(2)+ROI_pos{i}(4)/2;                      %%%%% y center being the y coordinate (bottom left corner) + the radius of the ROI (finds the center)
-        theta = (0:1/20:1)*2*pi;
-        x1{i} = round(sqrt(x_r{i}^2*y_r{i}^2./(x_r{i}^2*sin(theta).^2 + y_r{i}^2*cos(theta).^2)).*cos(theta) + x_c{i});    %%%%% Derives from the formula for an ellipse, wherein X(theta) = a * cos(theta)  
-        y1{i} = round(sqrt(x_r{i}^2*y_r{i}^2./(x_r{i}^2*sin(theta).^2 + y_r{i}^2*cos(theta).^2)).*sin(theta) + y_c{i});    %%%%% Derives from the formula for an ellipse, wherein Y(theta) = b * sin(theta)
-        ROImask{i} = roipoly(xsize,ysize, x1{i}, y1{i});
-        ROIreg{i} = find(ROImask{i}(:));
+        if strcmp(existing_ROI{i}, 'other')
+            xi = gui_CaImageViewer.OtherFeature_ROIpos{i}(:,1);
+            yi = gui_CaImageViewer.OtherFeature_ROIpos{i}(:,2);
+            ROImask{i} = roipoly(xsize, ysize, xi,yi);
+            ROIreg{i} = find(ROImask{i}(:));
+        else
+            ROI_stamp{i} = get(gui_CaImageViewer.ROI(i), 'Position');    %%%%% Same as ROI_pos, but used this for consistency between programs...
+            ROI_pos{i} = ROI_stamp{i};                                   %%%%% Returns coordinate position of ROI with format [x y w h]
+            x_r{i} = ROI_pos{i}(3)/2;                                    %%%%% x radius being w/2
+            y_r{i} = ROI_pos{i}(4)/2;                                    %%%%% y radius being y/2
+            x_c{i} = ROI_pos{i}(1)+ROI_pos{i}(3)/2;                      %%%%% x center being the x coordinate (bottom left corner) + the radius of the ROI (finds the center)
+            y_c{i} = ROI_pos{i}(2)+ROI_pos{i}(4)/2;                      %%%%% y center being the y coordinate (bottom left corner) + the radius of the ROI (finds the center)
+            theta = (0:1/20:1)*2*pi;
+            x1{i} = round(sqrt(x_r{i}^2*y_r{i}^2./(x_r{i}^2*sin(theta).^2 + y_r{i}^2*cos(theta).^2)).*cos(theta) + x_c{i});    %%%%% Derives from the formula for an ellipse, wherein X(theta) = a * cos(theta)  
+            y1{i} = round(sqrt(x_r{i}^2*y_r{i}^2./(x_r{i}^2*sin(theta).^2 + y_r{i}^2*cos(theta).^2)).*sin(theta) + y_c{i});    %%%%% Derives from the formula for an ellipse, wherein Y(theta) = b * sin(theta)
+            ROImask{i} = roipoly(xsize,ysize, x1{i}, y1{i});
+            ROIreg{i} = find(ROImask{i}(:));
+        end
         if gui_CaImageViewer.UsingSurroundBackground
             if i > 1
                 if ~isnan(gui_CaImageViewer.BackgroundROI(i))
@@ -255,10 +267,10 @@ if ~isempty(existing_ROI)
     %%%% Define Dendrite ROIs %%%%
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     
-    pix_per_micronat20x = 10.666;
+    pix_per_micron_at_20x = 10.666;
     zoom = get(gui_CaImageViewer.figure.handles.Zoom_EditableText, 'String');
     zoom = str2num(zoom);
-    pixpermic = pix_per_micronat20x*zoom/20;
+    pixpermic = pix_per_micron_at_20x*zoom/20;
 
     waitbar(2/steps, wb, 'Locating dendrite ROIs...');
     
@@ -304,75 +316,63 @@ if ~isempty(existing_ROI)
         end
     end
     
-        default_upper = str2num(get(gui_CaImageViewer.figure.handles.UpperLUT_EditableText, 'String'));
-        default_lower = str2num(get(gui_CaImageViewer.figure.handles.LowerLUT_EditableText, 'String'));
-        
-        waitbar(3/steps, wb, 'Caclulating raw fluorescence values...');
-        
-        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-        %%% Calculate all ROI values %%%
-        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-        
-        
-        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-        
-        if ~isempty(gui_CaImageViewer.SelectedStopFrame)
-            imseriesend = gui_CaImageViewer.SelectedStopFrame;
-        else
-            imseriesend = inf;
+    default_upper = str2num(get(gui_CaImageViewer.figure.handles.UpperLUT_EditableText, 'String'));
+    default_lower = str2num(get(gui_CaImageViewer.figure.handles.LowerLUT_EditableText, 'String'));
+
+    waitbar(3/steps, wb, 'Caclulating raw fluorescence values...');
+
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    %%% Calculate all ROI values %%%
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+    if ~isempty(gui_CaImageViewer.SelectedStopFrame)
+        imseriesend = gui_CaImageViewer.SelectedStopFrame;
+    else
+        imseriesend = inf;
+    end
+
+    if ~isempty(gui_CaImageViewer.IgnoreFrames)
+        flagframes = gui_CaImageViewer.IgnoreFrames;
+    else
+        flagframes = [];
+    end
+
+    actual_image_counter = 1;
+    I_handles = [];
+    for i = 1:length(gui_CaImageViewer.PolyROI);
+        if ishandle(gui_CaImageViewer.PolyROI{i});
+            I_handles(end+1) = i;
         end
-        
-        if ~isempty(gui_CaImageViewer.IgnoreFrames)
-            flagframes = gui_CaImageViewer.IgnoreFrames;
-        else
-            flagframes = [];
+    end
+    
+    
+    %%% Main calculations 
+    
+    for j = 1:timecourse_image_number
+        if actual_image_counter>=imseriesend
+            break
         end
-        
-        if strcmpi(load_type, 'Compressed')
-            for j = 1:gui_CaImageViewer.imageserieslength       %%% Assumes that the first ROI (actually labeled 'ROI 0') is the background
-                Background_Intensity = gui_CaImageViewer.GCaMP_Image{j}(ROIreg{1});
-                Background_Intensity = Background_Intensity(~isnan(Background_Intensity));
-                Total_Background_Intensity = sum(Background_Intensity(:));
-                Background_Pixel_num = Total_Background_Intensity/nanmean(Background_Intensity(:));
-                Background_Mean_Int = nanmean(Background_Intensity(:));
+        if multifile
+            imnum = frame_bin_count(j,:);
+            filepattern = [fname, '_',acquisition_step(j,:),'_',imnum, '_corrected.tif'];
+        else
+            filepattern = fname;
+        end
+        if j == 1 || j ==2 || j == timecourse_image_number  %%% Acquisition 1 is easily overwritten by an accidental double-click of the 'grab' button, and can therefore be a different length; thus, find the length of the first file, then establish the standard length of acqusition two (all others except the final should be this length).
+            CaImage_File_info = imfinfo(filepattern);
+        else
+        end
+        all_images = read_tiff(filepattern,CaImage_File_info);
 
-                if twochannels == 1
-                    Background_Red = gui_CaImageViewer.Red_Image{j}(ROIreg{1});
-                    Total_Background_Red = sum(Background_Red(:));
-                    Background_Mean_Red = nanmean(Background_Red(:));
+        for k = 1:length(CaImage_File_info)
+
+            if any(actual_image_counter == flagframes)
+                Background_Mean_Int = NaN;
+                for i = 2:length(existing_ROI)
+                    Fluorescence_Measurement{i-1}(1,actual_image_counter) = NaN;
                 end
-
-                %%% 
-
-                for i = 2:length(existing_ROI) %%% Should cover all spines...
-                    Fluorescence_Intensity{i-1} = gui_CaImageViewer.GCaMP_Image{j}(ROIreg{i});
-                    Fluorescence_Intensity{i-1} = Fluorescence_Intensity{i-1}(~isnan(Fluorescence_Intensity{i-1}));
-                    Total_Intensity{i-1} = sum(Fluorescence_Intensity{i-1}(:));
-                    Pixel_Number{i-1} = Total_Intensity{i-1}/nanmean(Fluorescence_Intensity{i-1}(:));
-                    Fluorescence_Measurement{i-1}(1,j) = (nanmean(Fluorescence_Intensity{i-1}(:))-Background_Mean_Int)*Pixel_Number{i-1};
-                    if twochannels == 1;
-                        Red_Intensity{i-1} = gui_CaImageViewer.Red_Image{j}(ROIreg{i});
-                        Total_Red_Intensity{i-1} = sum(Red_Intensity{i-1}(:));
-                        Red_Measurement{i-1}(1,j) = (nanmean(Red_Intensity{i-1}(:))-Background_Mean_Red)*Pixel_Number{i-1};
-                    end
-                end
-
-                if isfield(gui_CaImageViewer, 'PolyROI')
-                    for i = 1:length(gui_CaImageViewer.PolyROI);
-                        if ishandle(gui_CaImageViewer.PolyROI{i});
-                            Poly_Fluorescence_Intensity{i} = gui_CaImageViewer.GCaMP_Image{j}(PolyROIreg{i});
-                            Poly_Fluorescence_Intensity{i} = Poly_Fluorescence_Intensity{i}(~isnan(Poly_Fluorescence_Intensity{i}));
-                            Poly_Total_Intensity{i} = sum(Poly_Fluorescence_Intensity{i}(:));
-                            Poly_Pixel_Number{i} = Poly_Total_Intensity{i}/nanmean(Poly_Fluorescence_Intensity{i}(:));
-                            Poly_Fluorescence_Measurement{i}(1,j) = (nanmean(Poly_Fluorescence_Intensity{i}(:))-Background_Mean_Int)*Poly_Pixel_Number{i};
-                            PolyFMat(i,j) = Poly_Fluorescence_Measurement{i}(1,j);
-                            if twochannels == 1
-                                Poly_Red_Intensity{i} = gui_CaImageViewer.Red_Image{j}(PolyROIreg{i});
-                                Poly_Red_Measurement{i}(1,j) = (nanmean(Poly_Red_Intensity{i}(:))-Background_Mean_Red)*Poly_Pixel_Number{i};
-                                Poly_Total_Red_Intensity{i} = sum(Poly_Red_Intensity{i}(:));
-                            end
-                        end
-                    end
+                for i = I_handles
+                    Poly_Fluorescence_Measurement{i}(1,actual_image_counter) = NaN;
                 end
                 for i = 1:DendNum
                     if i == 1
@@ -380,199 +380,89 @@ if ~isempty(existing_ROI)
                     else
                         dendgroup = (DendPPNum(1,i-1)+1):(DendPPNum(1,i-1)+DendPPNum(1,i));
                     end
-                    Mean_Dend(i,j) = nanmean(PolyFMat(dendgroup,j),1);
+                    Mean_Dend(i,actual_image_counter) = NaN;
                 end
-
-                movie_toggle = get(gui_CaImageViewer.figure.handles.ViewMovie_Checkbox, 'Value');
-
-                if movie_toggle == 1;
-                    if filterwindow == 0;
-                        filterwindow = 1;
-                    end
-                    if filterwindow == 1;
-                        axes(gui_CaImageViewer.figure.handles.GreenGraph);
-                        imshow(gui_CaImageViewer.GCaMP_Image{j}, [default_lower, default_upper]);
-
-                        axes(gui_CaImageViewer.figure.handles.RedGraph);
-                        imshow(gui_CaImageViewer.Red_Image{j}, [default_lower, default_upper])
-                    elseif isnumeric(filterwindow)
-                        smoothing_green = filter2(ones(filterwindow, filterwindow)/filterwindow^2, gui_CaImageViewer.GCaMP_Image{j});
-                        smoothing_red = filter2(ones(filterwindow, filterwindow)/filterwindow^2, gui_CaImageViewer.Red_Image{j});
-
-                        axes(gui_CaImageViewer.figure.handles.GreenGraph);
-                        imshow(smoothing_green, [default_lower, default_upper]);
-
-                        axes(gui_CaImageViewer.figure.handles.RedGraph);
-                        imshow(smoothing_red, [default_lower, default_upper]);
-                    end
-
-                    set(gui_CaImageViewer.figure.handles.Frame_EditableText, 'String', i);
-                    set(gui_CaImageViewer.figure.handles.ImageSlider_Slider, 'Value', i);
-
-                    if ~isempty(existing_ROI)
-                        axes(gui_CaImageViewer.figure.handles.GreenGraph);
-                        gui_CaImageViewer.ROI = rectangle('Position', ROI_stamp, 'EdgeColor', 'green', 'Curvature', [1 1]);
-                        axes(gui_CaImageViewer.figure.handles.RedGraph);
-                        rectangle('Position', ROI_stamp, 'EdgeColor', 'red', 'Curvature', [1 1]);
-                    end
-                else
-                end
+                actual_image_counter = actual_image_counter+1;
+                continue
             end
-            Time = 1:gui_CaImageViewer.imageserieslength;
-        elseif strcmpi(load_type, 'Full')
-            actual_image_counter = 1;
-            I_handles = [];
-            for i = 1:length(gui_CaImageViewer.PolyROI);
-                if ishandle(gui_CaImageViewer.PolyROI{i});
-                    I_handles(end+1) = i;
-                end
+            current_image = all_images(:,:,k);
+            isNaNPossible = isa(current_image,'float');
+
+            Background_Intensity = current_image(ROIreg{1}); %%% Assumes that the first ROI (actually labeled 'ROI 0') is the background
+            if(isNaNPossible);Background_Intensity = Background_Intensity(~isnan(Background_Intensity));end
+            Total_Background_Intensity = sum(Background_Intensity(:));
+            Background_Pixel_num = Total_Background_Intensity/nanmean(Background_Intensity(:));
+            Background_Mean_Int = nanmean(Background_Intensity(:));
+
+            if twochannels == 1
+                Background_Red = current_image(ROIreg{1},2);
+                Total_Background_Red = sum(Background_Red(:));
+                Background_Mean_Red = nanmean(Background_Red(:));
             end
-            for j = 1:timecourse_image_number
-                if actual_image_counter>=imseriesend
-                    break
-                end
-                imnum = sprintf('%03d',j);
-                if j == 1 || j ==2 || j == timecourse_image_number  %%% Acquisition 1 is easily overwritten by an accidental double-click of the 'grab' button, and can therefore be a different length; thus, find the length of the first file, then establish the standard length of acqusition two (all others except the final should be this length).
-                    CaImage_File_info = imfinfo([fname,'_', imnum, '_corrected.tif']);
-                else
-                end
-                all_images = read_tiff([fname, '_', imnum, '_corrected.tif'],CaImage_File_info);
 
-                for k = 1:length(CaImage_File_info)
-                    
-                    if any(actual_image_counter == flagframes)
-                        Background_Mean_Int = NaN;
-                        for i = 2:length(existing_ROI)
-                            Fluorescence_Measurement{i-1}(1,actual_image_counter) = NaN;
-                        end
-                        for i = I_handles
-                            Poly_Fluorescence_Measurement{i}(1,actual_image_counter) = NaN;
-                        end
-                        for i = 1:DendNum
-                            if i == 1
-                                dendgroup = 1:DendPPNum(1,i);
-                            else
-                                dendgroup = (DendPPNum(1,i-1)+1):(DendPPNum(1,i-1)+DendPPNum(1,i));
-                            end
-                            Mean_Dend(i,actual_image_counter) = NaN;
-                        end
-                        actual_image_counter = actual_image_counter+1;
-                        continue
-                    end
-                    current_image = all_images(:,:,k);
-                    isNaNPossible = isa(current_image,'float');
-                    
-                    Background_Intensity = current_image(ROIreg{1}); %%% Assumes that the first ROI (actually labeled 'ROI 0') is the background
-                    if(isNaNPossible);Background_Intensity = Background_Intensity(~isnan(Background_Intensity));end
-                    Total_Background_Intensity = sum(Background_Intensity(:));
-                    Background_Pixel_num = Total_Background_Intensity/nanmean(Background_Intensity(:));
-                    Background_Mean_Int = nanmean(Background_Intensity(:));
+            %%% 
 
-                    if twochannels == 1
-                        Background_Red = current_image(ROIreg{1},2);
-                        Total_Background_Red = sum(Background_Red(:));
-                        Background_Mean_Red = nanmean(Background_Red(:));
-                    end
-
-                    %%% 
-
-                    for i = 2:length(existing_ROI) %%% Should cover all spines...
-                        Fluorescence_Intensity{i-1} = current_image(ROIreg{i});
-                        if(isNaNPossible);Fluorescence_Intensity{i-1} = Fluorescence_Intensity{i-1}(~isnan(Fluorescence_Intensity{i-1}));end
-                        Total_Intensity{i-1} = sum(Fluorescence_Intensity{i-1}(:));
-                        if(isNaNPossible);Fluorescence_Intensity{i-1}(isnan(Fluorescence_Intensity{i-1})) = 0;end
-                        tmp_mean_intensity = sloppy_mean(Fluorescence_Intensity{i-1}(:));
-                        Pixel_Number{i-1} = Total_Intensity{i-1}/tmp_mean_intensity;
-                        if gui_CaImageViewer.UsingSurroundBackground
-                            if ~isempty(BGreg{i})
-                                Surround_Intensity = current_image(BGreg{i});
-                                Total_Surround_Intensity{i-1} = sum(Surround_Intensity);
-                                tmp_surround_intensity = sloppy_mean(Surround_Intensity(:));
-                                Surround_Pixel = Total_Surround_Intensity{i-1}/tmp_surround_intensity;
-                                Surround_Measurement{i-1}(1,actual_image_counter) = (tmp_surround_intensity-Background_Mean_Int)*Surround_Pixel;
-                                Fluorescence_Measurement{i-1}(1,actual_image_counter) = ((tmp_mean_intensity-Background_Mean_Int)*Pixel_Number{i-1})-Surround_Measurement{i-1}(1,actual_image_counter);
-                            else
-                                Fluorescence_Measurement{i-1}(1,actual_image_counter) = (tmp_mean_intensity-Background_Mean_Int)*Pixel_Number{i-1};
-                            end
-                        else
-                            Fluorescence_Measurement{i-1}(1,actual_image_counter) = (tmp_mean_intensity-Background_Mean_Int)*Pixel_Number{i-1};
-                        end
-                        if twochannels == 1;
-                            Red_Intensity{i-1} = current_image(ROIreg{i},2);
-                            Total_Red_Intensity{i-1} = sum(Red_Intensity{i-1}(:));
-                            Red_Measurement{i-1}(1,actual_image_counter) = (nanmean(Red_Intensity{i-1}(:))-Background_Mean_Red)*Pixel_Number{i-1};
-                        end
-                    end
-                    
-                    if isfield(gui_CaImageViewer, 'PolyROI')
-                        for i = I_handles
-                            Poly_Fluorescence_Intensity{i} = current_image(PolyROIreg{i});
-                            if(isNaNPossible);Poly_Fluorescence_Intensity{i} = Poly_Fluorescence_Intensity{i}(~isnan(Poly_Fluorescence_Intensity{i}));end
-                            Poly_Total_Intensity{i} = sum(Poly_Fluorescence_Intensity{i}(:));
-                            if(isNaNPossible);Poly_Fluorescence_Intensity{i}(isnan(Poly_Fluorescence_Intensity{i}(:))) = 0;end
-                            tmp_mean_intensity = sloppy_mean(Poly_Fluorescence_Intensity{i}(:));
-                            Poly_Pixel_Number{i} = Poly_Total_Intensity{i}/tmp_mean_intensity;
-                            Poly_Fluorescence_Measurement{i}(1,actual_image_counter) = (tmp_mean_intensity-Background_Mean_Int)*Poly_Pixel_Number{i};
-                            PolyFMat(i,actual_image_counter) = Poly_Fluorescence_Measurement{i}(1,actual_image_counter);
-                            if twochannels == 1
-                                Poly_Red_Intensity{i} = current_image(PolyROIreg{i},2);
-                                Poly_Red_Measurement{i}(1,actual_image_counter) = (nanmean(Poly_Red_Intensity{i}(:))-Background_Mean_Red)*Poly_Pixel_Number{i};
-                                Poly_Total_Red_Intensity{i} = sum(Poly_Red_Intensity{i}(:));
-                            end
-                        end
-                    end
-                    for i = 1:DendNum
-                        if i == 1
-                            dendgroup = 1:DendPPNum(1,i);
-                        else
-                            dendgroup = (DendPPNum(1,i-1)+1):(DendPPNum(1,i-1)+DendPPNum(1,i));
-                        end
-                        Mean_Dend(i,actual_image_counter) = nanmean(PolyFMat(dendgroup,actual_image_counter),1);
-                    end
-
-                    movie_toggle = get(gui_CaImageViewer.figure.handles.ViewMovie_Checkbox, 'Value');
-
-                    if movie_toggle == 1;
-                        if filterwindow == 0;
-                            filterwindow = 1;
-                        end
-                        if filterwindow == 1;
-                            axes(gui_CaImageViewer.figure.handles.GreenGraph);
-                            imshow(gui_CaImageViewer.GCaMP_Image{j}, [default_lower, default_upper]);
-
-                            axes(gui_CaImageViewer.figure.handles.RedGraph);
-                            imshow(gui_CaImageViewer.Red_Image{j}, [default_lower, default_upper])
-                        elseif isnumeric(filterwindow)
-                            smoothing_green = filter2(ones(filterwindow, filterwindow)/filterwindow^2, gui_CaImageViewer.GCaMP_Image{j});
-                            smoothing_red = filter2(ones(filterwindow, filterwindow)/filterwindow^2, gui_CaImageViewer.Red_Image{j});
-
-                            axes(gui_CaImageViewer.figure.handles.GreenGraph);
-                            imshow(smoothing_green, [default_lower, default_upper]);
-
-                            axes(gui_CaImageViewer.figure.handles.RedGraph);
-                            imshow(smoothing_red, [default_lower, default_upper]);
-                        end
-
-                        set(gui_CaImageViewer.figure.handles.Frame_EditableText, 'String', i);
-                        set(gui_CaImageViewer.figure.handles.ImageSlider_Slider, 'Value', i);
-
-                        if ~isempty(existing_ROI)
-                            axes(gui_CaImageViewer.figure.handles.GreenGraph);
-                            gui_CaImageViewer.ROI = rectangle('Position', ROI_stamp, 'EdgeColor', 'green', 'Curvature', [1 1]);
-                            axes(gui_CaImageViewer.figure.handles.RedGraph);
-                            rectangle('Position', ROI_stamp, 'EdgeColor', 'red', 'Curvature', [1 1]);
-                        end
+            for i = 2:length(existing_ROI) %%% Should cover all spines...
+                Fluorescence_Intensity{i-1} = current_image(ROIreg{i});
+                if(isNaNPossible);Fluorescence_Intensity{i-1} = Fluorescence_Intensity{i-1}(~isnan(Fluorescence_Intensity{i-1}));end
+                Total_Intensity{i-1} = sum(Fluorescence_Intensity{i-1}(:));
+                if(isNaNPossible);Fluorescence_Intensity{i-1}(isnan(Fluorescence_Intensity{i-1})) = 0;end
+                tmp_mean_intensity = sloppy_mean(Fluorescence_Intensity{i-1}(:));
+                Pixel_Number{i-1} = Total_Intensity{i-1}/tmp_mean_intensity;
+                if gui_CaImageViewer.UsingSurroundBackground
+                    if ~isempty(BGreg{i})
+                        Surround_Intensity = current_image(BGreg{i});
+                        Total_Surround_Intensity{i-1} = sum(Surround_Intensity);
+                        tmp_surround_intensity = sloppy_mean(Surround_Intensity(:));
+                        Surround_Pixel = Total_Surround_Intensity{i-1}/tmp_surround_intensity;
+                        Surround_Measurement{i-1}(1,actual_image_counter) = (tmp_surround_intensity-Background_Mean_Int)*Surround_Pixel;
+                        Fluorescence_Measurement{i-1}(1,actual_image_counter) = ((tmp_mean_intensity-Background_Mean_Int)*Pixel_Number{i-1})-Surround_Measurement{i-1}(1,actual_image_counter);
                     else
+                        Fluorescence_Measurement{i-1}(1,actual_image_counter) = (tmp_mean_intensity-Background_Mean_Int)*Pixel_Number{i-1};
                     end
-                    actual_image_counter = actual_image_counter + 1;
-                    if(mod(actual_image_counter,20)==0)
-                        waitbar(actual_image_counter/steps, wb, ['Processing image ', num2str(actual_image_counter)])
+                else
+                    Fluorescence_Measurement{i-1}(1,actual_image_counter) = (tmp_mean_intensity-Background_Mean_Int)*Pixel_Number{i-1};
+                end
+                if twochannels == 1;
+                    Red_Intensity{i-1} = current_image(ROIreg{i},2);
+                    Total_Red_Intensity{i-1} = sum(Red_Intensity{i-1}(:));
+                    Red_Measurement{i-1}(1,actual_image_counter) = (nanmean(Red_Intensity{i-1}(:))-Background_Mean_Red)*Pixel_Number{i-1};
+                end
+            end
+
+            if isfield(gui_CaImageViewer, 'PolyROI')
+                for i = I_handles
+                    Poly_Fluorescence_Intensity{i} = current_image(PolyROIreg{i});
+                    if(isNaNPossible);Poly_Fluorescence_Intensity{i} = Poly_Fluorescence_Intensity{i}(~isnan(Poly_Fluorescence_Intensity{i}));end
+                    Poly_Total_Intensity{i} = sum(Poly_Fluorescence_Intensity{i}(:));
+                    if(isNaNPossible);Poly_Fluorescence_Intensity{i}(isnan(Poly_Fluorescence_Intensity{i}(:))) = 0;end
+                    tmp_mean_intensity = sloppy_mean(Poly_Fluorescence_Intensity{i}(:));
+                    Poly_Pixel_Number{i} = Poly_Total_Intensity{i}/tmp_mean_intensity;
+                    Poly_Fluorescence_Measurement{i}(1,actual_image_counter) = (tmp_mean_intensity-Background_Mean_Int)*Poly_Pixel_Number{i};
+                    PolyFMat(i,actual_image_counter) = Poly_Fluorescence_Measurement{i}(1,actual_image_counter);
+                    if twochannels == 1
+                        Poly_Red_Intensity{i} = current_image(PolyROIreg{i},2);
+                        Poly_Red_Measurement{i}(1,actual_image_counter) = (nanmean(Poly_Red_Intensity{i}(:))-Background_Mean_Red)*Poly_Pixel_Number{i};
+                        Poly_Total_Red_Intensity{i} = sum(Poly_Red_Intensity{i}(:));
                     end
                 end
             end
-            Time = 1:actual_image_counter-1;
-            gui_CaImageViewer.imageserieslength = actual_image_counter-1;
+            for i = 1:DendNum
+                if i == 1
+                    dendgroup = 1:DendPPNum(1,i);
+                else
+                    dendgroup = (DendPPNum(1,i-1)+1):(DendPPNum(1,i-1)+DendPPNum(1,i));
+                end
+                Mean_Dend(i,actual_image_counter) = nanmean(PolyFMat(dendgroup,actual_image_counter),1);
+            end
+            actual_image_counter = actual_image_counter + 1;
+            if(mod(actual_image_counter,20)==0)
+                waitbar(actual_image_counter/steps, wb, ['Processing image ', num2str(actual_image_counter)])
+            end
         end
+    end
+    Time = 1:actual_image_counter-1;
+    gui_CaImageViewer.imageserieslength = actual_image_counter-1;
 else
     disp('No ROI selected!')
 end
@@ -689,20 +579,12 @@ a.Total_Intensity = Total_Intensity;
 a.Pixel_Number = Pixel_Number;
 a.Fluorescence_Measurement = Fluorescence_Measurement;
 a.Filename = fname;
-% a.Poly_deltaF = Poly_deltaF;
-% a.Poly_dF_over_F = Poly_dF_over_F;
 a.Poly_Fluorescence_Intensity = Poly_Fluorescence_Intensity;
 a.Poly_Total_Intensity = Poly_Total_Intensity;
 a.Poly_Pixel_Number = Poly_Pixel_Number;
 a.Poly_Fluorescence_Measurement = Poly_Fluorescence_Measurement;
 a.Dendrite_Fluorescence_Measurement = Mean_Dend;
-a.Dendrite_dFoF = deltaDend;
-% a.MeanEventAmp = amp;
-% a.EventNumber = freq;
-% a.SynapticEvents = deltaF_subtracted;
-% a.Alphas = alpha;
-% a.ActivityMap = binarized;
-a.ZoomValue = zoomval;
+a.Dendrite_dFoF = deltaDend;a.ZoomValue = zoomval;
 
 %%% for restoring ROIs
 try
@@ -738,12 +620,16 @@ user = get(gui_CaImageViewer.figure.handles.figure1, 'UserData');
 if gui_CaImageViewer.NewSpineAnalysis 
     analysis_tidbits = '_NewSpines_Analyzed_By';
 else
-    analysis_tidbits = '_Analyzed_By';
+    analysis_tidbits = 'Processed_';
 end
 
 try
     fname = fname(1:length(fname)-4);
-    save_fname = [fname, analysis_tidbits , user];
+    save_fname = [analysis_tidbits,fname];
+    if any(strfind(save_fname, ' '))
+        save_fname(strfind(save_fname, ' ')) = '_';
+    else
+    end
     evalc([save_fname, '= a']);
     start_dir = cd;
     target_dir = save_directory;
@@ -751,7 +637,7 @@ try
     save(save_fname, save_fname);
 catch
     fname = altname;
-    save_fname = [fname, analysis_tidbits, user];
+    save_fname = [fname, analysis_tidbits];
     evalc([save_fname, '= a']);
     start_dir = cd;
     target_dir = save_directory;
@@ -801,7 +687,7 @@ for i = 1:length(existing_ROI)-1
         end
     end
     col1 = mod(i-1, length(colorj))+1;
-    trace_fig = plot(Time, dF_over_F{i}, 'color', colorj{col1}, 'LineWidth', 2); hold on;
+    trace_fig = plot(Time, Fluorescence_Measurement{i}, 'color', colorj{col1}, 'LineWidth', 2); hold on;
     k = zeros(1,length(Time));
     plot(Time,k, '--k')
     xlabel('Time(sec)');
